@@ -1,0 +1,32 @@
+
+{%load static%}
+<head>
+<link href="{%static 'css/credito.css' %}">
+</head>
+
+<body>
+
+<main id="main">
+	<section id="left">
+		<div id="head">
+			<h1>Life has great moments</h1>
+			<p>Enjoy them with music!</p>
+		</div>
+		<h3>Only 9.99$</h3>
+	</section>
+	<section id="right">
+		<h1>Purchase</h1>
+		<form action="#">
+			<div id="form-card" class="form-field">
+				<label for="cc-number">Card number:</label>
+				<input id="cc-number" maxlength="19" placeholder="1111 2222 3333 4444" required>
+			</div>
+
+			{% csrf_token %}
+    <label for="valor_credito">Valor do Crédito:</label>
+    <input type="number" id="valor_credito" name="valor_credito" required>
+    <button type="submit">Comprar Crédito</button>
+		</form>
+	</section>
+</main>
+</body>

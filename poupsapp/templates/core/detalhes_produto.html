@@ -1,0 +1,94 @@
+
+|{%extends 'core/base.html'%}
+
+{%load static%}
+
+
+{%block 'conteudo'%}
+<div class="fluid-container p-4" style="background:#fff!important; margin-top:5rem;" >
+   <div class="container d-flex align-items-center" style="gap:2rem;">
+      <a class="voltar-btn" style="color:#b11000;">
+         <i style="color:#b11000; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
+      </a>
+      <span style="color:#b11000; font-size:1.6rem;">{{loja.nomeLoja}}</span>
+   </div>
+</div>
+    <!-- Script JavaScript -->
+    <script>
+      function goBack() {
+          window.history.back();
+      }
+      </script>
+      <div class="fluid-container d-flex justify-content-center" style="flex-grow:1">
+      <div class="container mt-5">
+        <div class="d-flex mobile-flex justify-content-center align-items-start" style="gap:1rem;">
+          <div class="d-flex justify-content-center align-items-start flex-column mt-1">
+            <!-- Imagem do Produto -->
+            <img style="height:15rem; width:15rem; object-fit:cover; border-radius:4px;" src="{{ produto.foto.url }}" alt="{{ produto.nome }}" class="img-fluid">
+          </div>
+          <div class="d-flex justify-content-center flex-column" style="height:100%">
+            <!-- Detalhes do Produto -->
+            <span class="fw-bold" style="color:#333; font-size:1.6rem;">{{ produto.nome }}</span>
+            <p class="price fw-bold" style="color:#333; font-size:1.2rem">R$ {{ produto.preco | floatformat:2 }}</p>
+            {%if produto.descricao%}
+            <p>{{ produto.descricao }}</p>
+            {%else%}
+            <p>Produto sem descrição</p>
+
+            {%endif%}
+            
+            <!-- Input para Comentários -->
+            <div class="mb-3">
+              <label for="comentarios" class="form-label">Comentários:</label>
+              <textarea class="form-control" id="comentarios" rows="3"></textarea>
+            </div>
+            
+            <!-- Botão de Adicionar ao Carrinho -->
+            <button class="btn btn-primary" id="add-to-cart" data-produto-id="{{ produto.id }}" style="color:#fff;">Adicionar ao Carrinho</button>
+        </div>
+        </div>
+      </div>
+    </div>
+      <script>
+        document.getElementById('add-to-cart').addEventListener('click', function() {
+            const produtoId = this.getAttribute('data-produto-id');
+            fetch(`/adicionar_ao_carrinho/${produtoId}/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(), // Pega o token CSRF do cookie ou do elemento HTML
+              },
+              body: JSON.stringify({ produto_id: produtoId })
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Problema ao adicionar ao carrinho');
+              }
+              return response.json(); // ou response.text() se você estiver retornando HTML
+            })
+            .then(data => {
+              // Aqui você pode atualizar o modal do carrinho ou algum indicador na interface do usuário
+              console.log('Item adicionado ao carrinho:', data);
+              // Por exemplo, atualizar a quantidade de itens no ícone do carrinho
+              // document.getElementById('quantidade-carrinho').textContent = data.totalItens;
+            })
+            .catch(error => {
+              console.error('Erro:', error);
+            });
+          });
+          
+          // Função para obter o token CSRF do cookie
+          function getCsrfToken() {
+            let csrfToken = null;
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+              let [name, value] = cookie.trim().split('=');
+              if (name === 'csrftoken') {
+                csrfToken = value;
+                break;
+              }
+            }
+            return csrfToken;
+          }
+        </script>
+{%endblock%}

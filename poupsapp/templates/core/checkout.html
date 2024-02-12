@@ -1,0 +1,24 @@
+{%extends 'core/base.html'%}
+
+{%load static%}
+{%block 'conteudo'%}
+<div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
+{% for produto_id, produto_info in carrinho.itens.items %}
+    <div class="produto">
+        <h5>{{ produto_info.nome }}</h5>
+        <p>Quantidade: {{ produto_info.quantidade }}</p>
+        <p>Preço unitário: {{ produto_info.preco }}</p>
+    </div>
+{% endfor %}
+
+<h3>Total Geral: {{ total_geral }}</h3>
+
+<!-- Formulário de Checkout -->
+<form action="{% url 'processar_pagamento' %}" method="POST">
+    {% csrf_token %}
+    <!-- Campos de informações do cliente, como endereço de entrega -->
+
+    <button type="submit" class="btn btn-primary">Finalizar Compra</button>
+</form>
+</div>
+{%endblock%}

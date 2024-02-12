@@ -1,0 +1,10 @@
+{%extends 'core/base.html'%}
+{%load static%}
+<head>    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+</head>
+{%block 'conteudo'%}
+{%load static%}
+
+
+{%endblock%}

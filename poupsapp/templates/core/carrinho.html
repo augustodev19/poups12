@@ -1,0 +1,32 @@
+<div class="carrinho-container">
+    {% if carrinho.itens %}
+        <ul class="lista-de-itens">
+            {% for produto_id, produto_info in carrinho.itens.items %}
+                <li class="item-carrinho mb-5">
+                    <!-- Detalhes do produto -->
+                    <div class="detalhes-produto d-flex" style="gap:.5rem;">
+                        <img style="height:5.5rem; width:5.5rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       <div class="d-block">
+                        <h5>{{ produto_info.nome }}</h5>
+                        <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
+                        <p>Preço unitário: R$ {{ produto_info.preco }}</p>
+                        </div>
+                        <!-- Você pode adicionar uma imagem aqui se disponível -->
+                        <!-- <img src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}"> -->
+                    </div>
+                    <!-- Botões de ação -->
+                    <div class="acoes">
+                        <!-- Botão para remover o item do carrinho -->
+                        <button class="btn btn-danger remover-item" data-produto-id="{{ produto_id }}">Remover</button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="total-geral-carrinho">
+            <h3>Total Geral: R$ {{ total_geral_carrinho|floatformat:2 }}</h3>
+          </div>
+        <!-- Aqui você pode adicionar o total do carrinho e botões de checkout -->
+    {% else %}
+        <p>Seu carrinho está vazio.</p>
+    {% endif %}
+</div>

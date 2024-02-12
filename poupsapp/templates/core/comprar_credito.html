@@ -1,0 +1,39 @@
+{%load static%}
+
+<html lang="en">
+<head>
+	<title>Login V1</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{%static 'css/credito.css'%}">
+<!--===============================================================================================-->	
+
+<!--===============================================================================================-->
+</head>
+<body>
+	
+	
+        <main id="main">
+            <section id="left">
+                <div id="head">
+                    <h1>Aproveite a vida!</h1>
+                    <p>Com Poups, suas moedas valem mais! Economize em cada lanche, transforme compras em ganhos.</p>
+                    <img style="height:13rem; border-radius:50%;" src="{%static 'img/dev12_Make_a_red_and_white_logo_for_a_food_app_called_Poupe_Com_e2a5c17a-3e23-428e-afbf-13a0259b0ba7.webp' %}">
+                </div>
+            </section>
+            <section id="right">
+                <h1>Comprar Poups</h1>
+                <form method="post" action="{%url 'payment' %}">
+                    <div id="form-card" class="form-field">
+                        <label for="valor_credito">Valor Desejado:</label>
+            <input type="number" id="valor_credito" name="valor_credito" required>
+                    </div>
+        
+                    {% csrf_token %}
+           
+            <button type="submit">Finalizar Compra</button>
+                </form>
+            </section>
+        </main>
+</body>
+</html>

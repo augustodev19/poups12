@@ -1,0 +1,9 @@
+<form action="{% url 'payment' %}" method="get">
+    <label for="amount">Quantia para Depósito:</label>
+    <input type="number" id="amount" name="amount" min="1" step="any" required>
+    <input type="submit" value="Depositar">
+</form>
+
+{% if error %}
+    <p>{{ error }}</p>
+{% endif %}

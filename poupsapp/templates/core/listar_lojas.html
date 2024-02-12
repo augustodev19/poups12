@@ -1,0 +1,9 @@
+{%load static%}
+{%for loja in lojas%}
+
+{{loja.nomeLoja }}
+
+
+<img style="max-height:3rem;" src="{{loja.foto.url}}">
+
+{%endfor%}

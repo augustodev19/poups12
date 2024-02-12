@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lojas Próximas</title>
+    <style>
+        /* Adicione aqui qualquer estilo que você desejar */
+    </style>
+</head>
+<body>
+    <h1>Lojas Próximas a Você</h1>
+
+    {% if lojas %}
+        <div id="lista-lojas">
+            {% for loja in lojas %}
+                <div class="loja">
+                    <h2>{{ loja.nomeLoja }}</h2>
+                    <img style="height:10rem; width:10rem; border-radius:50%; object-fit:cover;" src={{loja.foto.url}}>
+                    <p>Endereço: {{loja.endereco.rua}}, {{loja.endereco.bairro}}
+                    </p>
+                    <p>Distância: {{ loja.distancia_calculada|floatformat:2 }} km</p>
+                    <!-- Adicione mais informações sobre a loja aqui -->
+                </div>
+         
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Não foram encontradas lojas próximas à sua localização.</p>
+    {% endif %}
+
+    {% if mensagem_nenhuma_loja %}
+    <div class="alert alert-warning" role="alert">
+        {{ mensagem_nenhuma_loja }}
+    </div>
+{% endif %}
+    <script>
+        // Aqui você pode adicionar algum JavaScript, se necessário
+    </script>
+</body>
+</html>

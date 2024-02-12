@@ -1,0 +1,411 @@
+
+{%extends 'core/base-dashboard.html'%}
+{%load static%}
+{%block 'conteudo' %}
+      <div class="container-fluid">
+        <div class="container-fluid">
+          <form id="capaForm" method="post" enctype="multipart/form-data">
+            {%csrf_token%}
+
+          
+          
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Criar categoria</h5>
+
+    
+              <div class="card">
+                <div class="card-body">
+            <!-- Formulário para criar nova categoria -->
+            <form method="POST" id="categoriaForm">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="nomeCategoria">Nome da Categoria:</label>
+                    <input type="text" id="nomeCategoria" name="nome" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="descricaoCategoria">Descrição:</label>
+                    <textarea id="descricaoCategoria" name="descricao" class="form-control" ></textarea>
+                </div>
+                <button name="categoria_submit" type="submit" class="mt-3 btn btn-primary">Criar Categoria</button>
+            </form>
+    
+           
+          
+    
+            <!-- Formulário para criar novo produto -->
+         
+      
+          <script>
+          
+              function abrirFormularioProduto(categoriaId) {
+                  // Define o valor do campo oculto de categoria no formulário de produto
+                  document.getElementById('categoriaId').value = categoriaId;
+      
+                  // Mostra o formulário de produto
+                  document.getElementById('produtoFormContainer').style.display = 'block';
+              }
+          </script>
+
+              
+            </div>
+
+            
+          </div>
+            </div>
+          </div>
+            <div class="card d-none">
+              <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Produtos Criados</h5>
+            
+            
+         <!-- Lista de categorias --><div class="card">
+          <div class="card-body">
+            <div id="categorias" class="mt-5 d-flex flex-column">
+              {% for categoria in loja.categoriaproduto_set.all %}
+              <h3>{{ categoria.nome }}</h3>
+              {% for produto in categoria.produto_set.all %}
+                  <div class="categoria-item">
+                      <span class="mb-3">{{ produto.nome }}</span>
+                      <img style="height:3rem;" src="{{produto.foto.url}}">
+                      <span class="mb-3">{{produto.preco}}</span>
+                      <button class="btn btn-secondary" onclick="abrirFormularioOpcao({{ produto.id }})">+ Adicionar Opção</button>
+
+                      <!-- Se o botão é para criar um novo produto, o texto e a função devem ser ajustados -->
+                      <button class="btn btn-secondary" onclick="abrirFormularioProduto({{ produto.id }})">Editar Produto</button>
+                  </div>
+                  {% for opcao in produto.opcoes.all %}
+        <div>Opção: <span class="mb-3">{{ opcao.nome }}</span>
+        <img style="height:6rem;" src="{{opcao.foto.url}}"></div>
+    {% endfor %}
+                  {%endfor%}
+          {% endfor %}
+            </div>
+            </div>
+            </div>
+            </div>
+
+            <div id="formularioOpcao" style="display:none;">
+              <form method="POST" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <!-- Campos do formulário de opção -->
+                  <input type="hidden" name="produto_id" id="produtoIdParaOpcao" value="">
+                  <fieldset>
+                    <legend>Opções do Produto1</legend>
+                    <div class="form-group mb-3">
+                    <label for="id_nome_opcao">Nome da Opção:</label>
+                    <input type="text" id="id_nome_opcao" class="form-control" name="nome_opcao" value="{{ opcao_form.nome.value }}">
+                    </div>
+                    <div class="form-group mb-3">
+                    <label for="id_descricao_opcao">Descrição da Opção:</label>
+                    <input type="text" id="id_descricao_opcao" class="form-control" name="descricao_opcao" value="{{ opcao_form.descricao.value }}">
+                    </div>
+                    <div class="form-group mb-3">
+                    <label for="id_foto_opcao">Foto da Opção:</label>
+                    <input type="file" id="id_foto_opcao" class="form-control" name="foto_opcao" accept="image/*">
+                    </div>
+                </fieldset>
+            
+             
+              </form>
+          </div>
+
+            <script>
+              function abrirFormularioOpcao(produtoId) {
+                  document.getElementById('produtoIdParaOpcao').value = produtoId;
+                  document.getElementById('formularioOpcao').style.display = 'block';
+              }
+          </script>
+
+          </div>
+            
+            <div class="card mb-0">
+              <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Criar produtos</h5>
+      
+                <!-- Lista de Categorias com botões para adicionar produtos -->
+                <div id="categorias" class="mt-5">
+                    {% for categoria in loja.categoriaproduto_set.all %}
+                        <div class="categoria-item">
+                            <span>{{ categoria.nome }}</span>
+                            <button class="mb-3 btn btn-secondary" onclick="abrirFormularioProduto({{ categoria.id }}, '{{categoria.nome}}')">
+                                Criar Produto para "{{ categoria.nome }}"
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+        
+             <!-- Formulário de Produto -->
+<div id="produtoFormContainer"  style="display:none; position:fixed; width:100%; height:100%; background:rgb(0 0 0 / 45%); z-index:999; top:0; right:0; ">
+  <div class="p-4 d-flex flex-column align-items-start" style="width:50%; height:100%; background:#fff; position:absolute; right:0; overflow-y:auto;">
+    <h3 class="card-title fw-semibold mb-4" style="font-size:1.4rem;">Criar produto para <span class="categoriaNome1"></span></h3>
+
+    <button class="fechar-produto" style="position:absolute; top:10px; right:10px;">x</button>
+
+  <form class="w-100" method="POST" enctype="multipart/form-data">
+    <div class="d-flex" style="gap:1rem;">
+    <button class="form-button" type="button" onclick="mostrarDiv('div1')">Detalhes</button>
+<button class="form-button" type="button" onclick="mostrarDiv('div2')">Complementos</button>
+<button class="form-button" type="button" onclick="mostrarDiv('div3')">Disponibilidade</button>
+    </div>
+    <div >
+
+      <div id="div1" class=" w-100" style="gap:2rem;display:flex;" >
+      <div class="flex-column mt-3"  style="width:70%; display:flex;"> 
+      {% csrf_token %}
+      <input type="hidden" id="categoriaId" name="categoriaId" value="">
+     
+      <!-- Campos do ProdutoForm -->
+      <div class="form-group mb-3">
+
+      <label for="id_nome_produto">Nome do Produto:</label>
+      <input type="text" class="form-control" id="id_nome_produto" name="nome" >
+      </div>
+      <div class="form-group mb-3">
+
+        <label for="id_preco_produto">Preço:</label>
+        <input type="number" class="form-control" id="id_preco_produto" name="preco" >
+        </div>
+
+      <div class="form-group mb-3">
+
+        <label for="id_preco_produto">Descrição:</label>
+        <textarea type="number" class="form-control" id="id_preco_produto" name="descricao">
+        </textarea>
+        </div>
+
+
+
+    
+ 
+      </div>
+
+      <div class="d-flex  flex-column" style="width:30%">
+        <div class="custom-file-upload">
+          <input type="file" id="imageUpload" name="foto" accept=".png, .jpg, .jpeg" style="display: none;" onchange="updateUploadArea()" />
+          <label for="imageUpload">
+            <div class="upload-area" id="uploadArea">
+              <!-- Você pode deixar o ícone e o texto ou removê-los, a imagem selecionada irá substituí-los -->
+              <img src="icon-de-upload.png" alt="Upload Icon" style="margin-bottom: 10px;" />
+              <p>Escolher imagem</p>
+            </div>
+          </label>
+        </div>
+        
+      </div>
+
+    </div>
+    <div class="mt-3 flex-column" id="div2" style="display:none; ">
+      <div id="opcoesContainer"></div>
+      <button type="button" id="addOpcaoBtn" class="btn btn-secondary">Adicionar Mais Opções</button>
+
+      <button type="submit" name="produto_submit" class="btn btn-primary">Salvar Produto</button>
+          </div>
+        </div>
+      <div class="mt-3" id="div3" style="display:none;">
+            <!-- Container para Opções Dinâmicas -->
+   2
+        
+        
+      
+      
+
+      </div>
+  </form>
+</div>
+</div>
+
+<script>
+  function mostrarDiv(id) {
+    // Primeiro ocultamos todas as divs
+    var divs = ['div1', 'div2', 'div3'];
+    for (var i = 0; i < divs.length; i++) {
+      document.getElementById(divs[i]).style.display = 'none';
+    }
+  
+    // Agora mostramos apenas a div que foi solicitada
+    document.getElementById(id).style.display = 'flex';
+  }
+</script>
+<script>
+
+  let fechar = document.querySelector('.fechar-produto')
+  let produtoFormContainer = document.querySelector('#produtoFormContainer')
+
+  produtoFormContainer.addEventListener('click', function(event)
+  {
+    event.stopPropagation()
+    if(event.target === produtoFormContainer)
+    {
+      produtoFormContainer.style.display = 'none';
+    }
+  })
+
+
+            fechar.addEventListener('click', function()
+            {
+             
+              document.getElementById('produtoFormContainer').style.display = 'none';
+              
+            })
+</script>
+
+<script>
+  function updateUploadArea() {
+    var input = document.getElementById('imageUpload');
+    var uploadArea = document.getElementById('uploadArea');
+    if (input.files && input.files[0]) {
+      // Usar FileReader para ler o arquivo selecionado
+      var reader = new FileReader();
+      
+      reader.onload = function(e) {
+        // Atualizar a área de upload com a imagem selecionada
+        uploadArea.innerHTML = '<img src="' + e.target.result + '" alt="Imagem selecionada" style="max-width: 100%; max-height: 100%;" />';
+      };
+      
+      // Ler o arquivo selecionado como URL de dados
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
+<!-- JavaScript para adicionar campos de opção de forma dinâmica -->
+<script>
+  var  opcaoIndex= 0;
+  document.getElementById('addOpcaoBtn').addEventListener('click', function() {
+    var container = document.getElementById('opcoesContainer');
+
+    // Cria um novo fieldset
+    var fieldset = document.createElement('fieldset');
+    fieldset.id = `opcaoFieldset_${opcaoIndex}`;
+    fieldset.innerHTML = `
+        <legend>Opção ${opcaoIndex + 1}</legend>
+        <div class="form-group mb-3">
+            <label for="id_nome_opcao_${opcaoIndex}">Nome da Opção:</label>
+            <input class="form-control" type="text" id="id_nome_opcao_${opcaoIndex}" name="nome_opcao_${opcaoIndex}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="id_descricao_opcao_${opcaoIndex}">Descrição da Opção:</label>
+            <input class="form-control" type="text" id="id_descricao_opcao_${opcaoIndex}" name="descricao_opcao_${opcaoIndex}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="id_foto_opcao_${opcaoIndex}">Foto da Opção:</label>
+            <div class="custom-file-upload">
+              <input type="file" id="id_foto_opcao_${opcaoIndex}" name="foto_opcao_${opcaoIndex}" accept=".png, .jpg, .jpeg" style="display: none;" onchange="updateOptionUploadArea(this, 'uploadArea_${opcaoIndex}')"/>
+              <label for="id_foto_opcao_${opcaoIndex}">
+                  <div class="upload-area" id="uploadArea_${opcaoIndex}">
+                      <img src="icon-de-upload.png" alt="Upload Icon" style="margin-bottom: 10px;" />
+                      <p>Escolher imagem</p>
+                  </div>
+              </label>
+          </div>        </div>
+        <button type="button" class="btn btn-danger removeOpcaoBtn" onclick="removeOpcao(${opcaoIndex})">X</button>
+    `;
+
+    // Adiciona o novo fieldset ao container
+    container.appendChild(fieldset);
+
+    opcaoIndex++;
+});
+
+function removeOpcao(index) {
+  var container = document.getElementById('opcoesContainer');
+  var fieldsetToRemove = document.getElementById('opcaoFieldset_' + index);
+  if (fieldsetToRemove) {
+      container.removeChild(fieldsetToRemove);
+  }
+
+  // Atualiza os índices dos fieldsets restantes
+  var fieldsets = container.querySelectorAll('fieldset');
+  fieldsets.forEach((fieldset, idx) => {
+      fieldset.id = 'opcaoFieldset_' + idx;
+      fieldset.querySelector('legend').textContent = 'Opção ' + (idx + 1);
+      fieldset.querySelector('input[type="text"]').id = 'id_nome_opcao_' + idx;
+      fieldset.querySelector('input[type="text"]').name = 'nome_opcao_' + idx;
+      fieldset.querySelector('input[type="text"]').nextElementSibling.id = 'id_descricao_opcao_' + idx;
+      fieldset.querySelector('input[type="text"]').nextElementSibling.name = 'descricao_opcao_' + idx;
+      fieldset.querySelector('input[type="file"]').id = 'id_foto_opcao_' + idx;
+      fieldset.querySelector('input[type="file"]').name = 'foto_opcao_' + idx;
+      fieldset.querySelector('.removeOpcaoBtn').setAttribute('onclick', 'removeOpcao(' + idx + ')');
+  });
+
+  // Atualiza o opcaoIndex para refletir o número total de opções
+  opcaoIndex = fieldsets.length;
+}
+</script>
+
+<!-- JavaScript para Manipulação do Formulário de Produto -->
+<script>
+  let categoriaNome1 = document.querySelector('.categoriaNome1')
+
+  function abrirFormularioProduto(categoriaId, categoriaNome) {
+
+      document.getElementById('categoriaId').value = categoriaId;
+      document.getElementById('produtoFormContainer').style.display = 'block';
+      categoriaNome1.textContent = categoriaNome
+
+      // Você pode adicionar lógica adicional aqui, se necessário
+  }
+
+  var opcaoIndex = 0;
+  document.getElementById('addOpcaoBtn').addEventListener('click', function() {
+      // ... Código existente para adicionar opções dinamicamente ...
+  });
+</script>
+                      
+                 
+<script>
+
+  function updateOptionUploadArea(input, uploadAreaId) {
+    var uploadArea = document.getElementById(uploadAreaId);
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+      
+        reader.onload = function(e) {
+            uploadArea.innerHTML = '<img src="' + e.target.result + '" alt="Imagem selecionada" style="max-width: 100%; max-height: 100%;" />';
+        };
+      
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+</script>
+                      
+                    </form>
+                </div>
+  </div>
+  </div>
+  
+        </div>
+
+
+        
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Formulário de Produto (pode ser um modal ou uma sidebar oculta) -->
+  
+<!-- <script>
+  function abrirFormularioProduto(categoriaId) {
+      // Define o valor do campo oculto de categoria no formulário de produto
+      document.getElementById('categoriaId').value = categoriaId;
+
+      // Mostra o formulário de produto
+      document.getElementById('produtoFormContainer').style.display = 'block';
+  }
+</script>
+-->
+
+
+
+
+ {%endblock%}

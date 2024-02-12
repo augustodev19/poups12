@@ -1,0 +1,179 @@
+
+{%extends 'core/base-dashboard.html'%}
+{%load static%}
+{%block 'conteudo' %}
+      <div class="container-fluid">
+        <div class="container-fluid">
+          <form id="capaForm" method="post" enctype="multipart/form-data">
+            {%csrf_token%}
+
+          
+
+          
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Informações Gerais</h5>
+
+    
+              <div class="card">
+                <div class="card-body">
+            <!-- Formulário para criar nova categoria -->
+            <form method="POST" id="categoriaForm">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="nomeCategoria">Nome da Loja:</label>
+                    <input type="text" id="nomeCategoria" value="{{loja.nomeLoja}}" name="nome" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="descricaoCategoria">Descrição:</label>
+                    <textarea id="descricaoCategoria" name="descricao" class="form-control" ></textarea>
+                </div>
+                <button name="categoria_submit" type="submit" class="mt-3 btn btn-primary">Criar Categoria</button>
+            </form>
+    
+           
+          
+    
+            <!-- Formulário para criar novo produto -->
+         
+      
+          <script>
+          
+              function abrirFormularioProduto(categoriaId) {
+                  // Define o valor do campo oculto de categoria no formulário de produto
+                  document.getElementById('categoriaId').value = categoriaId;
+      
+                  // Mostra o formulário de produto
+                  document.getElementById('produtoFormContainer').style.display = 'block';
+              }
+          </script>
+
+              
+            </div>
+
+            
+          </div>
+            </div>
+          </div>
+          <div class="card d-none">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Atualizar Perfil</h5>
+
+    
+              <div class="card">
+                <div class="card-body">
+            <!-- Formulário para criar nova categoria -->
+            <form method="POST" id="categoriaForm">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="nomeCategoria">Nome da Categoria:</label>
+                    <input type="text" id="nomeCategoria" name="nome" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="descricaoCategoria">Descrição:</label>
+                    <textarea id="descricaoCategoria" name="descricao" class="form-control" ></textarea>
+                </div>
+                <button name="categoria_submit" type="submit" class="mt-3 btn btn-primary">Criar Categoria</button>
+            </form>
+    
+           
+         
+              
+            </div>
+
+            
+          </div>
+     
+     
+            </div>
+   
+          </div>
+          <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Capa do perfil</h5>
+                <img style="width:100%;border-radius:4px; height:20rem; object-fit:cover;" src="{{ loja.capa.url }}" id="capaPreview" style="cursor: pointer;">
+                <input type="file" id="capaUpload" name="capa" accept=".png, .jpg, .jpeg" style="display: none;" onchange="previewCapa(this)"/>
+                
+                <div class="d-flex justify-content-center"><button id="saveBtn" class=" mt-3 btn btn-primary" style="background:#b11000; border:none; ">Salvar</button>
+                </div>
+            </div>
+        </div>
+      </form>
+
+        
+        <script>
+            document.getElementById('capaPreview').addEventListener('click', function() {
+                document.getElementById('capaUpload').click();
+            });
+        
+            function previewCapa(input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('capaPreview').src = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+        
+            document.getElementById('saveBtn').addEventListener('click', function() {
+              var formData = new FormData();
+              var capaUpload = document.getElementById('capaUpload');
+          
+              // Adiciona o arquivo à FormData, apenas se um arquivo foi selecionado
+              if (capaUpload.files[0]) {
+                  formData.append('capa', capaUpload.files[0]);
+              }
+          
+              // Adiciona o CSRF token à requisição
+              var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+              formData.append('csrfmiddlewaretoken', csrfToken);
+          
+              // Cria a requisição usando fetch
+              fetch('/update_capa/', {
+                  method: 'POST',
+                  body: formData,
+                  headers: {
+                      'X-CSRFToken': csrfToken
+                  }
+              })
+              .then(response => {
+                  if (response.ok) {
+                      return response.json();
+                  }
+                  throw new Error('Ocorreu um problema no servidor.');
+              })
+              .then(data => {
+                  console.log(data); // Pode-se tratar a resposta aqui
+                  alert('Capa do perfil atualizada com sucesso!');
+              })
+              .catch(error => {
+                  console.error('Erro ao atualizar a capa do perfil:', error);
+                  alert('Ocorreu um erro ao atualizar a capa do perfil.');
+              });
+          });
+        </script>
+            
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Formulário de Produto (pode ser um modal ou uma sidebar oculta) -->
+  
+<!-- <script>
+  function abrirFormularioProduto(categoriaId) {
+      // Define o valor do campo oculto de categoria no formulário de produto
+      document.getElementById('categoriaId').value = categoriaId;
+
+      // Mostra o formulário de produto
+      document.getElementById('produtoFormContainer').style.display = 'block';
+  }
+</script>
+-->
+
+
+
+
+ {%endblock%}

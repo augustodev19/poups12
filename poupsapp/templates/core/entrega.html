@@ -1,0 +1,63 @@
+
+{%extends 'core/base-dashboard.html'%}
+{%load static%}
+{%block 'conteudo' %}
+      <div class="container-fluid">
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Valor do frete</h5>
+              <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="frete" value="frete">
+                        
+                        <div class="mb-3">
+                            <div id="emailHelp" class="mb-3 form-text">
+                                <p><strong>Deixe em branco em caso de frete gratuito</strong></p>
+                            </div>
+                    
+                            <label for="valor_frete" class="form-label">Valor:</label>
+                            <input type="text" class="form-control" id="valor_frete" name="valor_frete" value="{{ loja.valor_frete }}">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Enviar</button>
+                    </form>
+                </div>
+              </div>
+
+
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title fw-semibold mb-4">Tempo de entrega</h5>
+                  <div class="card">
+                    <div class="card-body">
+                      <form method="POST">
+                        {%csrf_token%}
+                        <input type="hidden" name="tempo" value="tempo">
+                        <div class="mb-3">
+                            <p><strong>Coloque o tempo estimado em minutos</strong></p>
+
+                          <label for="exampleInputEmail1"  class="form-label">Tempo estimado:</label>
+                          <input type="text" class="form-control" name="tempo_entrega" value="{{loja.tempo_entrega}}" id="exampleInputEmail1" aria-describedby="emailHelp">
+                        </div>
+                       
+                        <button type="submit" class="btn btn-primary">Enviar</button>
+                      </form>
+                    </div>
+                  </div>
+              
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+      </div>
+    </div>
+  </div>
+  <script>
+  </script>
+ {%endblock%}

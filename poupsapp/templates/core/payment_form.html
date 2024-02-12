@@ -1,0 +1,21 @@
+<html>
+<head>
+    <title>Doação PIX</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <label for="key">Chave PIX:</label><br>
+        <input type="text" id="key" name="key"><br>
+        <label for="typeKey">Tipo de Chave:</label><br>
+        <select id="typeKey" name="typeKey">
+            <option value="document">CPF/CNPJ</option>
+            <option value="phoneNumber">Número de Telefone</option>
+            <option value="email">E-mail</option>
+            <option value="randomKey">Chave Aleatória</option>
+            <option value="paymentCode">Código de Pagamento</option>
+        </select><br>
+        <input type="submit" value="Doar">
+    </form>
+</body>
+</html>
