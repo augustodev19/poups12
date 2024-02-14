@@ -207,8 +207,7 @@
         -webkit-text-stroke-color: black;">Onde você quer receber seu pedido?</h2>
       </div>
       <div class="modal-body1">
-        <button style="background:#b11000; font-size:1.4rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
-        <p>Já tem um endereço salvo? <a href="{%url 'login' %}">Entre</a> ou <a href="{%url 'registerCliente' %}">cadastre-se</a></p>
+        <div class="d-flex flex-column align-items-center" style="gap:.5rem;"> <a style="font-size:1.4rem" href="{%url 'registerCliente' %}"><button style="background:#b11000; font-size:1.4rem; border-radius:4px;">Cadastre-se</button></a>  <a style="font-size:1.2rem" href="{%url 'login' %}">Já tenho uma conta</a>  </div>
       </div>
     </div>
   </div>
