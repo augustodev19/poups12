@@ -28,7 +28,8 @@ SECRET_KEY = 'django-insecure-1q$$n3hh=h1f*n8i2lwjivc2dz2_ics324t0&5i7k10nmd3x69
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['poupecomprando.onrender.com.br', 'poupecomprando.com.br', 'poupecomprando.com', 'www.poupecomprando.com', 'www.poupecomprando.com.br']
+CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'https://poupecomprando.com/*', 'https://www.poupecomprando.com/*', 'https://www.poupecomprando.com.br/*']
     
 
 LOGOUT_REDIRECT_URL = 'home'
