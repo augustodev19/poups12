@@ -845,9 +845,10 @@
     background: #fff;
     padding: 20px;
     border-radius: 5px;
-    width: 50%;
-    max-width: 500px;
-  }
+    width: 500px;
+    max-width: 90%;
+}
+
   
   .modal-header1 {
     border-bottom: 1px solid #e5e5e5;
