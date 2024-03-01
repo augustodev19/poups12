@@ -73,7 +73,6 @@ def registerCliente(request):
                 messages.success(request, 'Cadastro Realizado com sucesso!')
                 return redirect('login')
         else:
-            print("Formulário inválido")
             messages.error(request, form.errors)
     
     return render(request, 'core/registroClientes.html', {'form': form})
