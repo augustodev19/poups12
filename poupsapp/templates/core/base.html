@@ -235,6 +235,41 @@
   </div>
 </div>
 
+<div class="cookiesContainer modal2" >
+<div class="modal-content2">
+
+  <h3>
+    Política de Cookies
+  </h3>
+  <p class="text-center">
+Lorem Ipsum is simply dummy text of the printing and typesetting industry.  </p>
+  <button class="btn btn-primary aceitarCookies" style="color:#fff; font-size:1.2rem;">
+    Aceitar todos os Cookies
+  </button>
+</div>
+
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verifica se o consentimento já foi dado
+    if(localStorage.getItem('aceitouCookies') === 'true') {
+      document.querySelector('.cookiesContainer').style.display = 'none';
+    } else {
+      setTimeout(function() {
+        document.querySelector('.cookiesContainer').style.display = 'flex';
+      }, 2000);
+    }
+  });
+  
+  document.querySelector('.aceitarCookies').addEventListener('click', function() {
+    document.querySelector('.cookiesContainer').style.display = 'none';
+    
+    // Salva no localStorage que o usuário aceitou os cookies
+    localStorage.setItem('aceitouCookies', 'true');
+  });
+  </script>
 <script>
   function getCsrfToken() {
     let csrfToken = '';
@@ -311,9 +346,9 @@
         
       
   
-      if (localStorage.getItem('locationPermission') !== 'granted') {
-        modal.style.display = "flex";
-      }
+      //if (localStorage.getItem('locationPermission') !== 'granted') {
+      //   modal.style.display = "flex";
+      //}
   
       btn.onclick = function() {
         navigator.geolocation.getCurrentPosition(function(position) {
