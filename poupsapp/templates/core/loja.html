@@ -216,9 +216,15 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 <h2>{{loja.nomeLoja}}</h2>
 <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
 
+{%if user.is_authenticated%}
 <p class="mt-3"><a href="{%url 'perfil_loja' loja.id%}">
     Ver Perfil
 </a></p>
+{%else%}
+<p class="mt-3"><a href="{%url 'registerCliente'%}">
+    Ver Perfil
+</a></p>
+{%endif%}
 <p>Endereço: {{loja.endereco.rua}}, {{loja.endereco.bairro}}
 </p>
 <p>Distância: {{ loja.distancia_calculada|floatformat:2 }} km</p>
