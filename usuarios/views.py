@@ -178,7 +178,7 @@ def user_login(request):
         if user is not None:
             auth_login(request, user)
             messages.success(request, "Usuário logado com sucesso!")
-            return redirect('home')
+            return redirect('loja')
         else:
             messages.error(request, "Email ou senha inválidos.")
     else:

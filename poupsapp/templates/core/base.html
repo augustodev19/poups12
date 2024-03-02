@@ -88,15 +88,17 @@
 
                             <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'editar_loja'%}"><span>Editar Loja</a>
 
-                        
+                            {%endif%}
 
-                            {%elif cliente%}
+                            {%if cliente%}
                             <a href="{%url 'payment'%}" class="nav-item nav-link">Comprar Poups</a>
 
                             {%endif%}
-                            {%if not user.is_authenticated%} <a href="{%url 'registerLoja'%}" class="nav-item nav-link">Sou Lojista</a>
-                            {% endif %}
+                            {%if not user.is_authenticated%}
+                            <a href="{%url 'registerLoja'%}" class="nav-item nav-link">Sou Lojista</a>
+                            {%endif%}
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Quem Somos</a>
+                            <a href="{%url 'home'%}" class="nav-item nav-link active">Dúvidas</a>
 
                      
 
@@ -194,14 +196,19 @@
   <script src="{%static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
 
 
-  <div id="locationModal" style="display:none;" class="modal1 {% if not user.is_authenticated %}d-flex{% endif %}">
+  <div id="locationModal" class="modal1 {%if user.is_authenticated%}d-none{%endif%}">
     <div class="modal-content1">
       <div class="modal-header1">
-        <h2 class="fw-bold text-center" style="font-size:2.5rem; text-shadow:2px 2px #000; color:#fff !important; -webkit-text-stroke-width: 1px;
+        
+        <h2 class="fw-bold text-center" style="font-size:2.2rem; text-shadow:2px 2px #000; color:#fff !important; -webkit-text-stroke-width: 1px;
         -webkit-text-stroke-color: black;">Onde você quer receber seu pedido?</h2>
+        <div class="mb-3 d-flex justify-content-center">
+          <img style="height:15rem;" src="{%static 'img/GPS navigator-rafiki.svg' %}">
+          </div>
       </div>
       <div class="modal-body1">
-        <div class="d-flex flex-column align-items-center" style="gap:.5rem;"> <a style="font-size:1.4rem" href="{%url 'registerCliente' %}"><button style="background:#b11000; font-size:1.4rem; border-radius:4px;">Cadastre-se</button></a>  <a style="font-size:1.2rem" href="{%url 'login' %}">Já tenho uma conta</a>  </div>
+        <button style="background:#b11000; font-size:1.4rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
+        <p>Já tem um endereço salvo? <a href="{%url 'login' %}">Entre</a> ou <a href="{%url 'registerCliente' %}">cadastre-se</a></p>
       </div>
     </div>
   </div>
@@ -288,7 +295,6 @@
     }
 });
 </script>
-<!--
   <script>
     document.addEventListener('DOMContentLoaded', (event) => {
       const modal = document.getElementById("locationModal");
@@ -353,7 +359,6 @@
       };
     });
   </script>
-  -->
 
   <script src="{% static 'js/main.js' %}"></script>
 <!--

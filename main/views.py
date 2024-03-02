@@ -117,10 +117,28 @@ def loja(request):
         mensagem_nenhuma_loja = "Nenhuma loja encontrada dentro do raio especificado."
     else:
         mensagem_nenhuma_loja = None                    
+
+    if request.user.is_authenticated:
+        try:
+            cliente = request.user.cliente  # Substitua 'cliente' pelo nome correto do campo no seu modelo
+        except AttributeError:
+            cliente = None
+    else:
+        cliente = None
+
+    if request.user.is_authenticated:
+        try:
+            loja = request.user.loja  # Substitua 'cliente' pelo nome correto do campo no seu modelo
+        except AttributeError:
+            loja = None
+    else:
+        loja = None
                         
 
     # Preparar o contexto para o template
     context = {
+        'loja':loja,
+        'cliente':cliente,
         'lojas': lojas_proximas,
         'categorias': categorias,
         'mensagem_nenhuma_loja': mensagem_nenhuma_loja,  # Adicione a mensagem ao contexto
