@@ -58,10 +58,17 @@
 
         {% for categoria in categorias %}
 
+        {%if user.is_authenticated%}
         <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'10' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
         <img style="width:8rem; height:8rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
             <span>{{ categoria.nome }}</span>
         </a>
+        {%else%}
+        <a class="d-flex flex-column align-items-center abrirEndereco">
+            <img style="width:8rem; height:8rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
+                <span>{{ categoria.nome }}</span>
+            </a>
+        {%endif%}
         {% endfor %}
     </div>
     

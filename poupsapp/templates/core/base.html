@@ -70,8 +70,12 @@
         <button type="submit" class="nav-item nav-link" style="border:none; background:none;">Sair</button>
     </form>
 {% endif %}                   {%endif%}
+                            {%if user.is_authenticated%}
                             <a href="{%url 'loja'%}" class="nav-item nav-link">Lojas</a>
+                            {%else%}
+                            <a class="nav-item nav-link abrirEndereco">Lojas</a>
 
+                            {%endif%}
                             <div class="d-none nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Parceiros</a>
                                 <div class="dropdown-menu m-0 bg-secondary rounded-0">
