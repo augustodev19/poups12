@@ -206,7 +206,9 @@ class Cliente(CustomUser):
     foto = models.ImageField(upload_to='images/', blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
     saldo_poups = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-        
+    pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    plano_familia = models.BooleanField(default=False, verbose_name=_('Plano Família'))
+
 
 class CarrinhoItem(models.Model):
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
@@ -217,3 +219,18 @@ class Carrinho(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     itens = models.ManyToManyField(CarrinhoItem)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+
+class Subperfil(models.Model):
+    titular = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='subperfis')
+    nome = models.CharField(max_length=100)
+    foto_perfil = models.ImageField(upload_to='subclientes_fotos/', blank=True, null=True)
+
+    def __str__(self):
+        return self.nome
+
+    def save(self, *args, **kwargs):
+        if self.titular.subperfis.count() >= 4:
+            raise ValidationError('Não é possível adicionar mais de 4 subperfis para um titular.')
+        super(Subperfil, self).save(*args, **kwargs)
+

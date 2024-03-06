@@ -36,12 +36,12 @@
 						Registre-se Agora!
 					</span>
                 
-                    <form  method="post" enctype="multipart/form-data" action="{% url 'registerCliente'  %}">
+                    <form  method="post" enctype="multipart/form-data" action="{% url 'registerFamilia'  %}">
                         {%csrf_token%}
                 <!-- Passo 1: Informações Básicas -->
                 <div id="step1" class="step">
                     <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="nome" placeholder="Nome Completo">
+						<input class="input100" type="text" name="nome" placeholder="Nome do Titular">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-user" aria-hidden="true"></i>
@@ -49,7 +49,7 @@
 					</div>
 
 					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="text" name="username" placeholder="CPF">
+						<input class="input100" type="text" name="username" placeholder="CPF do Titular">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-user" aria-hidden="true"></i>
@@ -63,7 +63,7 @@
             <!-- Passo 2: Detalhes Adicionais -->
 <div id="step2" class="step" style="display:block;">
     <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
-        <input class="input100" type="email" name="email" placeholder="Email">
+        <input class="input100" type="email" name="email" placeholder="Email do Titular">
         <span class="focus-input100"></span>
         <span class="symbol-input100">
             <i class="fa fa-envelope" aria-hidden="true"></i>
@@ -89,7 +89,7 @@
                  <!-- Passo 3: Informações Básicas -->
                  <div id="step3" class="step" style="display:block;">
                     <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="telefone" placeholder="Telefone">
+						<input class="input100" type="text" name="telefone" placeholder="Telefone do Titular">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-user" aria-hidden="true"></i>

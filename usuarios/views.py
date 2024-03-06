@@ -78,6 +78,68 @@ def registerCliente(request):
     return render(request, 'core/registroClientes.html', {'form': form})
 
 
+def registerFamilia(request):
+    form = ClienteRegistrationForm()
+
+    if request.method == 'POST':
+        form = ClienteRegistrationForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+           
+                user = Cliente.objects.create_user(
+                    nome = form.cleaned_data['nome'],
+                    username = form.cleaned_data['username'],
+                    telefone = form.cleaned_data['telefone'],
+                    email=form.cleaned_data['email'],
+                    foto = form.cleaned_data['foto'],
+                    password=form.cleaned_data['password1'],
+                    plano_familia = True,
+              
+                 
+                  
+                )
+                user.save()
+
+                cep = request.POST.get('cep')
+                complemento = request.POST.get('complemento')
+
+                if cep:
+                    response = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
+                    data = response.json()
+
+                    if response.status_code == 200 and not data.get('erro'):
+                        estado, _ = Estado.objects.get_or_create(nome=data['uf'])
+                        cidade, _ = Cidade.objects.get_or_create(nome=data['localidade'], estado=estado)
+                        bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
+                        cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
+                        endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
+                        latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
+
+                        endereco, _ = Endereco.objects.get_or_create(
+                            rua=data['logradouro'],
+                            complemento=complemento,
+                            bairro=bairro,
+                            cidade=cidade,
+                            estado=estado,
+                            cep=cep_obj,
+                            latitude=latitude,
+                            longitude=longitude
+                        )
+
+                        user.endereco = endereco
+                        user.save()
+
+             
+               
+               
+                    
+                messages.success(request, 'Cadastro Realizado com sucesso!')
+                return redirect('login')
+        else:
+            messages.error(request, form.errors)
+    
+    return render(request, 'core/registroFamilia.html', {'form': form})
+
 
 def obter_coordenadas(endereco_completo, google_maps_api_key):
     gmaps = googlemaps.Client(key=google_maps_api_key)
@@ -188,10 +250,12 @@ def user_login(request):
     return render(request, 'core/login.html')
 
 
+def tipo_cliente(request):
+    return render(request, 'core/tipoCliente.html')
     
 def editar_loja2(request):
     try:
-        loja = request.user.loja
+        loja = request.user.loja    
     except Loja.DoesNotExist:
         return HttpResponseForbidden("Você não tem permissão para acessar esta página.")
 
