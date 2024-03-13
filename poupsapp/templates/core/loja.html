@@ -4,7 +4,7 @@
 
 {%block 'conteudo'%}
 
-<div class="container  d-flex justify-content-start" style="gap:4rem; margin-top:10rem; overflow-x:auto; white-space: nowrap;">
+<div class="container  d-flex justify-content-start" style="gap:3rem; margin-top:10rem; overflow-x:auto; white-space: nowrap;">
 
 {% for categoria in categorias %}
 
@@ -212,24 +212,21 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
     <div class="mt-5 container-1">
 
 {%for loja in lojas%}
-<div class="card-1">
+<a  class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'registerCliente' %}?next=loja_{{loja.id}}{% endif %}">
+
+<div >
 <h2>{{loja.nomeLoja}}</h2>
 <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
 
-{%if user.is_authenticated%}
-<p class="mt-3"><a href="{%url 'perfil_loja' loja.id%}">
+<p class="mt-3">
     Ver Perfil
-</a></p>
-{%else%}
-<p class="mt-3"><a href="{%url 'registerCliente'%}">
-    Ver Perfil
-</a></p>
-{%endif%}
+</p>
+
 <p>Endereço: {{loja.endereco.rua}}, {{loja.endereco.bairro}}
 </p>
 <p>Distância: {{ loja.distancia_calculada|floatformat:2 }} km</p>
 </div>
-
+</a>
 
 {%endfor%}
     </div>

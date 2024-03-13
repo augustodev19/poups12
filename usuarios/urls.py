@@ -23,7 +23,11 @@ urlpatterns = [
     path('remover_produto/<int:produto_id>/', remover_produto, name='remover_produto'),
     path('buscar_produto/<int:produto_id>/', buscar_produto, name='buscar_produto'),
     path('editar_produto/', editar_produto, name='editar_produto'),
-    path('tipo_cliente/', tipo_cliente, name='tipoCliente')
+    path('tipo_cliente/', tipo_cliente, name='tipoCliente'),
+    path('criar_subperfil/', criar_subperfil, name='criarSubperfil'),
+    path('perfil_familia/', perfil_familia, name='perfil_familia'),
+
+
 
 
 

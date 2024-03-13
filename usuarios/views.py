@@ -9,10 +9,13 @@ from django.contrib.auth import login as auth_login
 from .forms import LoginForm
 from django.contrib.auth import authenticate
 import logging
+from django.utils.http import urlencode
+from django.urls import reverse
 import googlemaps
 from django.contrib import messages
 from .forms import *
 from geopy.geocoders import Nominatim
+from django.contrib.auth import authenticate, login
 
 
 # Create your views here.
@@ -78,6 +81,25 @@ def registerCliente(request):
     return render(request, 'core/registroClientes.html', {'form': form})
 
 
+def perfil_familia(request):
+    return render(request, 'core/perfilFamilia.html')
+
+
+def criar_subperfil(request):
+    if request.method == 'POST':
+        form = SubperfilForm(request.POST, request.FILES)
+        if form.is_valid():
+            subperfil = form.save(commit=False)
+            subperfil.titular = request.user.cliente  # Assumindo que o cliente está relacionado ao User
+            subperfil.save()
+            return redirect('subperfil')  # Redirecionar conforme necessário
+    else:
+        form = SubperfilForm()
+    return render(request, 'core/subperfil.html', {'form': form})
+
+def selecionar_perfil(request):
+    return render(request, 'core/perfisFamilia.html')
+
 def registerFamilia(request):
     form = ClienteRegistrationForm()
 
@@ -139,7 +161,6 @@ def registerFamilia(request):
             messages.error(request, form.errors)
     
     return render(request, 'core/registroFamilia.html', {'form': form})
-
 
 def obter_coordenadas(endereco_completo, google_maps_api_key):
     gmaps = googlemaps.Client(key=google_maps_api_key)
@@ -229,16 +250,25 @@ from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
+
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(data=request.POST)
         username = request.POST['email']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
-
-        
+        cliente = None
+       
         if user is not None:
             auth_login(request, user)
+            try:
+                cliente = request.user.cliente
+            except:
+                pass
+            if cliente:
+                if cliente.plano_familia:
+                    messages.success(request, "Usuário logado com sucesso!")
+                    return redirect('perfil_familia')
             messages.success(request, "Usuário logado com sucesso!")
             return redirect('loja')
         else:
@@ -280,7 +310,8 @@ def editar_cliente(request):
         cliente = request.user.cliente
     except Cliente.DoesNotExist:
         return HttpResponseForbidden("Você não tem permissão para acessar esta página.")
-
+    if cliente.plano_familia:
+        return render('perfil_familia')
     if request.method == 'POST':
         form = EditarClienteForm(request.POST, request.FILES, instance=cliente)
         if form.is_valid():
@@ -497,3 +528,18 @@ def editar_produto(request, produto_id):
 
     context = {'produto_form': produto_form, 'loja': loja}
     return render(request, 'core/catalogo.html', context)
+
+
+def criar_subperfil(request):
+    if request.method == 'POST':
+        form = SubperfilForm(request.POST, request.FILES)
+        if form.is_valid():
+
+            subperfil.nome = form.cleaned_data['nome']
+            subperfil.foto = form.cleaned_data['foto'] 
+            subperfil.titular = request.user.cliente  # Assumindo que o cliente está relacionado ao User
+            subperfil.save()
+            return redirect('perfil_familia')  # Redirecionar conforme necessário
+    else:
+        form = SubperfilForm()
+    return render(request, 'core/criarSubperfil.html', {'form': form})

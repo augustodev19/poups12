@@ -213,9 +213,10 @@
     display: flex;  
     align-items: center;
     background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background:linear-gradient(to right, rgba(255, 157, 0, 0.124), rgba(195, 105, 15, 0.397)), url('../img/janice-lin-yUIN4QWKCTw-unsplash.jpg');
+    width: 100%;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background:linear-gradient(to right, rgba(237, 112, 3, 0.296), rgba(195, 105, 15, 0.487)), url('../img/0_3.webp');
 }
 
 .carousel-item {
@@ -321,6 +322,11 @@
   @media (max-width: 770px) {
     #carousel-vp {
       width: 510px;
+    }
+
+    .categorias
+    {
+        justify-content: start !important;
     }
 
     .mobile-flex
@@ -807,7 +813,7 @@
     border-radius: 8px;
     padding: 20px;
     box-sizing: border-box; /* Isso faz com que a margem seja incluída nos 33.333% de largura */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
     width: calc(33.333% - 20px); /* Ajusta a largura para incluir a margem */
     text-align: center;
 }

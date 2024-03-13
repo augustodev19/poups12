@@ -64,3 +64,9 @@ class ItemOpcaoForm(forms.ModelForm):
     class Meta:
         model = ItemOpcao
         fields = ['nome', 'preco_adicional', 'descricao', 'foto']  # Removido 'opcao', será definido no backend
+
+
+class SubperfilForm(forms.ModelForm):
+    class Meta:
+        model = Subperfil
+        fields = ['nome', 'foto_perfil']
