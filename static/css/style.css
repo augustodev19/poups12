@@ -123,6 +123,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     transition: .5s;
+    justify-content: start !important;
 }
 
 .navbar {
@@ -335,6 +336,11 @@
         align-items: center !important;
         justify-content: center !important;
     }
+  }
+
+  .pac-container 
+  {
+    z-index: 99999 !important;
   }
   
   @media (max-width: 510px) {

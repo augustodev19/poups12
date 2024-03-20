@@ -25,6 +25,8 @@
         <!-- Customized Bootstrap Stylesheet -->
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
 
+        
+
         <!-- Template Stylesheet -->
 
         <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -69,6 +71,16 @@
         <button type="submit" class="nav-item nav-link" style="border:none; background:none;">Sair</button>
     </form>
 {% endif %}                   {%endif%}
+
+{%if not user.is_authenticated%}
+
+<a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'tipoPerfil'%}"><span>Criar Conta</a>
+
+{%endif%}
+{%if cliente%}
+<a href="{%url 'payment'%}" class="nav-item nav-link">Comprar Poups</a>
+
+{%endif%}
                             {%if user.is_authenticated%}
                             <a href="{%url 'loja'%}" class="nav-item nav-link">Lojas</a>
                             {%else%}
@@ -93,13 +105,8 @@
 
                             {%endif%}
 
-                            {%if cliente%}
-                            <a href="{%url 'payment'%}" class="nav-item nav-link">Comprar Poups</a>
-
-                            {%endif%}
-                            {%if not user.is_authenticated%}
-                            <a href="{%url 'registerLoja'%}" class="nav-item nav-link">Sou Lojista</a>
-                            {%endif%}
+                           
+                     
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Quem Somos</a>
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Dúvidas</a>
 
@@ -111,7 +118,7 @@
                             <a href="#" class="position-relative me-4 my-auto">
                                 <i style="color:#fff; " class="abrir-carrinho fa fa-shopping-bag fa-2x"></i>
                             </a>
-                            <a href="{%url 'tipoCliente' %}" class="my-auto me-4">
+                            <a href="{%url 'tipoPerfil' %}" class="my-auto me-4">
                                 <i style="color:#fff; !important" class="fas fa-user fa-2x"></i>
                             </a>
                           
@@ -197,20 +204,89 @@
   <script src="{%static 'lib/waypoints/waypoints.min.js' %}"></script>
   <script src="{%static 'lib/lightbox/js/lightbox.min.js' %}"></script>
   <script src="{%static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places&callback=initAutocomplete" async defer></script>
+<script>
+  function initAutocomplete() {
+    var input = document.getElementById('autocomplete');
+    var autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.addListener('place_changed', function() {
+      var place = autocomplete.getPlace();
+      if (!place.geometry) {
+        // O usuário digitou o nome de um lugar que não foi retornado pelas sugestões do Autocomplete.
+        window.alert("Nenhum resultado disponível para: '" + place.name + "'");
+        return;
+      }
+      // Use o objeto address_components para encontrar a rua e o número
+    var rua = '';
+    var numero = '';
+    for (var i = 0; i < place.address_components.length; i++) {
+      var component = place.address_components[i];
+      if (component.types.indexOf('route') !== -1) {
+        rua = component.long_name;  // ou short_name para uma versão mais curta
+      }
+      if (component.types.indexOf('street_number') !== -1) {
+        numero = component.long_name;
+      }
+    }
 
+    // Combinar rua e número
+    var addressToShow = numero ? `${rua}, ${numero}` : rua;
+
+    console.log(addressToShow);  // Exibir no console ou usar conforme necessário
+      var data = {
+        latitude: place.geometry.location.lat(),
+        longitude: place.geometry.location.lng(),
+        address: place.formatted_address
+    };
+
+      fetch('/set_location/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken') // Função auxiliar para obter o valor do cookie CSRF.
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(data => {
+        window.location.href = '{%url 'loja' %}';
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    });
+  }
+  
+  // Função para obter o cookie CSRF do Django.
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+</script>
 
   <div id="locationModal" class="modal1 {%if user.is_authenticated%}d-none{%endif%}">
     <div class="modal-content1">
       <div class="modal-header1">
         
-        <h2 class="fw-bold text-center" style="font-size:2.2rem; text-shadow:2px 2px #000; color:#fff !important; -webkit-text-stroke-width: 1px;
-        -webkit-text-stroke-color: black;">Onde você quer receber seu pedido?</h2>
+        <h2 class=" text-center" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
         <div class="mb-3 d-flex justify-content-center">
-          <img style="height:15rem;" src="{%static 'img/GPS navigator-rafiki.svg' %}">
+          <img style="height:15rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
           </div>
       </div>
       <div class="modal-body1">
-        <button style="background:#b11000; font-size:1.4rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
+        <input class="w-100" id="autocomplete" placeholder="Digite seu endereço" type="text" />
+
+        <button class="w-100" style="background:#b11000; font-size:1.2rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
         <p>Já tem um endereço salvo? <a href="{%url 'login' %}">Entre</a> ou <a href="{%url 'registerCliente' %}">cadastre-se</a></p>
       </div>
     </div>
@@ -244,15 +320,34 @@
   <h3>
     Política de Cookies
   </h3>
-  <p class="text-center" style="width:60rem; font-size:1.2rem;color:#000;">
-    Utilizamos cookies para oferecer uma melhor experiência de navegação em nosso site. Ao clicar em "ACEITO", vc concorda com o seu uso. Para maiores informações, consulte nossa Política de Privacidade. </p>
+  <p class="text-center" style="max-width:60rem; font-size:1rem;color:#000;">
+    Utilizamos cookies para oferecer uma melhor experiência de navegação em nosso site. Ao clicar em <strong>"ACEITO"</strong>, você concorda com o seu uso. Para maiores informações, consulte nossa Política de Privacidade. </p>
   <button class="btn btn-primary aceitarCookies" style="color:#fff; font-size:1.2rem; padding:.5rem 2rem; border-radius:30px;">
     ACEITO
   </button>
 </div>
 
 </div>
-
+  
+  <!-- Remove Modal -->
+  <div class="modal fade" id="successRemove" tabindex="-1" aria-labelledby="successRemove" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+      <!-- ... rest of modal content ... -->
+      <div class="modal-body">
+    
+        <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+          <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
+        <div class="messages">
+      
+        <span style="text-align:center; font-size:1.2rem !important;">Produto removido com sucesso!</span>
+     
+        </div>
+        </div>
+      </div>
+      </div>
+    </div>
+    </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -323,6 +418,7 @@
                 // Remover o item do DOM
                 
                 atualizarConteudoCarrinho();
+                new bootstrap.Modal(document.querySelector('#successRemove')).show();
             } else {
                 console.error('Erro ao remover o item:', data.message);
             }
@@ -352,47 +448,61 @@
       //if (localStorage.getItem('locationPermission') !== 'granted') {
       //   modal.style.display = "flex";
       //}
+      function getAddressFromCoordinates(latitude, longitude, callback) {
+        var geocoder = new google.maps.Geocoder();
+        var latLng = new google.maps.LatLng(latitude, longitude);
+      
+        geocoder.geocode({ 'location': latLng }, function(results, status) {
+          if (status === google.maps.GeocoderStatus.OK && results[0]) {
+            callback(results[0].formatted_address);
+          } else {
+            console.error('Geocoding failed: ' + status);
+            callback('');
+          }
+        });
+      }
   
       btn.onclick = function() {
         navigator.geolocation.getCurrentPosition(function(position) {
           localStorage.setItem('locationPermission', 'granted');
-  
-          console.log('Latitude obtida:', position.coords.latitude);
-          console.log('Longitude obtida:', position.coords.longitude);
-  
-          function getCookie(name) {
-            // ... Código para obter o cookie
-          }
-  
-          fetch('/set_location/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            })
-          })
-          .then(response => {
-            if (response.ok) {
-              // Redireciona o usuário para a URL desejada
-              window.location.href = '{%url 'loja' %}';
+      
+          var latitude = position.coords.latitude;
+          var longitude = position.coords.longitude;
+      
+          getAddressFromCoordinates(latitude, longitude, function(address) {
+            if (address) {
+              console.log('Endereço obtido:', address);
+      
+              fetch('/set_location/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                  latitude: latitude,
+                  longitude: longitude,
+                  address: address  // Aqui você passa o endereço obtido
+                })
+              })
+              .then(response => response.json())
+              .then(data => {
               
+                    window.location.href = '/loja/'; // Redireciona para a URL padrão
+                
+              })
+              .catch(error => {
+                console.error('Erro ao enviar localização:', error);
+              });
             } else {
-              throw new Error('Falha ao enviar localização');
+              // Trate o caso onde o endereço não pôde ser obtido
+              console.error('Endereço não encontrado para as coordenadas.');
             }
-          })
-          .catch(error => {
-            console.error('Erro ao enviar localização:', error);
           });
-  
+      
         }, function(error) {
-          console.log('Erro ao obter localização:', error);
-          if (error.code === error.PERMISSION_DENIED) {
-            localStorage.setItem('locationPermission', 'denied');
-          }
+          console.error('Erro ao obter localização:', error);
+          localStorage.setItem('locationPermission', 'denied');
         });
       };
     });
@@ -466,7 +576,13 @@
     </div>
   </div>
   </div>
-  
+
+
+
+    
+
+
+
   <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', (event) => {
     {% if messages %}

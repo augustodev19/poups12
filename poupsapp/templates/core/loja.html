@@ -3,8 +3,16 @@
 {%load static%}
 
 {%block 'conteudo'%}
+{%if user_location.address %}
 
-<div class="container  d-flex justify-content-start" style="gap:3rem; margin-top:10rem; overflow-x:auto; white-space: nowrap;">
+<div class="container" style="margin-top:10rem;">
+    <span style="color:#000">{{user_location.address}}</span>
+</div>
+{%endif%}
+
+<div class="container mt-5 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;{%if not user_location.address %}margin-top:10rem !important;
+{%endif%}
+">
 
 {% for categoria in categorias %}
 
@@ -23,15 +31,15 @@
 
 
 <a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\linguica.webp' %}">
+    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner1.png' %}">
 
 </a>
 <a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\comida2.webp' %}">
+    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner2.png' %}">
 
 </a>
 <a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\comida3.webp' %}">
+    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner4.png' %}">
 
 </a>
 
@@ -218,7 +226,7 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 <h2>{{loja.nomeLoja}}</h2>
 <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
 
-<p class="mt-3">
+<p class="mt-3" style="color: #b11000; font-weight:600;">
     Ver Perfil
 </p>
 

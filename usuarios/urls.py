@@ -26,6 +26,8 @@ urlpatterns = [
     path('tipo_cliente/', tipo_cliente, name='tipoCliente'),
     path('criar_subperfil/', criar_subperfil, name='criarSubperfil'),
     path('perfil_familia/', perfil_familia, name='perfil_familia'),
+    path('tipo_perfil/', tipo_perfil, name='tipoPerfil'),
+
 
 
 

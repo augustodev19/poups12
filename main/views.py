@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from .models import *
+from django.contrib import messages
+
 from usuarios.models import *
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
@@ -72,9 +74,23 @@ def haversine(lon1, lat1, lon2, lat2):
 def set_location(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        request.session['user_location'] = data
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'}, status=400)
+        # Agora você está recebendo também o endereço formatado
+        address = data['address']
+        latitude = data['latitude']
+        longitude = data['longitude']
+        print(data)
+        # Salve essas informações na sessão do usuário
+        request.session['user_location'] = {
+            'address': address,
+            'latitude': latitude,
+            'longitude': longitude
+        }
+        
+        # Pode querer retornar o endereço ou outras informações para confirmação
+        return JsonResponse({'status': 'success', 'address': address})
+        
+    else:
+        return JsonResponse({'status': 'error'}, status=400)
 def loja(request):
     # Buscar todas as categorias
     categorias = Categoria.objects.all()
@@ -89,6 +105,7 @@ def loja(request):
         user_location = request.session.get('user_location')
         latitude = user_location.get('latitude') if user_location else None
         longitude = user_location.get('longitude') if user_location else None
+        adress = user_location.get('adress') if user_location else None
 
     # Inicializar todas_lojas
     todas_lojas = Loja.objects.all()
@@ -134,9 +151,11 @@ def loja(request):
     else:
         loja = None
                         
+    user_location = request.session.get('user_location', {})  # Usa um dict vazio como padrão
 
     # Preparar o contexto para o template
     context = {
+        'user_location':user_location,
         'loja':loja,
         'cliente':cliente,
         'lojas': lojas_proximas,
@@ -355,43 +374,40 @@ import json
 
 @require_http_methods(["POST"])
 def adicionar_ao_carrinho(request, produto_id):
-    # Carrega o produto do banco de dados
     produto = get_object_or_404(Produto, id=produto_id)
     loja_id = produto.categoria.loja.id if produto.categoria.loja else None
 
     if not loja_id:
         return JsonResponse({'erro': 'Produto sem loja associada'}, status=400)
 
-    # Inicializa o carrinho se ele não existir na sessão
     if 'carrinho' not in request.session:
-        request.session['carrinho'] = {
-            'loja_id': loja_id,
-            'itens': {}
-        }
+        request.session['carrinho'] = {'loja_id': loja_id, 'itens': {}}
 
     carrinho = request.session['carrinho']
 
-    # Verifica se o carrinho já possui itens de outra loja
     if carrinho['loja_id'] != loja_id:
-        # Se sim, esvaziar o carrinho e definir a nova loja_id
         carrinho['itens'] = {}
         carrinho['loja_id'] = loja_id
 
-    # Adiciona o produto ao carrinho ou incrementa a quantidade
-    if str(produto_id) in carrinho['itens']:
-        carrinho['itens'][str(produto_id)]['quantidade'] += 1
+    item_key = str(produto_id)
+    if item_key in carrinho['itens']:
+        carrinho['itens'][item_key]['quantidade'] += 1
     else:
-        carrinho['itens'][str(produto_id)] = {
+        carrinho['itens'][item_key] = {
+            'produto_id': produto_id,  # Confirme que esta linha está presente
             'quantidade': 1,
             'preco': str(produto.preco),
             'nome': produto.nome
         }
+    request.session.modified = True
+    context = {
+        'carrinho': carrinho,
+        'sucesso':True,
+        'mensagem': 'Adicionado ao Carrinho'}
+    return JsonResponse(context)
 
     # Salva o carrinho atualizado na sessão
-    request.session.modified = True
-
-    # Retorna o carrinho para atualização no frontend
-    return JsonResponse({'carrinho': carrinho})
+  
 
 
 def ver_carrinho(request):
@@ -441,28 +457,74 @@ def checkout(request):
     return render(request, 'core/checkout.html', context)
 
 
-# Continuação de views.py
-import mercadopago
-import json
+from decimal import Decimal
+from django.shortcuts import redirect
+from django.http import HttpResponse
 
 def processar_pagamento(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
-    sdk = mercadopago.SDK("YOUR_ACCESS_TOKEN")
+    total = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
 
-    preference_data = {
+    # Supondo que todos os itens pertençam à mesma loja, pegue a loja do primeiro item
+    primeiro_item = next(iter(carrinho['itens'].values()))
+    produto_id = primeiro_item.get('produto_id')
+
+    if produto_id is None:
+        # Trate o caso em que produto_id não está disponível
+        return HttpResponse("Produto ID não encontrado no carrinho.", status=400)
+    produto = get_object_or_404(Produto, id=produto_id)
+    loja = produto.categoria.loja
+
+    token_lojista = loja.token_pagseguro
+    email_lojista_pagseguro = loja.email_pagseguro
+
+    # Substitua pelos valores reais
+    token_plataforma = "39FD640937A14E0A91310DEDE47AFF72"
+    email_plataforma_pagseguro = "augusto.webdeveloping@gmail.com"
+    percentual_plataforma = 0.1  # Por exemplo, 10% para a plataforma
+
+    dados_pagamento = {
+        "reference": "Referencia_da_Compra",
         "items": [
             {
-                "title": item['nome'],
+                "id": str(produto_id),
+                "description": item['nome'],
                 "quantity": item['quantidade'],
-                "unit_price": float(item['preco'])
-            } for item in carrinho['itens'].values()
+                "amount": float(item['preco'])
+            } for produto_id, item in carrinho['itens'].items()
+        ],
+        "split": [
+            {
+                "recipient": "EMAIL_DO_LOJISTA_NO_PAGSEGURO",
+                "amount": {
+                    "percent": (1 - percentual_plataforma) * 100  # Calcula a porcentagem para o lojista
+                },
+                # Opcional: "token": "TOKEN_DO_LOJISTA" se necessário
+            },
+            {
+                "recipient": email_plataforma_pagseguro,
+                "amount": {
+                    "percent": percentual_plataforma * 100  # Calcula a porcentagem para a plataforma
+                },
+                "token": token_plataforma
+            }
         ]
     }
-    preference_response = sdk.preference().create(preference_data)
-    preference = preference_response["response"]
 
-    return redirect(preference["init_point"])
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token_plataforma}'  # Use o token de segurança da plataforma
+    }
 
+    # Substitua URL pela endpoint correta de transações do PagSeguro
+    response = requests.post('https://api.pagseguro.com/transactions', json=dados_pagamento, headers=headers)
 
+    if response.status_code == 200:
+        preference = response.json()
+        # Substitua pela URL de redirecionamento adequada
+        return redirect(preference["paymentLink"])
+    else:
+        # Tratar erro de pagamento aqui
+        return HttpResponse("Erro ao processar pagamento", status=500)
 
 

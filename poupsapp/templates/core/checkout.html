@@ -2,6 +2,7 @@
 
 {%load static%}
 {%block 'conteudo'%}
+<!-- 
 <div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
 {% for produto_id, produto_info in carrinho.itens.items %}
     <div class="produto">
@@ -13,12 +14,85 @@
 
 <h3>Total Geral: {{ total_geral }}</h3>
 
-<!-- Formulário de Checkout -->
+ Formulário de Checkout 
 <form action="{% url 'processar_pagamento' %}" method="POST">
     {% csrf_token %}
-    <!-- Campos de informações do cliente, como endereço de entrega -->
+    Campos de informações do cliente, como endereço de entrega 
 
     <button type="submit" class="btn btn-primary">Finalizar Compra</button>
 </form>
 </div>
+-->
+
+<div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
+
+<form id="paymentForm">
+    {%csrf_token%}
+    <div class="form-group">
+        <label for="cardNumber">Número do Cartão</label>
+        <input type="text" id="cardNumber" class="form-control" placeholder="Número do cartão">
+    </div>
+    <div class="form-group">
+        <label for="cardExpiry">Data de Vencimento</label>
+        <input type="text" id="cardExpiry" class="form-control" placeholder="MM/AA">
+    </div>
+    <div class="form-group">
+        <label for="cardCvv">CVV</label>
+        <input type="text" id="cardCvv" class="form-control" placeholder="CVV">
+    </div>
+    <div class="form-group">
+        <label for="holderName">Nome (como no cartão)</label>
+        <input type="text" id="holderName" class="form-control" placeholder="Nome do Titular">
+    </div>
+    <!-- Incluir outros campos necessários como CPF, data de nascimento, etc. -->
+    <button type="button" onclick="processPayment()">Finalizar Pagamento</button>
+</form>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    function processPayment() {
+        var cardData = {
+            cardNumber: document.getElementById('cardNumber').value,
+            cardExpiry: document.getElementById('cardExpiry').value,
+            cardCvv: document.getElementById('cardCvv').value,
+            holderName: document.getElementById('holderName').value,
+            // Adicione os outros dados necessários aqui
+        };
+    
+        // Exemplo de como enviar os dados para a sua view Django que irá processar o pagamento
+        fetch('/processar_pagamento/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken  // Garanta que csrftoken esteja definido
+            },
+            body: JSON.stringify(cardData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data); // Trate a resposta da sua aplicação Django aqui
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+    </script>
+    
 {%endblock%}

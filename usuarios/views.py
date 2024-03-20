@@ -84,7 +84,8 @@ def registerCliente(request):
 def perfil_familia(request):
     return render(request, 'core/perfilFamilia.html')
 
-
+def tipo_perfil(request):
+    return render(request, 'core/tipoPerfil.html')
 def criar_subperfil(request):
     if request.method == 'POST':
         form = SubperfilForm(request.POST, request.FILES)
