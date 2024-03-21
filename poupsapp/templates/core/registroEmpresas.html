@@ -80,27 +80,7 @@
         </span>
     </div>
 
-      <div id="step1" class="step">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="nomeLoja" placeholder="Nome da Loja">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
 
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="text" name="username" placeholder="CNPJ">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
-                    <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
-                    <!-- Botão para ir para o Passo 2 -->
-                    <button type="button" onclick="showStep(2)">Próximo</button>
-
-                </div>
 
     <!-- Campo de upload de imagem com ícone antes do texto 
     <div class="wrap-input100 validate-input" data-validate="Image is required">
@@ -122,8 +102,33 @@
 
 </div>
 
+
+ <!-- Passo 3: Informações Básicas -->
+ <div id="step3" class="step" style="display:none;">
+    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
+        <input class="input100" type="text" name="telefone" placeholder="Telefone">
+        <span class="focus-input100"></span>
+        <span class="symbol-input100">
+            <i class="fa fa-phone" aria-hidden="true"></i>
+        </span>
+    </div>
+
+    <div class="wrap-input100 validate-input" data-validate = "CEP is required">
+        <input class="input100" type="text" name="cep" placeholder="CEP">
+        <span class="focus-input100"></span>
+        <span class="symbol-input100">
+            <i>&#xf124;</i>
+        </span>
+    </div>
+    <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
+    <!-- Botão para ir para o Passo 2 -->
+    <div class="d-flex align-items-center" style="gap:1rem;">
+        <button type="button" onclick="showStep(2)">Anterior</button>
+        <button type="button" onclick="showStep(4)">Próximo</button>
+        </div>
+</div>
             <!-- Passo 2: Detalhes Adicionais -->
-<div id="step3" class="step" style="display:none;">
+<div id="step4" class="step" style="display:none;">
 
 
     <!-- Campo de upload de imagem com ícone antes do texto 
@@ -169,8 +174,8 @@
             
                 </div>
                 <div class="d-flex align-items-center" style="gap:1rem;">
-                    <button type="button" onclick="showStep(2)">Anterior</button>
-                    <button type="button" onclick="showStep(4)">Próximo</button>
+                    <button type="button" onclick="showStep(3)">Anterior</button>
+                    <button type="button" onclick="showStep(5)">Próximo</button>
                 </div>
             </div>
     <!-- Conteúdo do Passo 2 (Ex: Endereço, Telefone) -->
@@ -178,9 +183,9 @@
 </div>
 
                  <!-- Passo 3: Informações Básicas -->
-                 <div id="step4" class="step" style="display:none;">
+                 <div id="step5" class="step" style="display:none;">
                     <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="email-pagbank" placeholder="Email PAGBANK">
+						<input class="input100" type="text" name="email_pagseguro" placeholder="Email PAGBANK">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-phone" aria-hidden="true"></i>
@@ -188,7 +193,7 @@
 					</div>
 
 					<div class="wrap-input100 validate-input" data-validate = "CEP is required">
-						<input class="input100" type="text" name="token-pagbank" placeholder="Token PAGBANK">
+						<input class="input100" type="text" name="token_pagseguro" placeholder="Token PAGBANK">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
                             <i>&#xf124;</i>
@@ -197,13 +202,13 @@
                     <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
                     <!-- Botão para ir para o Passo 2 -->
                     <div class="d-flex align-items-center" style="gap:1rem;">
-                        <button type="button" onclick="showStep(3)">Anterior</button>
-                        <button type="button" onclick="showStep(5)">Próximo</button>
+                        <button type="button" onclick="showStep(4)">Anterior</button>
+                        <button type="button" onclick="showStep(6)">Próximo</button>
                         </div>
                 </div>
                 
                 <!-- Passo 4: Confirmação -->
-                <div id="step5" class="step" style="display:none;">
+                <div id="step6" class="step" style="display:none;">
                     <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
 						<input class="input100" type="password" name="password1" placeholder="Senha">
 						<span class="focus-input100"></span>
@@ -220,11 +225,13 @@
 						</span>
 					</div>
                     <div class="d-flex align-items-center" style="gap:1rem;">
-                    <button type="button" onclick="showStep(4)">Anterior</button>
+                    <button type="button" onclick="showStep(5)">Anterior</button>
                     <button type="submit">Enviar</button>
+
                     </div>
                 
                 </div>
+
             </form>
 
          

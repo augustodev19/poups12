@@ -25,9 +25,9 @@
 -->
 
 <div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
-
+<!--
 <form id="paymentForm">
-    {%csrf_token%}
+    {%csrf_token %}
     <div class="form-group">
         <label for="cardNumber">Número do Cartão</label>
         <input type="text" id="cardNumber" class="form-control" placeholder="Número do cartão">
@@ -44,29 +44,12 @@
         <label for="holderName">Nome (como no cartão)</label>
         <input type="text" id="holderName" class="form-control" placeholder="Nome do Titular">
     </div>
-    <!-- Incluir outros campos necessários como CPF, data de nascimento, etc. -->
+    <!-- Incluir outros campos necessários como CPF, data de nascimento, etc.
     <button type="button" onclick="processPayment()">Finalizar Pagamento</button>
 </form>
 </div>
 
 <script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    const csrftoken = getCookie('csrftoken');
     function processPayment() {
         var cardData = {
             cardNumber: document.getElementById('cardNumber').value,
@@ -94,5 +77,17 @@
         });
     }
     </script>
-    
+-->
+
+    <h2>Carrinho de Compras</h2>
+    <!-- Lista os itens do carrinho aqui -->
+    <div>
+        <h3>Total: R$ {{ total_carrinho }}</h3>
+    </div>
+    <form action="{% url 'criar_checkout_com_split' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Finalizar Compra</button>
+    </form>
+</div>
+
 {%endblock%}

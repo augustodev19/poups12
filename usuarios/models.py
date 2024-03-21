@@ -148,7 +148,10 @@ class Loja(CustomUser):
     valor_frete = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default="0")
     frete_gratis = models.BooleanField(default=False)
     vale_refeicao = models.ManyToManyField(ValeRefeicao, related_name='vale_refeicao', blank=True)
-    tempo_entrega = models.IntegerField(blank=True, null=True)  # campo adicionado
+    tempo_entrega = models.IntegerField(blank=True, null=True)
+    token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
+    email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
+      # campo adicionado
     def __str__(self):
         return self.nomeLoja
 

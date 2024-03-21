@@ -461,70 +461,113 @@ from decimal import Decimal
 from django.shortcuts import redirect
 from django.http import HttpResponse
 
-def processar_pagamento(request):
+logger = logging.getLogger(__name__)
+def criar_pagamento_com_split(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
+
+    if not carrinho['itens']:
+        return HttpResponse("Carrinho vazio.", status=400)
+
     total = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
 
-    # Supondo que todos os itens pertençam à mesma loja, pegue a loja do primeiro item
-    primeiro_item = next(iter(carrinho['itens'].values()))
-    produto_id = primeiro_item.get('produto_id')
+    primeiro_produto_id = next(iter(carrinho['itens']))
+    primeiro_produto = get_object_or_404(Produto, id=primeiro_produto_id)
+    loja = primeiro_produto.categoria.loja
 
-    if produto_id is None:
-        # Trate o caso em que produto_id não está disponível
-        return HttpResponse("Produto ID não encontrado no carrinho.", status=400)
-    produto = get_object_or_404(Produto, id=produto_id)
-    loja = produto.categoria.loja
-
-    token_lojista = loja.token_pagseguro
-    email_lojista_pagseguro = loja.email_pagseguro
-
-    # Substitua pelos valores reais
-    token_plataforma = "39FD640937A14E0A91310DEDE47AFF72"
-    email_plataforma_pagseguro = "augusto.webdeveloping@gmail.com"
-    percentual_plataforma = 0.1  # Por exemplo, 10% para a plataforma
-
-    dados_pagamento = {
-        "reference": "Referencia_da_Compra",
-        "items": [
-            {
-                "id": str(produto_id),
-                "description": item['nome'],
-                "quantity": item['quantidade'],
-                "amount": float(item['preco'])
-            } for produto_id, item in carrinho['itens'].items()
-        ],
-        "split": [
-            {
-                "recipient": "EMAIL_DO_LOJISTA_NO_PAGSEGURO",
-                "amount": {
-                    "percent": (1 - percentual_plataforma) * 100  # Calcula a porcentagem para o lojista
-                },
-                # Opcional: "token": "TOKEN_DO_LOJISTA" se necessário
-            },
-            {
-                "recipient": email_plataforma_pagseguro,
-                "amount": {
-                    "percent": percentual_plataforma * 100  # Calcula a porcentagem para a plataforma
-                },
-                "token": token_plataforma
-            }
-        ]
+    dados_compra = {
+        "email": "augusto.webdeveloping@gmail.com",
+        "token": "39FD640937A14E0A91310DEDE47AFF72",
+        "currency": "BRL",
+        "paymentMode": "default",
+        "paymentMethod": "creditCard",
+        "receiverEmail": loja.email_pagseguro,
+        "notificationURL": "https://seusite.com/notificacoes",
+        "reference": "ReferenciaDaCompra123",
+        # Adicione mais campos conforme necessário
     }
 
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {token_plataforma}'  # Use o token de segurança da plataforma
-    }
+    # Itens do carrinho e demais informações devem ser adicionados aos dados de compra
+    # Convertendo os dados para x-www-form-urlencoded
+    dados_compra_encoded = "&".join(f"{key}={value}" for key, value in dados_compra.items())
 
-    # Substitua URL pela endpoint correta de transações do PagSeguro
-    response = requests.post('https://api.pagseguro.com/transactions', json=dados_pagamento, headers=headers)
+    headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
+    response = requests.post("https://ws.sandbox.pagseguro.uol.com.br/v2/checkout", data=dados_compra_encoded, headers=headers)
 
     if response.status_code == 200:
-        preference = response.json()
-        # Substitua pela URL de redirecionamento adequada
-        return redirect(preference["paymentLink"])
+        # A resposta do PagSeguro é XML, então você precisa extrair a URL de redirecionamento a partir do XML
+        # Exemplo: use response.text ou uma biblioteca de parsing XML para encontrar a URL
+        # redirect_url = extract_redirect_url_from_response(response.text)
+        return redirect(redirect_url)
     else:
-        # Tratar erro de pagamento aqui
-        return HttpResponse("Erro ao processar pagamento", status=500)
+        print(response.text)
+        return HttpResponse("Erro ao processar o pagamento.", status=response.status_code)
 
+def log_response(response):
+    """Log detalhado da resposta da API."""
+    logger.error(f"Status Code: {response.status_code}")
+    logger.error(f"Headers: {response.headers}")
+    try:
+        logger.error(f"Body: {response.json()}")
+    except ValueError:
+        logger.error(f"Raw Body: {response.text}")
+
+def processar_pagamento(request):
+    try:
+        carrinho = request.session.get('carrinho', {'itens': {}})
+        total = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
+
+        # Este bloco precisa ser ajustado conforme sua lógica de carrinho e modelos
+        primeiro_item = next(iter(carrinho['itens'].values()), None)
+        if not primeiro_item:
+            return HttpResponse("Carrinho vazio.", status=400)
+
+        produto_id = list(carrinho['itens'].keys())[0]  # Ajuste conforme a estrutura do seu carrinho
+        produto = get_object_or_404(Produto, pk=produto_id)
+        loja = produto.categoria.loja
+
+        # Aqui começa a estrutura dos dados de pagamento
+        dados_pagamento = {
+            "reference": "Referencia_da_Compra",
+            "items": [
+                {
+                    "id": str(item_id),
+                    "description": item['nome'],
+                    "quantity": item['quantidade'],
+                    "amount": float(item['preco'])
+                } for item_id, item in carrinho['itens'].items()
+            ],
+            "split": [
+                {
+                    "recipient": loja.email_pagseguro,
+                    "amount": {
+                        "percent": (1 - 0.1) * 100  # Ajuste a porcentagem conforme necessário
+                    },
+                    "token": loja.token_pagseguro
+                },
+                {
+                    "recipient": "v02512273638540991803@sandbox.pagseguro.com.br",
+                    "amount": {
+                        "percent": 10  # A porcentagem que a plataforma recebe
+                    },
+                    "token": "39FD640937A14E0A91310DEDE47AFF72"  # Seu token de segurança da plataforma
+                }
+            ]
+        }
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer 39FD640937A14E0A91310DEDE47AFF72'  # Substitua pelo seu token de acesso
+        }
+
+        response = requests.post('https://api.pagseguro.com/transactions', json=dados_pagamento, headers=headers)
+
+        if response.status_code == 200:
+            preference = response.json()
+            return redirect(preference["paymentLink"])
+        else:
+            log_response(response)
+            return HttpResponse("Erro ao processar pagamento", status=response.status_code)
+    except Exception as e:
+        logger.error("Erro ao processar pagamento", exc_info=True)
+        return HttpResponse("Erro interno ao processar pagamento", status=500)
 

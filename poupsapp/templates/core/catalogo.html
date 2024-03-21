@@ -183,7 +183,7 @@
           <label for="imageUpload">
             <div class="upload-area" id="uploadArea">
               <!-- Você pode deixar o ícone e o texto ou removê-los, a imagem selecionada irá substituí-los -->
-              <img style="height:.8rem;" src="{%static 'img/restaurant.png' %}" alt="Upload Icon" style="margin-bottom: 10px;" />
+              <img style="height:auto !important; max-width:2rem !important;" src="{%static 'img/restaurant.png' %}" alt="Upload Icon" style="margin-bottom: 10px;" />
               <p>Escolher imagem</p>
             </div>
           </label>
@@ -217,7 +217,7 @@
   <!-- Formulário de Produto -->
   <div id="editarFormContainer"  style="display:none; position:fixed; width:100%; height:100%; background:rgb(0 0 0 / 45%); z-index:999; top:0; right:0; ">
     <div class="p-4 d-flex flex-column align-items-start" style="width:50%; height:100%; background:#fff; position:absolute; right:0; overflow-y:auto;">
-      <h3 class="card-title fw-semibold mb-4" style="font-size:1.4rem;">Criar produto para <span class="categoriaNome1"></span></h3>
+      <h3 class="card-title fw-semibold mb-4" style="font-size:1.4rem;">Editando <span id="Editar_id_nome_produto" > </span> </h3>
   
       <button class="fechar-produto" style="position:absolute; top:10px; right:10px;">x</button>
   
@@ -240,18 +240,18 @@
         <div class="form-group mb-3">
   
         <label for="Editar_id_nome_produto">Nome do Produto:</label>
-        <input type="text" class="form-control" id="Editar_id_nome_produto" name="nome" >
+        <input type="text" class="form-control" id="input-nome" name="nome" >
         </div>
         <div class="form-group mb-3">
   
           <label for="id_preco_produto">Preço:</label>
-          <input type="number" class="form-control" id="id_preco_produto" name="preco" >
+          <input type="number" class="form-control" id="input-preco" name="preco" >
           </div>
   
         <div class="form-group mb-3">
   
           <label for="id_preco_produto">Descrição:</label>
-          <textarea type="number" class="form-control" id="id_preco_produto" name="descricao">
+          <textarea type="number" class="form-control" id="input-descricao" name="descricao">
           </textarea>
           </div>
   
@@ -267,7 +267,7 @@
             <label for="imageUpload">
               <div class="upload-area" id="uploadArea">
                 <!-- Você pode deixar o ícone e o texto ou removê-los, a imagem selecionada irá substituí-los -->
-                <img src="icon-de-upload.png" alt="Upload Icon" style="margin-bottom: 10px;" />
+                <img style="height:auto !important; max-width:2rem !important;" src="{%static 'img/restaurant.png' %}" alt="Upload Icon" style="margin-bottom: 10px;" />
                 <p>Escolher imagem</p>
               </div>
             </label>
@@ -442,8 +442,12 @@ function removeOpcao(index) {
     fetch(`/buscar_produto/${produtoId}/`)
         .then(response => response.json())
         .then(dados => {
-            document.getElementById('Editar_produtoId').value = dados.id; // Define o produto_id
-            document.getElementById('Editar_id_nome_produto').value = dados.nome;
+            document.getElementById('Editar_id_nome_produto').textContent = dados.nome;
+            document.getElementById('Editar_produtoId').value = dados.id;
+            document.getElementById('input-nome').value = dados.nome;
+            document.getElementById('input-preco').value = dados.preco;
+            document.getElementById('input-descricao').value = dados.descricao;
+
             // Supondo que categoriaId e categoriaNome sejam recuperados de dados
             document.getElementById('editarFormContainer').style.display = 'block';
             // Supondo que você tenha um elemento para mostrar o nome da categoria

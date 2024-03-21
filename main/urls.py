@@ -19,6 +19,7 @@ urlpatterns = [
     path('remover_do_carrinho/<int:produto_id>/', remover_do_carrinho, name='remover_do_carrinho'),
     path('checkout/', checkout, name="checkout"),
     path('processar_pagamento/', processar_pagamento, name='processar_pagamento'),
+    path('criar_pagamento_com_split', criar_pagamento_com_split, name='criar_checkout_com_split')
 
 
 

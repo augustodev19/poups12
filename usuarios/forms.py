@@ -27,13 +27,13 @@ class LojaRegistrationForm(UserCreationForm):
 
     class Meta:
         model = Loja
-        fields = ['email', 'password1', 'password2', 'cep', 'nome', 'username', 'telefone', 'categorias', 'foto', 'nomeLoja']
+        fields = ['nomeLoja', 'username', 'foto', 'categorias', 'endereco', 'valor_frete', 'tempo_entrega', 'email_pagseguro', 'email', 'token_pagseguro', 'telefone', 'nome']
 
 
 class LojaForm(ModelForm):
     class Meta:
         model = Loja
-        fields = ['nomeLoja', 'foto', 'categorias', 'endereco', 'valor_frete', 'tempo_entrega']
+        fields = ['nomeLoja', 'username', 'foto', 'categorias', 'endereco', 'valor_frete', 'tempo_entrega', 'email_pagseguro', 'email', 'token_pagseguro', 'telefone', 'nome']
 
 
 class EditarClienteForm(ModelForm):

@@ -186,13 +186,14 @@ def registerLoja(request):
            
             user = Loja.objects.create_user(
                 nomeLoja = form.cleaned_data['nomeLoja'],
-                nome = form.cleaned_data['nome'],
+                nomeDono = form.cleaned_data['nomeDono'],
                 foto = form.cleaned_data['foto'],
                 username = form.cleaned_data['username'],
                 telefone = form.cleaned_data['telefone'],
                 email=form.cleaned_data['email'],
                 password=form.cleaned_data['password1'],
-                
+                email_pagseguro = form.cleaned_data['email_pagseguro'],
+                token_pagseguro = form.cleaned_data['token_pagseguro'],
 
             
                 
