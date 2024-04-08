@@ -483,6 +483,7 @@ def pagamento_pendente(request):
     return HttpResponse("Seu pagamento está pendente de confirmação. Aguarde a confirmação.")
 
 from urllib.parse import urljoin
+from django.http import JsonResponse, HttpResponseRedirect
 
 @require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
@@ -501,13 +502,11 @@ def criar_pagamento_checkout(request):
         "unit_price": float(item['preco'])
     } for item_id, item in carrinho['itens'].items()]
 
-    # Construindo as URLs manualmente
     success_url = request.build_absolute_uri('/pagamento/sucesso/')
     failure_url = request.build_absolute_uri('/pagamento/falha/')
     pending_url = request.build_absolute_uri('/pagamento/pendente/')
     notification_url = request.build_absolute_uri('/pagamento/notificacao/')
 
-    # Montando o dicionário preference_data
     preference_data = {
         "items": items,
         "back_urls": {
@@ -523,7 +522,10 @@ def criar_pagamento_checkout(request):
 
     if preference_response["status"] == 201:
         preference_id = preference_response["response"]["id"]
-        return JsonResponse({"preferenceId": preference_id})
+        # Construa a URL de pagamento baseando-se no preference_id
+        pagamento_url = f"https://www.mercadopago.com.br/checkout/v1/redirect?pref_id={preference_id}"
+        # Redireciona o usuário para a URL de pagamento
+        return HttpResponseRedirect(pagamento_url)
     else:
         return JsonResponse({   
             "erro": "Não foi possível criar a preferência de pagamento.",
