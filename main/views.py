@@ -5,6 +5,10 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from .models import *
+import mercadopago
+
+import xml.etree.ElementTree as ET
+
 from django.contrib import messages
 
 from usuarios.models import *
@@ -13,13 +17,16 @@ from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
+import urllib.parse
 
+from django.http import HttpResponse, JsonResponse
 
 from shapely.geometry import Point
 from shapely.ops import nearest_points
 from django.contrib.auth.decorators import login_required
 from math import radians, cos, sin, asin, sqrt
-
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # Create your views here.
 def home_view(request):
@@ -394,50 +401,38 @@ def adicionar_ao_carrinho(request, produto_id):
         carrinho['itens'][item_key]['quantidade'] += 1
     else:
         carrinho['itens'][item_key] = {
-            'produto_id': produto_id,  # Confirme que esta linha está presente
+            'produto_id': produto_id,
             'quantidade': 1,
             'preco': str(produto.preco),
             'nome': produto.nome
         }
+
     request.session.modified = True
-    context = {
+    return JsonResponse({
         'carrinho': carrinho,
-        'sucesso':True,
-        'mensagem': 'Adicionado ao Carrinho'}
-    return JsonResponse(context)
-
-    # Salva o carrinho atualizado na sessão
-  
-
+        'sucesso': True,
+        'mensagem': 'Adicionado ao Carrinho'
+    })
 
 def ver_carrinho(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     total_geral_carrinho = Decimal('0.00')
 
-    # Atualize a estrutura do carrinho para incluir a URL da imagem
     for produto_id, produto_info in carrinho.get('itens', {}).items():
-        # Carregue o produto para obter a URL da imagem
         produto = get_object_or_404(Produto, id=produto_id)
         produto_info['imagem_url'] = produto.foto.url if produto.foto else None
 
-        # Certifique-se de que o preço é um Decimal
         preco = Decimal(produto_info['preco'])
         quantidade = int(produto_info['quantidade'])
-
-        # Calcule o total para cada item e adicione ao total geral
         total_geral_carrinho += preco * quantidade
 
-    context = {
+    return render(request, 'core/carrinho.html', {
         'carrinho': carrinho,
-        'total_geral_carrinho': total_geral_carrinho,
-    }
-    return render(request, 'core/carrinho.html', context)
-
+        'total_geral_carrinho': total_geral_carrinho
+    })
 
 def remover_do_carrinho(request, produto_id):
     carrinho = request.session.get('carrinho', {'itens': {}})
-
-    # Remove o item do carrinho
     if str(produto_id) in carrinho['itens']:
         del carrinho['itens'][str(produto_id)]
         request.session.modified = True
@@ -445,63 +440,14 @@ def remover_do_carrinho(request, produto_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Item não encontrado no carrinho.'})
 
-
 def checkout(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     total_geral_carrinho = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
-
-    context = {
+    return render(request, 'core/checkout.html', {
         'carrinho': carrinho,
         'total_geral': total_geral_carrinho
-    }
-    return render(request, 'core/checkout.html', context)
-
-
-from decimal import Decimal
-from django.shortcuts import redirect
-from django.http import HttpResponse
-
-logger = logging.getLogger(__name__)
-def criar_pagamento_com_split(request):
-    carrinho = request.session.get('carrinho', {'itens': {}})
-
-    if not carrinho['itens']:
-        return HttpResponse("Carrinho vazio.", status=400)
-
-    total = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
-
-    primeiro_produto_id = next(iter(carrinho['itens']))
-    primeiro_produto = get_object_or_404(Produto, id=primeiro_produto_id)
-    loja = primeiro_produto.categoria.loja
-
-    dados_compra = {
-        "email": "augusto.webdeveloping@gmail.com",
-        "token": "39FD640937A14E0A91310DEDE47AFF72",
-        "currency": "BRL",
-        "paymentMode": "default",
-        "paymentMethod": "creditCard",
-        "receiverEmail": loja.email_pagseguro,
-        "notificationURL": "https://seusite.com/notificacoes",
-        "reference": "ReferenciaDaCompra123",
-        # Adicione mais campos conforme necessário
-    }
-
-    # Itens do carrinho e demais informações devem ser adicionados aos dados de compra
-    # Convertendo os dados para x-www-form-urlencoded
-    dados_compra_encoded = "&".join(f"{key}={value}" for key, value in dados_compra.items())
-
-    headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
-    response = requests.post("https://ws.sandbox.pagseguro.uol.com.br/v2/checkout", data=dados_compra_encoded, headers=headers)
-
-    if response.status_code == 200:
-        # A resposta do PagSeguro é XML, então você precisa extrair a URL de redirecionamento a partir do XML
-        # Exemplo: use response.text ou uma biblioteca de parsing XML para encontrar a URL
-        # redirect_url = extract_redirect_url_from_response(response.text)
-        return redirect(redirect_url)
-    else:
-        print(response.text)
-        return HttpResponse("Erro ao processar o pagamento.", status=response.status_code)
-
+    })
+from urllib.parse import urlencode
 def log_response(response):
     """Log detalhado da resposta da API."""
     logger.error(f"Status Code: {response.status_code}")
@@ -509,8 +455,80 @@ def log_response(response):
     try:
         logger.error(f"Body: {response.json()}")
     except ValueError:
+        # Para respostas que não são JSON, logue o corpo da resposta como está
         logger.error(f"Raw Body: {response.text}")
+# Configure o logger
+logger = logging.getLogger(__name__)
+# Configure o logger para registrar informações sobre a requisição
+logger = logging.getLogger(__name__)
 
+
+@csrf_exempt
+def pagamento_notificacao(request):
+    # Lógica para lidar com a notificação de pagamento do Mercado Pago
+    # Aqui você pode atualizar o status do pedido no seu banco de dados, enviar e-mails de confirmação, etc.
+    # Certifique-se de validar a autenticidade da notificação para evitar fraudes.
+    return HttpResponse(status=200)
+
+def pagamento_sucesso(request):
+    # View para lidar com o redirecionamento de sucesso do pagamento
+    return HttpResponse("Pagamento bem-sucedido! Obrigado por sua compra.")
+
+def pagamento_falha(request):
+    # View para lidar com o redirecionamento de falha do pagamento
+    return HttpResponse("O pagamento falhou. Por favor, tente novamente.")
+
+def pagamento_pendente(request):
+    # View para lidar com o redirecionamento de pagamento pendente
+    return HttpResponse("Seu pagamento está pendente de confirmação. Aguarde a confirmação.")
+
+from urllib.parse import urljoin
+
+@require_http_methods(["POST"])
+def criar_pagamento_checkout(request):
+    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'  # Substitua pelo seu access token real
+
+    sdk = mercadopago.SDK(access_token)
+
+    carrinho = request.session.get('carrinho', {'itens': {}})
+    
+    if not carrinho['itens']:
+        return JsonResponse({"erro": "Carrinho vazio."}, status=400)
+    
+    items = [{
+        "title": item['nome'],
+        "quantity": int(item['quantidade']),
+        "unit_price": float(item['preco'])
+    } for item_id, item in carrinho['itens'].items()]
+
+    # Construindo as URLs manualmente
+    success_url = request.build_absolute_uri('/pagamento/sucesso/')
+    failure_url = request.build_absolute_uri('/pagamento/falha/')
+    pending_url = request.build_absolute_uri('/pagamento/pendente/')
+    notification_url = request.build_absolute_uri('/pagamento/notificacao/')
+
+    # Montando o dicionário preference_data
+    preference_data = {
+        "items": items,
+        "back_urls": {
+            "success": success_url,
+            "failure": failure_url,
+            "pending": pending_url
+        },
+        "auto_return": "all",
+        "notification_url": notification_url
+    }
+    
+    preference_response = sdk.preference().create(preference_data)
+
+    if preference_response["status"] == 201:
+        preference_id = preference_response["response"]["id"]
+        return JsonResponse({"preferenceId": preference_id})
+    else:
+        return JsonResponse({   
+            "erro": "Não foi possível criar a preferência de pagamento.",
+            "detalhes": preference_response["response"]
+        }, status=preference_response["status"])
 def processar_pagamento(request):
     try:
         carrinho = request.session.get('carrinho', {'itens': {}})
@@ -554,12 +572,10 @@ def processar_pagamento(request):
             ]
         }
 
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer 39FD640937A14E0A91310DEDE47AFF72'  # Substitua pelo seu token de acesso
-        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}
 
-        response = requests.post('https://api.pagseguro.com/transactions', json=dados_pagamento, headers=headers)
+
+        response = requests.post('https://poupecomprando.com.br/transactions', json=dados_pagamento, headers=headers)
 
         if response.status_code == 200:
             preference = response.json()

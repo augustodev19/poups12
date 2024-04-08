@@ -1,93 +1,15 @@
-{%extends 'core/base.html'%}
+{% extends 'core/base.html' %}
+{% block 'conteudo' %}
 
-{%load static%}
-{%block 'conteudo'%}
-<!-- 
-<div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
-{% for produto_id, produto_info in carrinho.itens.items %}
-    <div class="produto">
-        <h5>{{ produto_info.nome }}</h5>
-        <p>Quantidade: {{ produto_info.quantidade }}</p>
-        <p>Preço unitário: {{ produto_info.preco }}</p>
-    </div>
-{% endfor %}
-
-<h3>Total Geral: {{ total_geral }}</h3>
-
- Formulário de Checkout 
-<form action="{% url 'processar_pagamento' %}" method="POST">
-    {% csrf_token %}
-    Campos de informações do cliente, como endereço de entrega 
-
-    <button type="submit" class="btn btn-primary">Finalizar Compra</button>
-</form>
-</div>
--->
-
-<div class="container  d-flex flex-column" style="flex-grow:1; margin-top:15rem;">
-<!--
-<form id="paymentForm">
-    {%csrf_token %}
-    <div class="form-group">
-        <label for="cardNumber">Número do Cartão</label>
-        <input type="text" id="cardNumber" class="form-control" placeholder="Número do cartão">
-    </div>
-    <div class="form-group">
-        <label for="cardExpiry">Data de Vencimento</label>
-        <input type="text" id="cardExpiry" class="form-control" placeholder="MM/AA">
-    </div>
-    <div class="form-group">
-        <label for="cardCvv">CVV</label>
-        <input type="text" id="cardCvv" class="form-control" placeholder="CVV">
-    </div>
-    <div class="form-group">
-        <label for="holderName">Nome (como no cartão)</label>
-        <input type="text" id="holderName" class="form-control" placeholder="Nome do Titular">
-    </div>
-    <!-- Incluir outros campos necessários como CPF, data de nascimento, etc.
-    <button type="button" onclick="processPayment()">Finalizar Pagamento</button>
-</form>
-</div>
-
-<script>
-    function processPayment() {
-        var cardData = {
-            cardNumber: document.getElementById('cardNumber').value,
-            cardExpiry: document.getElementById('cardExpiry').value,
-            cardCvv: document.getElementById('cardCvv').value,
-            holderName: document.getElementById('holderName').value,
-            // Adicione os outros dados necessários aqui
-        };
-    
-        // Exemplo de como enviar os dados para a sua view Django que irá processar o pagamento
-        fetch('/processar_pagamento/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken  // Garanta que csrftoken esteja definido
-            },
-            body: JSON.stringify(cardData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data); // Trate a resposta da sua aplicação Django aqui
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-    }
-    </script>
--->
-
+<div id="carrinho" style="margin-top:15rem;">
     <h2>Carrinho de Compras</h2>
-    <!-- Lista os itens do carrinho aqui -->
-    <div>
-        <h3>Total: R$ {{ total_carrinho }}</h3>
-    </div>
-    <form action="{% url 'criar_checkout_com_split' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-success">Finalizar Compra</button>
-    </form>
+    <p>Total: R$ {{ total_carrinho }}</p>
 </div>
 
-{%endblock%}
+<!-- O formulário agora envia diretamente para o backend -->
+<form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %}">
+    {% csrf_token %}
+    <button type="submit" id="botao-pagamento">Pagar com Mercado Pago</button>
+</form>
+
+{% endblock %}

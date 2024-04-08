@@ -33,7 +33,7 @@ class LojaRegistrationForm(UserCreationForm):
 class LojaForm(ModelForm):
     class Meta:
         model = Loja
-        fields = ['nomeLoja', 'username', 'foto', 'categorias', 'endereco', 'valor_frete', 'tempo_entrega', 'email_pagseguro', 'email', 'token_pagseguro', 'telefone', 'nome']
+        fields = [ 'valor_frete', 'tempo_entrega']
 
 
 class EditarClienteForm(ModelForm):

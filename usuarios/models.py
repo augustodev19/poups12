@@ -170,6 +170,7 @@ class CategoriaProduto(models.Model):
     
 
 class Produto(models.Model):
+    pontos = models.IntegerField(blank=True, null=True)
     categoria = models.ForeignKey(CategoriaProduto, on_delete=models.CASCADE, blank=True, null=True)
     foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
     nome = models.CharField(max_length=100)

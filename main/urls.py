@@ -19,7 +19,12 @@ urlpatterns = [
     path('remover_do_carrinho/<int:produto_id>/', remover_do_carrinho, name='remover_do_carrinho'),
     path('checkout/', checkout, name="checkout"),
     path('processar_pagamento/', processar_pagamento, name='processar_pagamento'),
-    path('criar_pagamento_com_split', criar_pagamento_com_split, name='criar_checkout_com_split')
+    path('criar_pagamento_checkout/', criar_pagamento_checkout, name='criar_pagamento_checkout'),
+    path('pagamento/notificacao/', pagamento_notificacao, name='pagamento_notificacao'),
+    path('pagamento/sucesso/', pagamento_sucesso, name='pagamento_sucesso'),
+    path('pagamento/falha/', pagamento_falha, name='pagamento_falha'),
+    path('pagamento/pendente/', pagamento_pendente, name='pagamento_pendente'),
+
 
 
 
