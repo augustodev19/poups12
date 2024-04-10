@@ -120,8 +120,84 @@
                 {%endfor%}
             </div>
         </div>
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places&callback=initAutocomplete" async defer></script>
-
+        <script>
+            document.addEventListener('DOMContentLoaded', (event) => {
+              const modal = document.getElementById("locationModal");
+              const btn = document.getElementById("useLocation");
+              const abrirEndereco = document.querySelectorAll('.abrir-endereco');
+          
+              abrirEndereco.forEach((btn) => 
+              {
+                btn.addEventListener('click', function() {
+                  modal.style.display = 'flex';
+                
+                })
+                })
+                
+              
+          
+              //if (localStorage.getItem('locationPermission') !== 'granted') {
+              //   modal.style.display = "flex";
+              //}
+              function getAddressFromCoordinates(latitude, longitude, callback) {
+                var geocoder = new google.maps.Geocoder();
+                var latLng = new google.maps.LatLng(latitude, longitude);
+              
+                geocoder.geocode({ 'location': latLng }, function(results, status) {
+                  if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                    callback(results[0].formatted_address);
+                  } else {
+                    console.error('Geocoding failed: ' + status);
+                    callback('');
+                  }
+                });
+              }
+          
+              btn.onclick = function() {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                  localStorage.setItem('locationPermission', 'granted');
+              
+                  var latitude = position.coords.latitude;
+                  var longitude = position.coords.longitude;
+              
+                  getAddressFromCoordinates(latitude, longitude, function(address) {
+                    if (address) {
+                      console.log('Endereço obtido:', address);
+              
+                      fetch('/set_location/', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                          latitude: latitude,
+                          longitude: longitude,
+                          address: address  // Aqui você passa o endereço obtido
+                        })
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                      
+                            window.location.href = '/loja/'; // Redireciona para a URL padrão
+                        
+                      })
+                      .catch(error => {
+                        console.error('Erro ao enviar localização:', error);
+                      });
+                    } else {
+                      // Trate o caso onde o endereço não pôde ser obtido
+                      console.error('Endereço não encontrado para as coordenadas.');
+                    }
+                  });
+              
+                }, function(error) {
+                  console.error('Erro ao obter localização:', error);
+                  localStorage.setItem('locationPermission', 'denied');
+                });
+              };
+            });
+          </script>
 
         <!-- Tastimonial End -->
 

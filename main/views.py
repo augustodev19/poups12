@@ -115,7 +115,7 @@ def loja(request):
         adress = user_location.get('adress') if user_location else None
 
     # Inicializar todas_lojas
-    todas_lojas = Loja.objects.all()
+    todas_lojas = Loja.objects.filter(is_active=True)
 
     # Aplicar filtro de categoria se categoria_id for fornecido
     categoria_id = request.GET.get('categoria')
@@ -508,11 +508,10 @@ def pagamento_pendente(request):
 
 from urllib.parse import urljoin
 from django.http import JsonResponse, HttpResponseRedirect
-
+@login_required
 @require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
-    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'  # Substitua pelo seu access token real
-
+    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
     sdk = mercadopago.SDK(access_token)
 
     carrinho = request.session.get('carrinho', {'itens': {}})
@@ -520,12 +519,18 @@ def criar_pagamento_checkout(request):
     if not carrinho['itens']:
         return JsonResponse({"erro": "Carrinho vazio."}, status=400)
     
+    # Supondo que você esteja armazenando IDs de produtos no carrinho
+    primeiro_produto_id = next(iter(carrinho['itens']))
+    primeiro_produto = Produto.objects.get(id=primeiro_produto_id)
+    loja = primeiro_produto.categoria.loja
+    cliente = request.user.cliente  # Assumindo que você tenha um relacionamento 'cliente' em seu modelo de User
+
     items = [{
         "title": item['nome'],
         "quantity": int(item['quantidade']),
         "unit_price": float(item['preco'])
     } for item_id, item in carrinho['itens'].items()]
-    
+
     success_url = request.build_absolute_uri('/pagamento/sucesso/')
     failure_url = request.build_absolute_uri('/pagamento/falha/')
     pending_url = request.build_absolute_uri('/pagamento/pendente/')
@@ -539,19 +544,22 @@ def criar_pagamento_checkout(request):
             "pending": pending_url
         },
         "auto_return": "all",
-        "notification_url": notification_url
+        "notification_url": notification_url,
+        "metadata": {
+            "loja_id": loja.id if loja else None,
+            "cliente_id": cliente.id if cliente else None,
+            # Adicione aqui outras informações conforme necessário
+        }
     }
     
     preference_response = sdk.preference().create(preference_data)
 
     if preference_response["status"] == 201:
         preference_id = preference_response["response"]["id"]
-        # Construa a URL de pagamento baseando-se no preference_id
         pagamento_url = f"https://www.mercadopago.com.br/checkout/v1/redirect?pref_id={preference_id}"
-        # Redireciona o usuário para a URL de pagamento
         return HttpResponseRedirect(pagamento_url)
     else:
-        return JsonResponse({   
+        return JsonResponse({
             "erro": "Não foi possível criar a preferência de pagamento.",
             "detalhes": preference_response["response"]
         }, status=preference_response["status"])

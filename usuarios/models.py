@@ -153,9 +153,18 @@ class Loja(CustomUser):
     email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
     ever_saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
+    is_active = models.BooleanField(default=True)
       # campo adicionado
+    def delete(self, *args, **kwargs):
+        """
+        Sobrescreve o método delete para implementar soft delete.
+        Em vez de deletar a loja, marca-a como inativa.
+        """
+        self.is_active = False
+        self.save()
+
     def __str__(self):
-        return self.nomeLoja
+        return self.nome
 
 class CategoriaProduto(models.Model):
     foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
@@ -216,6 +225,24 @@ class Cliente(CustomUser):
     pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     plano_familia = models.BooleanField(default=False, verbose_name=_('Plano Família'))
 
+
+
+
+class Pedido(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, blank=True, null=True)
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE, blank=True, null=True)
+    categoria = models.ForeignKey(CategoriaProduto, on_delete=models.CASCADE, blank=True, null=True)
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    nome = models.CharField(max_length=100)
+    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    descricao = models.CharField(max_length=1000, blank=True, null=True)
+    pontos = models.IntegerField(default=0)
+
+    # outros campos do produto
+
+    def __str__(self):
+        return self.nome
+            # outros campos da loja
 
 class CarrinhoItem(models.Model):
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE)

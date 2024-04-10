@@ -120,7 +120,7 @@
 /*** Navbar Start ***/
 .navbar .navbar-nav .nav-link {
     padding: 10px 15px;
-    font-size: 1.1rem;
+    font-size: .9rem !important;
     font-weight: 600;
     transition: .5s;
     justify-content: start !important;
