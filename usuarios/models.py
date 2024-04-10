@@ -151,6 +151,8 @@ class Loja(CustomUser):
     tempo_entrega = models.IntegerField(blank=True, null=True)
     token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
+    saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
+    ever_saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
       # campo adicionado
     def __str__(self):
         return self.nomeLoja
@@ -176,6 +178,7 @@ class Produto(models.Model):
     nome = models.CharField(max_length=100)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
+    pontos = models.IntegerField(default=0)
 
     # outros campos do produto
 

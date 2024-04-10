@@ -2,6 +2,25 @@
 {%load static%}
 {%block 'conteudo'%}
 
+<div id="locationModal" class="modal1 {%if user.is_authenticated%}d-none{%endif%}">
+    <div class="modal-content1">
+      <div class="modal-header1">
+        
+        <h2 class=" text-center" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
+        <div class="mb-3 d-flex justify-content-center">
+          <img style="height:15rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
+          </div>
+      </div>
+      <div class="modal-body1">
+        <input class="w-100" id="autocomplete" placeholder="Digite seu endereço" type="text" />
+
+        <button class="w-100" style="background:#b11000; font-size:1.2rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
+        <p>Já tem um endereço salvo? <a href="{%url 'login' %}">Entre</a> ou <a href="{%url 'registerCliente' %}">cadastre-se</a></p>
+      </div>
+    </div>
+  </div>
+
+
         <!-- Hero Start -->
         <div class="container-fluid py-5 hero-header">
             <div class="container py-5">
@@ -101,8 +120,9 @@
                 {%endfor%}
             </div>
         </div>
-        
-      
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places&callback=initAutocomplete" async defer></script>
+
+
         <!-- Tastimonial End -->
 
 {%endblock%}

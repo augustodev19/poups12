@@ -356,8 +356,15 @@ def credito_sucesso(request):
 
 def perfil_loja(request, loja_id):
     loja = get_object_or_404(Loja, id=loja_id)
+    if request.user.cliente:
+        cliente = request.user.cliente
+    else:
+        cliente = None
+
+    
     context = {
-        'loja':loja,
+        'perfil_loja':loja,
+        'cliente':cliente
     }
 
     return render(request, 'core/perfil_loja.html', context)
@@ -440,11 +447,28 @@ def remover_do_carrinho(request, produto_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Item não encontrado no carrinho.'})
 
+
 def checkout(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
-    total_geral_carrinho = sum(Decimal(item['preco']) * item['quantidade'] for item in carrinho['itens'].values())
+    cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
+    endereco = cliente.endereco if cliente else None
+    total_geral_carrinho = Decimal('0.00')
+
+    # Aqui, vamos garantir que a imagem_url está sendo passada corretamente
+    itens_completos = []
+    for produto_id, item in carrinho.get('itens', {}).items():
+        produto = get_object_or_404(Produto, id=produto_id)
+        item['imagem_url'] = produto.foto.url if produto.foto else None
+        item['nome'] = produto.nome  # Já deve estar definido, mas só para garantir
+        preco = Decimal(item['preco'])
+        quantidade = item['quantidade']
+        total_geral_carrinho += preco * quantidade
+        itens_completos.append(item)  # Adiciona o item atualizado à lista
+
     return render(request, 'core/checkout.html', {
-        'carrinho': carrinho,
+        'itens': itens_completos,  # Passa os itens atualizados para o template
+        'cliente': cliente,
+        'endereco': endereco,
         'total_geral': total_geral_carrinho
     })
 from urllib.parse import urlencode
@@ -501,7 +525,7 @@ def criar_pagamento_checkout(request):
         "quantity": int(item['quantidade']),
         "unit_price": float(item['preco'])
     } for item_id, item in carrinho['itens'].items()]
-
+    
     success_url = request.build_absolute_uri('/pagamento/sucesso/')
     failure_url = request.build_absolute_uri('/pagamento/falha/')
     pending_url = request.build_absolute_uri('/pagamento/pendente/')

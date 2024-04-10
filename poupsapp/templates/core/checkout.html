@@ -1,15 +1,118 @@
 {% extends 'core/base.html' %}
 {% block 'conteudo' %}
 
-<div id="carrinho" style="margin-top:15rem;">
-    <h2>Carrinho de Compras</h2>
-    <p>Total: R$ {{ total_carrinho }}</p>
-</div>
 
-<!-- O formulário agora envia diretamente para o backend -->
+
+<div id="carrinho" class="container d-flex flex-column align-items-start" style="margin-top:10rem; flex-grow:1">
+    <p id="endereco-atual">{{endereco.bairro}}, {{endereco.rua}}, {{endereco.numero}}</p>
+    <button id="alterar-endereco">Pedir em outro endereço</button>
+    
+    <!-- Campo de Autocomplete, inicialmente escondido -->
+    <input class="w-100" id="endereco-autocomplete" placeholder="Digite seu endereço" type="text" style="display: none;"/>
+    
+    <!-- Campo para armazenar o endereço escolhido -->
+    <input type="hidden" name="endereco" id="endereco-form" />  
+    <input type="hidden" id="endereco-lng" name="longitude" />    <div class="itens-carrinho">
+        <h3>Itens no Carrinho</h3>
+        
+        <ul>    
+            {% for item in itens %}
+            <div class="item-carrinho mb-3">
+                <img src="{{ item.imagem_url }}" alt="{{ item.nome }}" style="width: 100px; height: auto;">
+                <p class="mb-2 mt-2">{{ item.nome }} - Quantidade: {{ item.quantidade }} - Preço: R$ {{ item.preco }}</p>
+                <!-- Botão de remover -->
+                <button class="btn btn-danger remover-item" data-produto-id="{{ item.produto_id }}">Remover</button>
+            </div>
+            {% endfor %}
+            
+        </ul>
+    </div>
+    <p>Endereço: {{endereco.rua}}, {{endereco.bairro}}, {{endereco.numero}} </p>
+
+
+    <p>Total: R$ {{ total_geral }}</p>
+    <!-- O formulário agora envia diretamente para o backend -->
 <form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %}">
     {% csrf_token %}
-    <button type="submit" id="botao-pagamento">Pagar com Mercado Pago</button>
+    <button style="color:#fff; !important" class="btn btn-primary" start type="submit" id="botao-pagamento">Finalizar Compra</button>
 </form>
+
+</div>
+<script>    
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.remover-item').forEach(function(botao) {
+        botao.addEventListener('click', function(e) {
+            e.preventDefault(); // Previne a ação padrão do botão
+            const produtoId = e.target.getAttribute('data-produto-id');
+            // Constrói a URL com o produto_id no caminho
+            const url = `/remover_do_carrinho/${produtoId}/`;
+
+            fetch(url, {
+                method: 'POST', // Muda para POST
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}', // Necessário para ações POST em Django
+                    'Content-Type': 'application/json', // Especifica o tipo de conteúdo da requisição
+                },
+                body: JSON.stringify({ produto_id: produtoId }) // Envia o produto_id no corpo da requisição
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Falha na comunicação com o servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Aqui, você pode optar por remover o item do DOM ou recarregar a página
+                    window.location.reload(); // Recarrega a página para refletir a remoção do item
+                } else {
+                    alert('Não foi possível remover o item: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao remover o item:', error);
+                alert('Erro ao remover o item.');
+            });
+        });
+    });
+});
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places&callback=initAutocomplete" async defer></script>
+
+<script>
+    function initAutocomplete() {
+        var input = document.getElementById('endereco-autocomplete');
+        var autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.addListener('place_changed', function() {
+            var place = autocomplete.getPlace();
+            if (!place.geometry) {
+                window.alert("Nenhum resultado disponível para: '" + place.name + "'");
+                return;
+            }
+    
+            // Atualiza o parágrafo do endereço e o campo do formulário com o novo endereço
+            document.getElementById('endereco-atual').textContent = `Endereço atual: ${place.formatted_address}`;
+            document.getElementById('endereco-form').value = place.formatted_address;
+    
+            // Opcionalmente, esconda o campo de autocomplete após a seleção
+            input.style.display = 'none';
+           
+        });
+    }
+    
+    document.addEventListener('click', function(event) {
+        var enderecoAutocomplete = document.getElementById('endereco-autocomplete');
+        var alterarEnderecoBtn = document.getElementById('alterar-endereco');
+    
+        // Verifica se o clique foi fora do campo de autocomplete e do botão de alterar endereço
+        if (!enderecoAutocomplete.contains(event.target) && !alterarEnderecoBtn.contains(event.target)) {
+            enderecoAutocomplete.style.display = 'none';
+        }
+    });
+    // Mostrar o campo de autocomplete quando "Pedir em outro endereço" for clicado
+    document.getElementById('alterar-endereco').addEventListener('click', function() {
+        document.querySelector('#endereco-autocomplete').style.display = 'block';
+    });
+</script>
 
 {% endblock %}

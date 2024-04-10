@@ -55,15 +55,17 @@
               {% for categoria in loja.categoriaproduto_set.all %}
               <h3>{{ categoria.nome }}</h3>
               {% for produto in categoria.produto_set.all %}
-                  <div class="categoria-item">
+                  <div class="categoria-item mb-4">
                       <span class="mb-3">{{ produto.nome }}</span>
                       <img style="height:3rem;" src="{{produto.foto.url}}">
                       <span class="mb-3">R$ {{produto.preco}}</span>
+                      <span class="mb-3"> Pontos: {{produto.pontos}}</span>
+
                       <button class="d-none btn btn-secondary" onclick="abrirFormularioOpcao({{ produto.id }})">+ Adicionar Opção</button>
 
                       <form action="{% url 'remover_produto' produto.id %}" method="post">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger mb-3">Remover Produto</button>
+                        <button type="submit" class="btn btn-danger mt-3 mb-3">Remover Produto</button>
                     </form>
                       <!-- Se o botão é para criar um novo produto, o texto e a função devem ser ajustados -->
                       <button class="btn btn-secondary" onclick="abrirFormularioEdicao({{ produto.id }})">Editar Produto</button>                  </div>
@@ -164,7 +166,13 @@
         <input type="number" class="form-control" id="id_preco_produto" name="preco" >
         </div>
 
-      <div class="form-group mb-3">
+        <div class="form-group mb-3">
+
+          <label for="id_pontos_produto">Pontos:</label>
+          <input type="number" class="form-control" id="id_pontos_produto" name="pontos" >
+          </div>
+
+      <div class="form-group">
 
         <label for="id_preco_produto">Descrição:</label>
         <textarea type="number" class="form-control" id="id_preco_produto" name="descricao">
@@ -196,7 +204,6 @@
       <div id="opcoesContainer"></div>
       <button type="button" id="addOpcaoBtn" class="btn btn-secondary">Adicionar Mais Opções</button>
 
-      <button type="submit" name="produto_submit" class="btn btn-primary">Salvar Produto</button>
           </div>
         </div>
       <div class="mt-3" id="div3" style="display:none;">
@@ -208,6 +215,8 @@
       
 
       </div>
+      <button  type="submit" name="produto_submit" class="mt-4 btn btn-primary">Salvar Produto</button>
+
   </form>
 </div>
 </div>
@@ -247,6 +256,11 @@
           <label for="id_preco_produto">Preço:</label>
           <input type="number" class="form-control" id="input-preco" name="preco" >
           </div>
+          <div class="form-group mb-3">
+  
+            <label for="id_preco_produto">Pontos:</label>
+            <input type="number" class="form-control" id="input-pontos" name="pontos" >
+            </div>
   
         <div class="form-group mb-3">
   

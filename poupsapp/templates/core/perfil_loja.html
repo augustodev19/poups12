@@ -10,7 +10,7 @@
       <a class="voltar-btn" style="color:#b11000;">
          <i style="color:#b11000; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
       </a>
-      <span style="color:#b11000; font-size:1.6rem;">{{loja.nomeLoja}}</span>
+      <span style="color:#b11000; font-size:1.6rem;">{{perfil_loja.nomeLoja}}</span>
    </div>
 </div>
     <!-- Script JavaScript -->
@@ -22,19 +22,19 @@
 <div class="fluid-container  d-flex justify-content-start" style="gap:4rem; ">
    <div class="capa-img-wrapper">
    
-   {%if loja.capa %}<img  class="capa-img" style="width:100%; height:15rem; object-fit:cover;"  src="{{loja.capa.url}}"> 
+   {%if perfil_loja.capa %}<img  class="capa-img" style="width:100%; height:15rem; object-fit:cover;"  src="{{perfil_loja.capa.url}}"> 
    {%else%}
    <img class="capa-img"  style="width:100%; height:15rem; object-fit:cover;" src="{%static 'img/tim-toomey-STqHLqMne3k-unsplash (1).jpg'%}"> 
    {%endif%}
    <div class="profile-pic">
-      <img src="{{loja.foto.url}}">
+      <img src="{{perfil_loja.foto.url}}">
    </div>
  
    </div>
 
 </div>
    <div class=" mt-4" style="padding: 0 20px">
-      <span class="fw-bold"    style="font-size:1.4rem; color:#333;">{{loja.nomeLoja}}</span>
+      <span class="fw-bold"    style="font-size:1.4rem; color:#333;">{{perfil_loja.nomeLoja}}</span>
    </div>
    <div class="container d-flex justify-content-between align-items-center">
 
@@ -51,7 +51,7 @@
 
 
 </div><div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem;">
-   {% for categoria in loja.categoriaproduto_set.all %}
+   {% for categoria in perfil_loja.categoriaproduto_set.all %}
    <div class="accordion-item">
      <h2 class="accordion-header" id="heading{{ categoria.id }}">
 
