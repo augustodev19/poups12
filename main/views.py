@@ -411,6 +411,7 @@ def adicionar_ao_carrinho(request, produto_id):
             'produto_id': produto_id,
             'quantidade': 1,
             'preco': str(produto.preco),
+            'pontos': str(produto.pontos),
             'nome': produto.nome
         }
 
@@ -424,6 +425,8 @@ def adicionar_ao_carrinho(request, produto_id):
 def ver_carrinho(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     total_geral_carrinho = Decimal('0.00')
+    total_pontos_carrinho = 0
+
 
     for produto_id, produto_info in carrinho.get('itens', {}).items():
         produto = get_object_or_404(Produto, id=produto_id)
@@ -431,7 +434,7 @@ def ver_carrinho(request):
 
         preco = Decimal(produto_info['preco'])
         quantidade = int(produto_info['quantidade'])
-        pontos = produto.pontos 
+        pontos = int(produto_info['pontos'])
 
         total_geral_carrinho += preco * quantidade
         total_pontos_carrinho += pontos * quantidade
