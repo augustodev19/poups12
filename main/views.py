@@ -588,7 +588,7 @@ def notificacao_pagamento(request):
         # O ID do pagamento é enviado pelo Mercado Pago na query string (por exemplo, ?id=123456789)
         pagamento_id = request.GET.get('id')
         
-        access_token = 'SEU_ACCESS_TOKEN'
+        access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
         sdk = mercadopago.SDK(access_token)
 
         # Consulta o pagamento usando o SDK do Mercado Pago
