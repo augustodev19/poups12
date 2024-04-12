@@ -24,6 +24,8 @@ admin.site.register(CategoriaProduto)
 admin.site.register(Produto)
 admin.site.register(Categoria)
 admin.site.register(Endereco)
+admin.site.register(Pedido)
+
 
 
 admin.site.register(Loja, LojaAdmin)

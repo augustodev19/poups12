@@ -237,6 +237,9 @@ class Pedido(models.Model):
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
     pontos = models.IntegerField(default=0)
+    data = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    localizao = models.CharField(blank=True, null=True, max_length=400)
+    confirmado = models.BooleanField(default=False)
 
     # outros campos do produto
 
