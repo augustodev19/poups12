@@ -2,10 +2,14 @@ from django.shortcuts import render, get_object_or_404
 from usuarios.models import *
 from decimal import Decimal
 from django.contrib import messages
+from django.db import transaction
+
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from .models import *
 import mercadopago
+from django.urls import reverse
+
 
 import xml.etree.ElementTree as ET
 
@@ -80,24 +84,25 @@ def haversine(lon1, lat1, lon2, lat2):
 @csrf_exempt
 def set_location(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        # Agora você está recebendo também o endereço formatado
-        address = data['address']
-        latitude = data['latitude']
-        longitude = data['longitude']
-        print(data)
-        # Salve essas informações na sessão do usuário
-        request.session['user_location'] = {
-            'address': address,
-            'latitude': latitude,
-            'longitude': longitude
-        }
+        try:
+            data = json.loads(request.body)
+            # Agora você está recebendo também o endereço formatado
+            address = data['address']
+            latitude = data['latitude']
+            longitude = data['longitude']
+            print(data)
+            # Salve essas informações na sessão do usuário
+            request.session['user_location'] = {
+                'address': address,
+                'latitude': latitude,
+                'longitude': longitude
+            }
         
-        # Pode querer retornar o endereço ou outras informações para confirmação
-        return JsonResponse({'status': 'success', 'address': address})
-        
+            return JsonResponse({'success': True, 'message': 'Localização definida com sucesso'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
     else:
-        return JsonResponse({'status': 'error'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
 def loja(request):
     # Buscar todas as categorias
     categorias = Categoria.objects.all()
@@ -412,7 +417,9 @@ def adicionar_ao_carrinho(request, produto_id):
             'quantidade': 1,
             'preco': str(produto.preco),
             'pontos': str(produto.pontos),
-            'nome': produto.nome
+            'nome': produto.nome,
+            'imagem_url': produto.foto.url if produto.foto else None  # Salvando a URL da imagem
+
         }
 
     request.session.modified = True
@@ -520,112 +527,104 @@ from django.http import JsonResponse, HttpResponseRedirect
 def criar_pagamento_checkout(request):
     access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
     sdk = mercadopago.SDK(access_token)
-
     carrinho = request.session.get('carrinho', {'itens': {}})
-    
+
     if not carrinho['itens']:
         return JsonResponse({"erro": "Carrinho vazio."}, status=400)
-    
-    # Supondo que você esteja armazenando IDs de produtos no carrinho
-    primeiro_produto_id = next(iter(carrinho['itens']))
-    primeiro_produto = Produto.objects.get(id=primeiro_produto_id)
-    loja = primeiro_produto.categoria.loja
-    cliente = request.user.cliente  # Assumindo que você tenha um relacionamento 'cliente' em seu modelo de User
-    endereco = request.POST.get('endereco')
-    items = [{
-        "title": item['nome'],
-        "quantity": int(item['quantidade']),
-        "unit_price": float(item['preco'])
-    } for item_id, item in carrinho['itens'].items()]
+
     total_geral_carrinho = 0
     total_pontos_carrinho = 0
+    items = []
     for item_id, item in carrinho['itens'].items():
         produto = Produto.objects.get(id=item_id)
         quantidade = int(item['quantidade'])
-        total_geral_carrinho += float(item['preco']) * quantidade
+        preco = float(item['preco'])
+        total_geral_carrinho += preco * quantidade
         total_pontos_carrinho += produto.pontos * quantidade
-    
-    success_url = request.build_absolute_uri('/pagamento/sucesso/')
-    failure_url = request.build_absolute_uri('/pagamento/falha/')
-    pending_url = request.build_absolute_uri('/pagamento/pendente/')
-    notification_url = request.build_absolute_uri('/pagamento/notificacao/')
+        items.append({
+            "title": produto.nome,
+            "quantity": quantidade,
+            "unit_price": preco
+        })
+
+    request.session.update({
+        'total_geral_carrinho': total_geral_carrinho,
+        'total_pontos_carrinho': total_pontos_carrinho,
+        'endereco': request.POST.get('endereco'),
+        'loja_id': produto.categoria.loja.id,
+        'cliente_id': request.user.cliente.id
+    })
 
     preference_data = {
         "items": items,
         "back_urls": {
-            "success": success_url,
-            "failure": failure_url,
-            "pending": pending_url
+            "success": request.build_absolute_uri(reverse('pagamento_sucesso')),
+            "failure": request.build_absolute_uri(reverse('pagamento_falha')),
+            "pending": request.build_absolute_uri(reverse('pagamento_pendente'))
         },
-        "auto_return": "all",
-        "notification_url": notification_url,
+        "auto_return": "approved",
         "metadata": {
-            "loja_id": loja.id if loja else None,
-            "cliente_id": cliente.id if cliente else None,
-            "localizacao": endereco,
+            "cliente_id": request.user.cliente.id if hasattr(request.user, 'cliente') else None,
             "total_geral_carrinho": total_geral_carrinho,
             "total_pontos_carrinho": total_pontos_carrinho
-            # Adicione aqui outras informações conforme necessário
         }
     }
-    
+
     preference_response = sdk.preference().create(preference_data)
+    if 'error' in preference_response:
+        return JsonResponse({"erro": "Erro ao processar pagamento"}, status=500)
 
-    if preference_response["status"] == 201:
-        preference_id = preference_response["response"]["id"]
-        pagamento_url = f"https://www.mercadopago.com.br/checkout/v1/redirect?pref_id={preference_id}"
-        return HttpResponseRedirect(pagamento_url)
-    else:
-        return JsonResponse({
-            "erro": "Não foi possível criar a preferência de pagamento.",
-            "detalhes": preference_response["response"]
-        }, status=preference_response["status"])
+    preference_id = preference_response['response']['id']
+    request.session['preference_id'] = preference_id
 
+    return redirect(preference_response['response']['init_point'])
+@csrf_exempt
+@require_http_methods(["POST"])
+def webhook_mercadopago(request):
+    try:
+        data = json.loads(request.body)
+        payment_id = data.get('data', {}).get('id')
 
-@csrf_exempt  # Desativa a proteção CSRF para este endpoint, já que o Mercado Pago não enviará um token CSRF.
-def notificacao_pagamento(request):
-    if request.method == 'POST':
-        # O ID do pagamento é enviado pelo Mercado Pago na query string (por exemplo, ?id=123456789)
-        pagamento_id = request.GET.get('id')
-        
-        access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
-        sdk = mercadopago.SDK(access_token)
+        if payment_id:
+            sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
+            payment_info = sdk.payment().get(payment_id)
+            payment_status = payment_info['response'].get('status')
 
-        # Consulta o pagamento usando o SDK do Mercado Pago
-        pagamento_info = sdk.payment().get(pagamento_id)
-        
-        # Verifica se a consulta foi bem-sucedida
-        if pagamento_info["status"] == 200:
-            pagamento_dados = pagamento_info["response"]
-            
-            # Aqui você pode verificar o status do pagamento
-            if pagamento_dados["status"] == "approved":
-                # Pagamento aprovado
-                # Recuperar os metadados enviados com a preferência de pagamento
-                metadados = pagamento_dados["metadata"]
-
-                # Exemplo de criação de um pedido baseado nos metadados
-                cliente_id = metadados.get("cliente_id")
-                total_pontos_carrinho = metadados.get("total_pontos_carrinho")
-                total_geral_carrinho = metadados.get("total_geral_carrinho")
-                
-                cliente = Cliente.objects.get(id=cliente_id)
-                pedido = Pedido.objects.create(
-                    cliente=cliente,
-                    total=total_geral_carrinho,
-                    pontos=total_pontos_carrinho,
-                    confirmado=False,
-                )
-                
-                # Adicione aqui mais lógica conforme necessário, por exemplo, para associar produtos ao pedido
-                
-                return JsonResponse({"status": "success", "message": "Pedido criado com sucesso."})
+            if payment_status == 'approved':
+                processar_pedido_aprovado(payment_info)
+                return HttpResponse('Webhook processed: Payment approved', status=200)
             else:
-                # Pagamento não aprovado
-                return JsonResponse({"status": "failed", "message": "Pagamento não aprovado."})
-        else:
-            return JsonResponse({"status": "error", "message": "Erro ao consultar o pagamento."})
-    else:
-        # Método não permitido
-        return JsonResponse({"error": "Método não permitido"}, status=405)
+                logger.info(f'Payment status: {payment_status}')
+                return HttpResponse(f'Webhook processed: Payment {payment_status}', status=200)
 
+    except Exception as e:
+        logger.error(f'Error processing webhook: {str(e)}')
+        return HttpResponse('Error processing webhook', status=500)
+
+@transaction.atomic
+def processar_pedido_aprovado(payment_info):
+    # Supondo que a resposta contém todas as informações necessárias para criar o pedido
+    response = payment_info['response']
+    cliente_id = response['metadata']['cliente_id']
+    itens_payment = response['additional_info']['items']
+
+    cliente = Cliente.objects.get(id=cliente_id)
+    pedido = Pedido.objects.create(
+        cliente=cliente,
+        total=response['transaction_amount'],
+        pontos=0,  # Calcule pontos se aplicável
+        confirmado=True,
+        localizacao=cliente.endereco  # Ajuste conforme seu modelo de dados
+    )
+
+    for item in itens_payment:
+        produto = Produto.objects.get(id=item['id'])
+        ItemPedido.objects.create(
+            pedido=pedido,
+            produto=produto,
+            quantidade=int(item['quantity']),
+            preco_unitario=float(item['unit_price']),
+            imagem_url=produto.imagem_url  # Supondo que os produtos têm uma URL de imagem
+        )
+
+    logger.info(f'Pedido {pedido.id} criado com sucesso para o cliente {cliente_id}')

@@ -152,7 +152,6 @@
         <!-- Modal Search End -->
 
 
-
 <div id="carrinho" class="container d-flex flex-column align-items-start" style="margin-top:10rem; flex-grow:1">
     <h3>Endereço de Entrega:</h3>
 
@@ -163,7 +162,6 @@
     <input class="w-100" id="autocomplete" placeholder="Digite seu endereço" type="text" style="display: none;"/>
     
     <!-- Campo para armazenar o endereço escolhido -->
-    <input type="hidden" name="endereco" id="endereco-form" />  
     <input type="hidden" id="endereco-lng" name="longitude" />    <div class="itens-carrinho">
         <h3 class="mt-3">Itens no Carrinho:</h3>
         
@@ -185,6 +183,8 @@
     <!-- O formulário agora envia diretamente para o backend -->
 <form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %}">
     {% csrf_token %}
+    <input type="hidden" name="endereco" id="endereco-form" />  
+
     <button style="color:#fff; !important" class="btn btn-primary" start type="submit" id="botao-pagamento">Finalizar Compra</button>
 </form>
 

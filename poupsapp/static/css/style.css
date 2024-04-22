@@ -525,6 +525,88 @@
     transition: 0.5s;
 }
 
+
+  .modal {
+    display: none; /* Escondido por padrão */
+    position: fixed; /* Fixo na página */
+    left: 0;
+    top: 0;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Largura total */
+    height: 100vh; /* Altura total */
+    background-color: rgba(0,0,0,0.4); /* Fundo escuro com opacidade */
+}
+
+.modal-location
+{
+    display: none; /* Escondido por padrão */
+    position: fixed; /* Fixo na página */
+    z-index: 9; /* Sobre outros itens */
+    left: 0;
+    top: 0;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Largura total */
+    height: 100vh; /* Altura total */
+    background-color: rgba(0,0,0,0.4); /* Fundo escuro com opacidade */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* Centralizado verticalmente e horizontalmente */
+    padding: 20px;
+    border: 1px solid #888;
+    max-width: 80%;
+    width:50rem;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content input,
+.modal-content button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+  .close {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 35px;
+    font-weight: bold;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  #map {
+    width: 100%; /* Largura completa */
+    height: 400px; /* Altura do mapa */
+  }
 .vesitable .vesitable-item .vesitable-img img:hover {
     transform: scale(1.2);
 }
@@ -674,10 +756,7 @@
     border-radius: 12px;
 }
 
-.accordion-button::after
-{
-    background-image:;
-}
+
 
 .accordion-button
 {
@@ -843,7 +922,7 @@
 .modal1 {
     display: none;
     position: fixed;
-    z-index: 99999;
+    z-index: 999;
     left: 0;
     top: 0;
     width: 100%;

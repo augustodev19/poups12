@@ -33,6 +33,9 @@
     </head>
 
     <body>
+      {% if novos_pedidos %}
+    <script>alert("Você tem novos pedidos!");</script>
+{% endif %}
 
         <!-- Spinner Start -->
         <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50  d-flex align-items-center justify-content-center">
@@ -135,7 +138,8 @@
         <!-- Modal Search Start -->
         <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-fullscreen">
-                <div class="modal-content rounded-0">
+              <div class="container" style="width:50rem; max-width:100%">
+                <div class="modal-content rounded-0" >
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel">Search by keyword</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -147,6 +151,7 @@
                         </div>
                     </div>
                 </div>
+              </div>
             </div>
         </div>
         <!-- Modal Search End -->
@@ -204,59 +209,250 @@
   <script src="{%static 'lib/waypoints/waypoints.min.js' %}"></script>
   <script src="{%static 'lib/lightbox/js/lightbox.min.js' %}"></script>
   <script src="{%static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
+<!-- Modal para Estado -->
+<!-- Modal para Estado -->
+<div id="stateModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('stateModal')">&times;</span>
+    <input id="stateInput" type="text" placeholder="Digite o estado">
+    <button onclick="saveState()">Salvar Estado</button>
+  </div>
+</div>
 
+<!-- Map Modal -->
+<div id="mapModal" class="modal-location">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('mapModal')">&times;</span>
+    <h3>Confirme sua localização</h3>
+    <div id="map" style="width: 100%; height: 400px;"></div>
+    <button class="btn btn-primary" id="requestStreetNumber" onclick="showNumberModal()" style="margin-top: 10px; color:#fff;">Confirmar Localização</button>
+  </div>
+</div>
+<div id="numberModal" class="modal-location">
+  <div class="modal-content">
+      <span class="close" onclick="closeModal('numberModal')">&times;</span>
+      <h3>Informe o número do endereço</h3>
+      <input type="text" id="streetNumber" placeholder="Digite o número do endereço aqui">
+      <button class="btn btn-primary" style="color:#fff;" onclick="confirmAddress()">Confirmar Endereço</button>
+  </div>
+</div>
+
+
+
+<!-- Modal para Cidade -->
+<div id="cityModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('cityModal')">&times;</span>
+
+    <input id="cityInput" type="text" placeholder="Digite a cidade">
+    <button onclick="saveCity()">Salvar Cidade</button>
+  </div>
+</div>
+
+<!-- Modal ou Div para Número do Endereço -->
+<div id="addressDetails" style="display:none;">
+  <p>Confirme o número do endereço e informações adicionais:</p>
+  <input type="text" id="streetNumber" placeholder="Número do Endereço" />
+  <button onclick="confirmAddress()">Confirmar Endereço</button>
+</div>
 <script>
   function initAutocomplete() {
     var input = document.getElementById('autocomplete');
     var autocomplete = new google.maps.places.Autocomplete(input);
+
     autocomplete.addListener('place_changed', function() {
-      var place = autocomplete.getPlace();
-      if (!place.geometry) {
-        // O usuário digitou o nome de um lugar que não foi retornado pelas sugestões do Autocomplete.
-        window.alert("Nenhum resultado disponível para: '" + place.name + "'");
-        return;
-      }
-      // Use o objeto address_components para encontrar a rua e o número
-    var rua = '';
-    var numero = '';
-    for (var i = 0; i < place.address_components.length; i++) {
-      var component = place.address_components[i];
-      if (component.types.indexOf('route') !== -1) {
-        rua = component.long_name;  // ou short_name para uma versão mais curta
-      }
-      if (component.types.indexOf('street_number') !== -1) {
-        numero = component.long_name;
-      }
-    }
+        var place = autocomplete.getPlace();
+        if (!place.geometry) {
+            alert("No details available for input: '" + input.value + "'");
+            return;
+        }
 
-    // Combinar rua e número
-    var addressToShow = numero ? `${rua}, ${numero}` : rua;
+        console.log("Address Components:", place.address_components);
 
-    console.log(addressToShow);  // Exibir no console ou usar conforme necessário
-      var data = {
-        latitude: place.geometry.location.lat(),
-        longitude: place.geometry.location.lng(),
-        address: place.formatted_address
-    };
+        const addressComponents = place.address_components;
+        const hasStreet = addressComponents.some(c => c.types.includes("route"));
+        // Modificação aqui para verificar 'locality' ou 'administrative_area_level_2'
+        const hasCity = addressComponents.some(c => c.types.includes("locality") || c.types.includes("administrative_area_level_2"));
 
-      fetch('/set_location/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken') // Função auxiliar para obter o valor do cookie CSRF.
-        },
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(data => {
-        window.location.href = '{%url 'loja' %}';
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+        console.log("Has street:", hasStreet);
+        console.log("Has city:", hasCity);
+
+        if (!hasStreet || !hasCity) {
+            alert("Por favor, forneça um endereço mais completo incluindo rua e cidade.");
+            return;
+        }
+
+        window.formattedAddress = place.formatted_address;
+        openMapAtLocation(place.geometry.location);
     });
+}
+// Verifica se o mapa já foi inicializado
+function isMapLoaded() {
+  return window.map && window.map instanceof google.maps.Map;
+}
+
+
+function showModal(modalId) {
+  var modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex'; // ou 'flex', 'inline', etc., dependendo do seu CSS
+    // Adicione outras classes ou atributos se necessário
+    // Por exemplo, se estiver usando Bootstrap, você pode precisar ativar o modal via JavaScript aqui
+  } else {
+    console.error('Modal not found: ' + modalId);
   }
+}
+
+function updateAddressFromMarker() {
+  const position = window.marker.getPosition();
+  const geocoder = new google.maps.Geocoder();
+
+  geocoder.geocode({ location: position }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+          console.log(results[0].formatted_address);
+          // Aqui você pode definir window.formattedAddress com o novo endereço, se desejado
+          window.formattedAddress = results[0].formatted_address;
+      } else {
+          console.error('Geocoder failed due to: ' + status);
+      }
+  });
+}
+
+function showNumberModal() {
+  var modal = document.getElementById('numberModal');
+  if (modal) {
+      modal.style.display = 'block'; // Ou 'flex' ou outro conforme seu CSS
+  } else {
+      console.error('Modal for street number is not found');
+  }
+}
+// Inicializa o mapa no elemento com ID 'map'
+function initializeMap(latLng) {
+  const mapElement = document.getElementById('map');
+  if (mapElement) {
+    window.map = new google.maps.Map(mapElement, {
+      center: latLng,
+      zoom: 15
+    });
+
+    window.marker = new google.maps.Marker({
+      position: latLng,
+      map: window.map,
+      draggable: true
+    });
+
+    window.marker.addListener('dragend', function() {
+      updateAddressFromMarker();
+    });
+
+    return true;
+  }
+  return false;
+}
+
+// Abre o mapa na localização dada por latLng
+function openMapAtLocation(latLng) {
+  // Se o mapa já foi carregado, apenas ajusta o centro e a posição do marcador
+  if (isMapLoaded()) {
+    window.map.setCenter(latLng);
+    window.marker.setPosition(latLng);
+  } else {
+    // Se o mapa ainda não foi carregado, inicializa-o
+    if (!initializeMap(latLng)) {
+      console.error('Falha ao inicializar o mapa');
+    }
+  }
+  document.querySelector('#locationModal').style.display = 'none'
+  // Mostra o modal do mapa
+  showModal('mapModal');
+}
+
+
+
+function confirmAddress() {
+  const streetNumber = document.getElementById('streetNumberInput').value;
+  const position = window.marker.getPosition();
+  const fullAddress = window.formattedAddress ? `${window.formattedAddress}, ${streetNumber}` : `Address not available`;
+
+  const addressDetails = {
+      latitude: position.lat(),
+      longitude: position.lng(),
+      address: fullAddress
+  };
+
+  fetch('/set_location/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(addressDetails)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+        window.location.href = '/lojas_proximas/';
+    } else {
+        alert('Não foi possível definir a localização: ' + (data.error || 'Erro desconhecido'));
+    }
+})
+  .catch(error => {
+      console.error('Erro ao definir localização:', error);
+  });
+}
+
+let currentCountry = null;
+
+function initModalAutocomplete(modalId, inputId, options) {
+  var input = document.getElementById(inputId);
+  var autocomplete = new google.maps.places.Autocomplete(input, options);
+  autocomplete.addListener('place_changed', function() {
+    var place = autocomplete.getPlace();
+    if (!place.geometry) {
+      alert("No details available for input: '" + input.value + "'");
+      return;
+    }
+    document.getElementById(inputId).dataset.placeId = place.place_id; // Salva o place_id para uso posterior
+  });
+
+  showModal(modalId);
+}
+
+
+
+function confirmAddress() {
+  const streetNumber = document.getElementById('streetNumber').value;
+  const position = window.marker.getPosition();
+  const fullAddress = window.formattedAddress && streetNumber ? `${window.formattedAddress}, ${streetNumber}` : `Address not available`;
   
+  const addressDetails = {
+    latitude: position.lat(),
+    longitude: position.lng(),
+    address: fullAddress
+  };
+
+  console.log("Endereço a ser enviado:", addressDetails);
+
+  fetch('/set_location/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(addressDetails)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = '/lojas_proximas/';
+    } else {
+      alert('Não foi possível definir a localização: ' + (data.error || 'Erro desconhecido'));
+    }
+  })
+  .catch(error => {
+    console.error('Erro ao definir localização:', error);
+  });
+}
   // Função para obter o cookie CSRF do Django.
   function getCookie(name) {
     let cookieValue = null;
@@ -507,7 +703,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- Owl Carousel JS -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places&callback=initAutocomplete" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4&libraries=places,geometry,marker&callback=initAutocomplete" async defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
   </body>

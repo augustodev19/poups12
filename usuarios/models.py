@@ -218,6 +218,7 @@ class ItemOpcao(models.Model):
         return f"{self.nome} - {self.opcao.nome}"
 
 
+
 class Cliente(CustomUser):
     foto = models.ImageField(upload_to='images/', blank=True, null=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
@@ -231,20 +232,23 @@ class Cliente(CustomUser):
 class Pedido(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, blank=True, null=True)
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE, blank=True, null=True)
-    categoria = models.ForeignKey(CategoriaProduto, on_delete=models.CASCADE, blank=True, null=True)
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
     nome = models.CharField(max_length=100)
-    preco = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
     pontos = models.IntegerField(default=0)
     data = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    localizao = models.CharField(blank=True, null=True, max_length=400)
+    localizacao = models.CharField(blank=True, null=True, max_length=400)
     confirmado = models.BooleanField(default=False)
 
-    # outros campos do produto
+class ItemPedido(models.Model):
+    pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE)
+    produto = models.ForeignKey('Produto', on_delete=models.CASCADE)
+    quantidade = models.IntegerField(default=1)
+    preco_unitario = models.DecimalField(max_digits=8, decimal_places=2)
+    imagem_url = models.URLField(null=True, blank=True)  # Campo opcional para a URL da imagem
 
-    def __str__(self):
-        return self.nome
+    def subtotal(self):
+        return self.quantidade * self.preco_unitario  # outros campos do produto
             # outros campos da loja
 
 class CarrinhoItem(models.Model):
