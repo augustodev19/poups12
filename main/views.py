@@ -586,7 +586,7 @@ def webhook_mercadopago(request):
         payment_id = data.get('data', {}).get('id')
 
         if payment_id:
-            sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
+            sdk = mercadopago.SDK("APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242")
             payment_info = sdk.payment().get(payment_id)
             payment_status = payment_info['response'].get('status')
 
