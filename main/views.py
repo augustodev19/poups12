@@ -203,8 +203,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 
-MERCADO_PAGO_PUBLIC_KEY = 'TEST-c1bc2f02-b8ed-46ee-86bd-b1d8bb394104'
-MERCADO_PAGO_ACCESS_TOKEN = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
+MERCADO_PAGO_PUBLIC_KEY = 'APP_USR-c79e3c7a-e8d0-4721-9a5e-2dad44492f75'
+MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
 
 # Configure a SDK do Mercado Pago com sua Access Token
 sdk = mercadopago.SDK(MERCADO_PAGO_ACCESS_TOKEN)
