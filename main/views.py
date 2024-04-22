@@ -525,7 +525,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 @login_required
 @require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
-    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
+    access_token = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
     sdk = mercadopago.SDK(access_token)
     carrinho = request.session.get('carrinho', {'itens': {}})
 
