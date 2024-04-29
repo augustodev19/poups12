@@ -3,6 +3,10 @@ from usuarios.models import *
 from decimal import Decimal
 from django.contrib import messages
 from django.db import transaction
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.core.mail import send_mail
+from pagseguro import PagSeguro
 
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -522,109 +526,109 @@ def pagamento_pendente(request):
 
 from urllib.parse import urljoin
 from django.http import JsonResponse, HttpResponseRedirect
+
+
+def get_pagseguro_api():
+    pg = PagSeguro(email="augusto.webdeveloping@gmail.com", token="39FD640937A14E0A91310DEDE47AFF72", config={'sandbox': True})
+    return pg
+
 @login_required
-@require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
-    access_token = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
-    sdk = mercadopago.SDK(access_token)
+    pg = get_pagseguro_api()
     carrinho = request.session.get('carrinho', {'itens': {}})
 
     if not carrinho['itens']:
         return JsonResponse({"erro": "Carrinho vazio."}, status=400)
 
-    total_geral_carrinho = 0
-    total_pontos_carrinho = 0
     items = []
+    total_geral_carrinho = 0
+
     for item_id, item in carrinho['itens'].items():
         produto = Produto.objects.get(id=item_id)
-        quantidade = int(item['quantidade'])
-        preco = float(item['preco'])
-        total_geral_carrinho += preco * quantidade
-        total_pontos_carrinho += produto.pontos * quantidade
-        items.append({
-            "title": produto.nome,
-            "quantity": quantidade,
-            "unit_price": preco
-        })
-
-    request.session.update({
-        'total_geral_carrinho': total_geral_carrinho,
-        'total_pontos_carrinho': total_pontos_carrinho,
-        'endereco': request.POST.get('endereco'),
-        'loja_id': produto.categoria.loja.id,
-        'cliente_id': request.user.cliente.id
-    })
-
-    preference_data = {
-        "items": items,
-        "back_urls": {
-            "success": request.build_absolute_uri(reverse('pagamento_sucesso')),
-            "failure": request.build_absolute_uri(reverse('pagamento_falha')),
-            "pending": request.build_absolute_uri(reverse('pagamento_pendente'))
-        },
-        "auto_return": "approved",
-        "metadata": {
-            "cliente_id": request.user.cliente.id if hasattr(request.user, 'cliente') else None,
-            "total_geral_carrinho": total_geral_carrinho,
-            "total_pontos_carrinho": total_pontos_carrinho
-        }
-    }
-
-    preference_response = sdk.preference().create(preference_data)
-    if 'error' in preference_response:
-        return JsonResponse({"erro": "Erro ao processar pagamento"}, status=500)
-
-    preference_id = preference_response['response']['id']
-    request.session['preference_id'] = preference_id
-
-    return redirect(preference_response['response']['init_point'])
-@csrf_exempt
-@require_http_methods(["POST"])
-def webhook_mercadopago(request):
-    try:
-        data = json.loads(request.body)
-        payment_id = data.get('data', {}).get('id')
-
-        if payment_id:
-            sdk = mercadopago.SDK("APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242")
-            payment_info = sdk.payment().get(payment_id)
-            payment_status = payment_info['response'].get('status')
-
-            if payment_status == 'approved':
-                processar_pedido_aprovado(payment_info)
-                return HttpResponse('Webhook processed: Payment approved', status=200)
-            else:
-                logger.info(f'Payment status: {payment_status}')
-                return HttpResponse(f'Webhook processed: Payment {payment_status}', status=200)
-
-    except Exception as e:
-        logger.error(f'Error processing webhook: {str(e)}')
-        return HttpResponse('Error processing webhook', status=500)
-
-@transaction.atomic
-def processar_pedido_aprovado(payment_info):
-    # Supondo que a resposta contém todas as informações necessárias para criar o pedido
-    response = payment_info['response']
-    cliente_id = response['metadata']['cliente_id']
-    itens_payment = response['additional_info']['items']
-
-    cliente = Cliente.objects.get(id=cliente_id)
-    pedido = Pedido.objects.create(
-        cliente=cliente,
-        total=response['transaction_amount'],
-        pontos=0,  # Calcule pontos se aplicável
-        confirmado=True,
-        localizacao=cliente.endereco  # Ajuste conforme seu modelo de dados
-    )
-
-    for item in itens_payment:
-        produto = Produto.objects.get(id=item['id'])
-        ItemPedido.objects.create(
-            pedido=pedido,
-            produto=produto,
-            quantidade=int(item['quantity']),
-            preco_unitario=float(item['unit_price']),
-            imagem_url=produto.imagem_url  # Supondo que os produtos têm uma URL de imagem
+        pg.add_item(
+            id=str(produto.id),
+            description=produto.nome,
+            amount=format(produto.preco, '.2f'),
+            quantity=item['quantidade']
         )
+        total_geral_carrinho += produto.preco * int(item['quantidade'])
 
-    logger.info(f'Pedido {pedido.id} criado com sucesso para o cliente {cliente_id}')
+    response = pg.checkout()
+    preference_id = response.code  # O código de referência do PagSeguro
+
+    request.session['preference_id'] = preference_id  # Armazenando o ID da preferência na sessão
+    return redirect(response.payment_url)  # Redirecionar para a página de pagamento do PagSeguro
+    
+def enviar_email_pedido(request, pedido, itens_pedido):
+    try:
+        pedido_url = request.build_absolute_uri(reverse('pedido_detalhe', args=[pedido.id]))  # 'pedido_detalhe' é o nome da URL para visualizar o pedido
+        subject = 'Detalhes do Seu Pedido'
+        message = f"Olá {pedido.cliente.nome},\n\nSeu pedido foi criado com sucesso!\n\nDetalhes do Pedido:\n"
+        for item in itens_pedido:
+            message += f"- {item.produto.nome} (Quantidade: {item.quantidade}, Preço: R${item.preco_unitario})\n"
+        message += f"\nTotal do Pedido: R${pedido.total}\n"
+        message += f"Você pode visualizar seu pedido aqui: {pedido_url}\n\nObrigado por comprar conosco!"
+        
+        send_mail(subject, message, 'seuemail@dominio.com', [pedido.cliente.email])
+        messages.success(request, "Email com detalhes do pedido enviado com sucesso.")
+    except Exception as e:
+        messages.error(request, f"Erro ao enviar email: {str(e)}")
+@require_http_methods(["POST"])
+def confirmar_pagamento(request):
+    notification_code = request.POST.get('notificationCode', None)
+    if notification_code:
+        pg = get_pagseguro_api()
+        transaction = pg.check_notification(notification_code)
+        
+        if transaction.status == '3':  # Código '3' indica que o pagamento foi confirmado
+            # Recupera os detalhes do carrinho armazenados na sessão
+            carrinho = request.session.get('carrinho', {'itens': {}})
+            cliente_id = request.session.get('cliente_id')
+            loja_id = request.session.get('loja_id')
+            endereco = request.session.get('endereco')
+
+            if not carrinho['itens']:
+                messages.error(request, 'Carrinho vazio.')
+                return redirect('home')
+
+            cliente = Cliente.objects.get(id=cliente_id)
+            loja = Loja.objects.get(id=loja_id)
+
+            # Cria o pedido
+            pedido = Pedido.objects.create(
+                cliente=cliente,
+                loja=loja,
+                total=request.session.get('total_geral_carrinho'),
+                pontos=request.session.get('total_pontos_carrinho'),
+                confirmado=True,
+                localizacao=endereco
+            )
+
+            # Cria os itens do pedido
+            for item_id, item in carrinho['itens'].items():
+                produto = Produto.objects.get(id=item_id)
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    produto=produto,
+                    quantidade=item['quantidade'],
+                    preco_unitario=item['preco'],
+                    imagem_url=item.get('imagem_url', None)
+                )
+
+            # Enviando o email com os detalhes do pedido
+            enviar_email_pedido(request, pedido, pedido.itempedido_set.all())
+
+            # Limpar a sessão após criar o pedido
+            keys_to_delete = ['carrinho', 'total_geral_carrinho', 'total_pontos_carrinho', 'endereco', 'loja_id', 'cliente_id', 'preference_id']
+            for key in keys_to_delete:
+                if key in request.session:
+                    del request.session[key]
+
+            messages.success(request, 'Pedido criado e confirmado com sucesso!')
+            return redirect('home')
+        else:
+            messages.error(request, 'Pagamento não confirmado.')
+            return redirect('home')
+    else:
+        messages.error(request, 'Notificação inválida.')
+        return redirect('home')

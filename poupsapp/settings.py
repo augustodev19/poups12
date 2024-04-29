@@ -17,6 +17,16 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOGOUT_REDIRECT_URL = 'home'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587  # ou 465 para SSL
+EMAIL_USE_TLS = True  # ou EMAIL_USE_SSL = True para SSL
+EMAIL_HOST_USER = 'augusto.dataanalysis@gmail.com'
+EMAIL_HOST_PASSWORD = 'muel jqer xnpw slqq'
+DEFAULT_FROM_EMAIL = 'augusto.webdeveloping@gmail.com'
+PASSWORD_RESET_EMAIL_SUBJECT = 'Redefinição de Senha do Nosso Site'
+PASSWORD_RESET_TEMPLATE_NAME = 'core/mudarSenha.html'
+LOGIN_URL = 'login'
 
 
 # Quick-start development settings - unsuitable for production
@@ -67,6 +77,8 @@ AUTHENTICATION_BACKENDS = [
     'usuarios.backends.EmailAuthenticationBackend',  # Seu backend personalizado
 ]
 
+STRIPE_PUBLIC_KEY = 'pk_test_51Mx8SXH8FtYk9H6oLmOmwNP8yKO29XU5tcspHDLo12OcNcgwLKu4xdEGIUfencY0zAr706LxorupAo2DXwq3Z5tI00HRp8WgBa'
+STRIPE_SECRET_KEY = 'sk_test_51Mx8SXH8FtYk9H6oOyXhyLDWQDsb1buTECeanmrPt0FqXmsrFqFZHOl4Hbmh8eDeraiPCr3UJsXszK3zk2qNp6P3002L472K2E'
 
 ROOT_URLCONF = 'poupsapp.urls'
 

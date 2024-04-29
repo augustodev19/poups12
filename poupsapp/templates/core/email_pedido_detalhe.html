@@ -1,0 +1,16 @@
+<html>
+<head></head>
+<body>
+    <h1>Detalhes do Pedido</h1>
+    <p>Olá {{ pedido.cliente.nome }},</p>
+    <p>Seu pedido foi criado com sucesso!</p>
+    <ul>
+        {% for item in itens_pedido %}
+        <li>{{ item.produto.nome }} - Quantidade: {{ item.quantidade }}, Preço: R${{ item.preco_unitario }}</li>
+        {% endfor %}
+    </ul>
+    <p>Total do Pedido: R${{ pedido.total }}</p>
+    <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}">Clique aqui</a></p>
+    <p>Obrigado por comprar conosco!</p>
+</body>
+</html>
