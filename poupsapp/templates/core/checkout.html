@@ -183,9 +183,15 @@
     <!-- O formulário agora envia diretamente para o backend -->
 <form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %}">
     {% csrf_token %}
-    <input type="hidden" name="endereco" id="endereco-form" />  
-
+    <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
     <button style="color:#fff; !important" class="btn btn-primary" start type="submit" id="botao-pagamento">Finalizar Compra</button>
+</form>
+
+    
+
+<form class="mt-4"  method="post">
+    {% csrf_token %}
+    <button style="color:#fff; !important" class="btn btn-primary"  type="submit">Comprar com Poups</button>
 </form>
 
 </div>

@@ -1,0 +1,112 @@
+
+{%extends 'core/base.html'%}
+{%load static%}
+{%block 'conteudo'%}
+
+
+
+    <div style="margin-top:10rem;" class="container flex-column align-items-center justify-content-center d-flex w-100 main-container mb-4" data-pedido-id="{{ pedido.id }}">
+        <span class="text-center" style="font-size:1.4rem;">
+            Previsão de Entrega:<br>
+            {{pedido.loja.tempo_entrega|default:"60 - 75min"}}
+        </span>
+       <span style="max-width: 30rem; font-size:.9rem" class="text-center mt-2">Abra um aplicativo em que você tenha o Pix habilitado e escolha a opção Pagar, em seguida Ler QR Code</span>
+    
+
+  
+<div class="mt-3" style="font-size: 24px; font-weight: bold; ">
+<span class="status_verificacao" style="font-size:1.1rem;">Aguardando a confirmação da loja...</span> <br> 
+  </div>
+  <div class="d-flex" style="gap:1rem">
+  <div class=" mt-2 inner-bar" style="background: green; width: 7rem; height: .5rem;" >
+</div>
+<div class=" mt-2 inner-bar2" style="background: gray; width:7rem; height: .5rem;" >
+</div>
+<div class=" mt-2 inner-bar" style="background: gray; width:7rem; height: .5rem;" >
+</div>
+</div>
+    
+
+
+
+
+       <div class=" mt-4  py-4 px-5 d-flex flex-column align-items-start container2 flex-column" style="display: flex; width: 60%;
+       flex-flow: column nowrap;
+       position: relative;
+       width: 420px;
+       background-color: #fff;
+       color: #3f3e3e;
+       box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+       border: 1px solid #f7f7f7;
+       margin: 0 0 10px;
+   ">
+           <h6 class="text-start d-flex flex-column mb-2" style=" font-weight: 400; width: 100%;">
+               <span class="mb-2" style="font-size: .8rem;">Seu pedido em:</span>
+               <span style="font-size:1.2rem; font-weight: 600;">{{pedido.loja.nomeLoja}}</span>
+               <div class="justify-content-between w-100 mt-3">
+                <a href="https://wa.me/{{ pedido.loja.telefone }}" style="text-decoration:none; color:#212529 !important" class="d-flex align-items-end">
+                    <span style="font-size:.9rem; font-weight: 600; text-decoration:underline">Conversar com a loja</span>&nbsp;
+                    <img style="height:1rem" src="{% static 'img/whatsapp (5).png' %}">
+                </a>
+            </div>
+               <div style="border-bottom:solid 1px rgb(195, 195, 195); width: 100%;" class="pb-2 mt-3">
+                
+            </span>
+               </div></h6>
+
+               <div class="justify-content-between w-100 mb-2">
+                <span style="font-size:.9rem; font-weight: 600;">Localização:</span>&nbsp;
+                <span style="font-size: .9rem;">{{pedido.localizacao}}</span>
+            </div>
+               <div class="d-flex justify-content-between w-100 mb-2">
+                   <span  class="fw-bold" style="font-size:.9rem">Subtotal:</span>
+                   <span  style="font-size: .9rem;">R$<span>{{pedido.total}}</span>
+                </span>
+               </div>
+
+               <div class="d-flex justify-content-between w-100 mb-2">
+                   <span class="fw-bold" style="font-size:.9rem">Taxa de Entrega:</span>
+                   <span style="font-size: .9rem;">R${{pedido.loja.taxa_entrega|default:0.00}}</span>
+               </div>
+
+               <div class="d-flex justify-content-between w-100 mb-2">
+                   <span style="font-size:.9rem; font-weight: 600;">Total:</span>
+                   <span style="font-size: .9rem; font-weight: 600;">R${{pedido.total}}</span>
+               </div>
+
+               
+           <!-- Conteúdo da segunda coluna -->
+       </div>
+
+       
+    </div>
+
+    
+
+    </span>
+
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pedidoId = document.body.getAttribute('data-pedido-id');
+            function atualizarStatus() {
+                fetch(`/verificar-status-pedido/${pedidoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'confirmado') {
+                        
+                        document.querySelector('.inner-bar2').style.background = 'green'
+                        document.querySelector('.status_verificacao').textContent = 'Pedido aprovado pela loja, aguardando entrega...'
+                        document.querySelector('.status_verificacao').style.textAlign = 'center'
+                    } else if (data.error) {
+                        console.error('Erro:', data.error); // Loga o erro se o pedido não foi encontrado
+                    }
+                })
+                .catch(error => console.error('Falha ao buscar o status do pedido:', error));
+            }
+        
+            setInterval(atualizarStatus, 3000); // Atualiza o status a cada 30 segundos
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+{%endblock%}

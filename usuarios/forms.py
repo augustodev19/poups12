@@ -53,7 +53,7 @@ class CategoriaForm(forms.ModelForm):
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = [ 'nome', 'preco', 'foto', 'descricao', 'pontos']  # Adicione outros campos necessários
+        fields = [ 'nome', 'preco', 'foto', 'descricao']  # Adicione outros campos necessários
 
 class OpcaoForm(forms.ModelForm):
     class Meta:

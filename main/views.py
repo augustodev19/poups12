@@ -6,8 +6,19 @@ from django.db import transaction
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.core.mail import send_mail
-from pagseguro import PagSeguro
+from django.views.decorators.http import require_POST
+import secrets  # Importe esta biblioteca no início do arquivo
 
+from pagseguro import PagSeguro
+import qrcode
+import base64
+from urllib.parse import quote_plus
+from django.template.loader import render_to_string
+from bs4 import BeautifulSoup
+from django.core.mail import EmailMultiAlternatives
+from decimal import Decimal
+from django.http import HttpResponse
+from io import BytesIO
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from .models import *
@@ -533,102 +544,313 @@ def get_pagseguro_api():
     return pg
 
 @login_required
+@require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
-    pg = get_pagseguro_api()
+    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
+    sdk = mercadopago.SDK(access_token)
     carrinho = request.session.get('carrinho', {'itens': {}})
 
     if not carrinho['itens']:
         return JsonResponse({"erro": "Carrinho vazio."}, status=400)
 
-    items = []
+    # Supondo que você esteja armazenando IDs de produtos no carrinho
+    primeiro_produto_id = next(iter(carrinho['itens']))
+    primeiro_produto = Produto.objects.get(id=primeiro_produto_id)
+    loja = primeiro_produto.categoria.loja
+    endereco = request.POST.get('endereco')
+    items = [{
+        "title": item['nome'],
+        "quantity": int(item['quantidade']),
+        "unit_price": float(item['preco'])
+    } for item_id, item in carrinho['itens'].items()]
     total_geral_carrinho = 0
-
+    total_pontos_carrinho = 0
     for item_id, item in carrinho['itens'].items():
         produto = Produto.objects.get(id=item_id)
-        pg.add_item(
-            id=str(produto.id),
-            description=produto.nome,
-            amount=format(produto.preco, '.2f'),
-            quantity=item['quantidade']
-        )
-        total_geral_carrinho += produto.preco * int(item['quantidade'])
+        quantidade = int(item['quantidade'])
+        total_geral_carrinho += float(item['preco']) * quantidade
+        total_pontos_carrinho += produto.pontos * quantidade
 
-    response = pg.checkout()
-    preference_id = response.code  # O código de referência do PagSeguro
+        request.session['total_geral_carrinho'] = total_geral_carrinho
+        request.session['total_pontos_carrinho'] = total_pontos_carrinho
+        request.session['endereco'] = endereco  # Armazenando o endereço
+        request.session['loja_id'] = loja.id
+        request.session['cliente_id'] = request.user.cliente.id
+  # Armazenando o ID da loja
+    items = [{
+        "title": Produto.objects.get(id=item_id).nome,
+        "quantity": int(item['quantidade']),
+        "unit_price": float(item['preco'])
+    } for item_id, item in carrinho['itens'].items()]
 
-    request.session['preference_id'] = preference_id  # Armazenando o ID da preferência na sessão
-    return redirect(response.payment_url)  # Redirecionar para a página de pagamento do PagSeguro
+    preference_data = {
+        "items": items,
+        "back_urls": {
+            "success": request.build_absolute_uri(reverse('pagamento_sucesso')),
+            "failure": request.build_absolute_uri(reverse('pagamento_falha')),
+            "pending": request.build_absolute_uri(reverse('pagamento_pendente'))
+        },
+        "auto_return": "approved",
+        "metadata": {
+            "cliente_id": request.user.cliente.id if hasattr(request.user, 'cliente') else None,
+            "total_geral_carrinho": total_geral_carrinho,
+            "total_pontos_carrinho": total_pontos_carrinho
+        }
+    }
+
+    preference_response = sdk.preference().create(preference_data)
+    preference_id = preference_response['response']['id']
+
+    # Armazenar o ID da preferência na sessão também pode ser uma boa ideia
+    request.session['preference_id'] = preference_id
+
+    # Redirecionar o usuário para a página de pagamento do Mercado Pago
+    return redirect(preference_response['response']['init_point'])
+
+def pedido_detalhe(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)  # Substitua Pedido pelo seu modelo de pedido se for diferente
+    return render(request, 'core/pedido_detalhe.html', {'pedido': pedido})   
+def strip_tags(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    text_content = soup.get_text()
+    return text_content
+
+def exibir_pedido(request, pedido_id):
+    pedido = Pedido.objects.get(id=pedido_id)  # Obtenha o pedido usando o ID
+    if request.method == "POST":
+        if 'aceitar' in request.POST:
+            # Implemente a lógica para aceitar o pedido
+            return redirect('alguma_url_de_sucesso')
+        elif 'recusar' in request.POST:
+            # Implemente a lógica para recusar o pedido
+            return redirect('alguma_url_de_falha')
+    return render(request, 'core/pedido_detalhe.html', {'pedido': pedido})
+
+def enviar_webhook_pedido(pedido):
+    url = f"http://meusite.com/revisar-pedido/{pedido.id}"
+    headers = {'Content-Type': 'application/json'}
+    # Adicione aqui mais dados se necessário
+    response = requests.post(url, headers=headers)
+    if response.status_code == 200:
+        print("Webhook enviado com sucesso")
+    else:
+        print("Falha ao enviar webhook")
+        
+def gerar_token_aleatorio():
+    return secrets.token_urlsafe(32)  # Gera um token seguro
+
+def gerar_token(pedido, tipo):
+    token_obj, created = TokenPedido.objects.get_or_create(
+        pedido=pedido,
+        tipo=tipo,
+        defaults={
+            'token': gerar_token_aleatorio(),  # Use a função real aqui
+            'expiracao': timezone.now() + timedelta(days=1)  # Token expira em 1 dia
+        }
+    )
+    if not created and token_obj.expiracao <= timezone.now():
+        # Se o token existe mas expirou, gere um novo e atualize a expiração
+        token_obj.token = gerar_token_aleatorio()
+        token_obj.expiracao = timezone.now() + timedelta(days=1)
+        token_obj.save()
+    return token_obj.token
+
     
 def enviar_email_pedido(request, pedido, itens_pedido):
     try:
-        pedido_url = request.build_absolute_uri(reverse('pedido_detalhe', args=[pedido.id]))  # 'pedido_detalhe' é o nome da URL para visualizar o pedido
+        pedido_url = request.build_absolute_uri(reverse('pedido_detalhe', args=[pedido.id]))
         subject = 'Detalhes do Seu Pedido'
-        message = f"Olá {pedido.cliente.nome},\n\nSeu pedido foi criado com sucesso!\n\nDetalhes do Pedido:\n"
-        for item in itens_pedido:
-            message += f"- {item.produto.nome} (Quantidade: {item.quantidade}, Preço: R${item.preco_unitario})\n"
-        message += f"\nTotal do Pedido: R${pedido.total}\n"
-        message += f"Você pode visualizar seu pedido aqui: {pedido_url}\n\nObrigado por comprar conosco!"
-        
-        send_mail(subject, message, 'seuemail@dominio.com', [pedido.cliente.email])
-        messages.success(request, "Email com detalhes do pedido enviado com sucesso.")
+        context = {
+            'pedido': pedido,
+            'itens_pedido': itens_pedido,
+            'pedido_url': pedido_url
+        }
+
+        # Renderiza o template HTML para o email
+        html_content = render_to_string('core/email_pedido_detalhe.html', context)
+        text_content = strip_tags(html_content)  # Cria uma versão de texto puro do HTML
+
+        # Configura o email com partes de texto e HTML
+        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+        enviar_webhook_pedido(pedido)
+
+        messages.success(request, "Email e webhook com detalhes do pedido enviados com sucesso.")
     except Exception as e:
         messages.error(request, f"Erro ao enviar email: {str(e)}")
-@require_http_methods(["POST"])
+
 def confirmar_pagamento(request):
-    notification_code = request.POST.get('notificationCode', None)
-    if notification_code:
-        pg = get_pagseguro_api()
-        transaction = pg.check_notification(notification_code)
-        
-        if transaction.status == '3':  # Código '3' indica que o pagamento foi confirmado
-            # Recupera os detalhes do carrinho armazenados na sessão
-            carrinho = request.session.get('carrinho', {'itens': {}})
-            cliente_id = request.session.get('cliente_id')
-            loja_id = request.session.get('loja_id')
+    sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
+    payment_id = request.GET.get('collection_id')
+    preference_id_from_get = request.GET.get('preference_id')
+    
+    if 'preference_id' in request.session and request.session['preference_id'] == preference_id_from_get:
+        payment_info = sdk.payment().get(payment_id)
+        if payment_info["status"] == 200 and payment_info["response"]["status"] == "approved":
             endereco = request.session.get('endereco')
+            loja_id = request.session.get('loja_id')
+            cliente_id = request.session.get('cliente_id')
+            total_geral_carrinho = request.session.get('total_geral_carrinho')
+            total_pontos_carrinho = request.session.get('total_pontos_carrinho')
 
-            if not carrinho['itens']:
-                messages.error(request, 'Carrinho vazio.')
-                return redirect('home')
-
-            cliente = Cliente.objects.get(id=cliente_id)
             loja = Loja.objects.get(id=loja_id)
-
-            # Cria o pedido
+            cliente = Cliente.objects.get(id=cliente_id)
             pedido = Pedido.objects.create(
                 cliente=cliente,
                 loja=loja,
-                total=request.session.get('total_geral_carrinho'),
-                pontos=request.session.get('total_pontos_carrinho'),
-                confirmado=True,
+                total=total_geral_carrinho,
+                pontos=total_pontos_carrinho,
+                status='pendente',
+                payment_id=payment_id,
                 localizacao=endereco
             )
-
-            # Cria os itens do pedido
-            for item_id, item in carrinho['itens'].items():
+            itens_pedido = []
+            carrinho = request.session.get('carrinho', {'itens': {}})
+            for item_id, item_details in carrinho['itens'].items():
                 produto = Produto.objects.get(id=item_id)
-                ItemPedido.objects.create(
+                item_pedido = ItemPedido.objects.create(
                     pedido=pedido,
                     produto=produto,
-                    quantidade=item['quantidade'],
-                    preco_unitario=item['preco'],
-                    imagem_url=item.get('imagem_url', None)
+                    quantidade=int(item_details['quantidade']),
+                    preco_unitario=float(item_details['preco']),
+                    imagem_url=item_details.get('imagem_url', None)
                 )
+                itens_pedido.append(item_pedido)
 
             # Enviando o email com os detalhes do pedido
-            enviar_email_pedido(request, pedido, pedido.itempedido_set.all())
-
-            # Limpar a sessão após criar o pedido
-            keys_to_delete = ['carrinho', 'total_geral_carrinho', 'total_pontos_carrinho', 'endereco', 'loja_id', 'cliente_id', 'preference_id']
+            enviar_email_pedido(request, pedido, itens_pedido)  # Chamada para enviar o email
+            # Limpeza da sessão após criar o pedido
+            keys_to_delete = [
+                'preference_id', 'total_geral_carrin ho', 'total_pontos_carrinho',
+                'carrinho', 'endereco', 'loja_id', 'cliente_id'
+            ]
             for key in keys_to_delete:
                 if key in request.session:
                     del request.session[key]
 
-            messages.success(request, 'Pedido criado e confirmado com sucesso!')
-            return redirect('home')
+            request.session['last_payment_id'] = payment_id  # Preservando payment_id para uso posterior
+
+            messages.success(request, 'Pedido criado com sucesso!')
+            return redirect('pedido_pagamento', pedido_id=pedido.id)
         else:
-            messages.error(request, 'Pagamento não confirmado.')
+            messages.error(request, 'Pagamento não foi aprovado.')
             return redirect('home')
     else:
-        messages.error(request, 'Notificação inválida.')
+        messages.error(request, 'Informação de pagamento não corresponde ou sessão expirada.')
         return redirect('home')
+
+
+
+from django.http import JsonResponse
+
+def verificar_status_pedido(request, pedido_id):
+    try:
+        pedido = Pedido.objects.get(id=pedido_id)
+        return JsonResponse({'status': pedido.status})
+    except Pedido.DoesNotExist:
+        return JsonResponse({'error': 'Pedido não encontrado'}, status=404)
+
+
+
+def pedido_pagamento(request, pedido_id):
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    context = {
+        'pedido': pedido,
+        'cliente':cliente
+    }
+    return render(request, 'core/pedido_pendente.html', context)
+
+def aceitar_pedido(request, pedido_id, token):
+    logger.debug("Recebendo token...")
+    
+    logger.debug(f"Token recebido: {token}")
+    if not token:
+        logger.error("Token não fornecido.")
+        return HttpResponse("Token não fornecido.", status=400)
+
+    logger.debug(f"Procurando por token válido para pedido {pedido_id}")
+    token_obj = TokenPedido.objects.filter(token=token, tipo='aceite', expiracao__gt=timezone.now(), pedido__id=pedido_id).first()
+    if not token_obj:
+        logger.error("Token inválido ou expirado.")
+        return HttpResponse("Token inválido ou expirado.", status=400)
+
+    pedido = token_obj.pedido
+    if pedido.status != 'pendente':
+        logger.error("Pedido não está pendente.")
+        return HttpResponse("Pedido já foi processado.", status=400)
+
+    # Confirmar pedido
+    pedido.status = 'confirmado'
+    pedido.save()
+    token_obj.delete()
+
+    # Atualizar saldo da loja
+    percentual_para_loja = Decimal('0.85')  # Convertendo para Decimal
+    valor_a_transferir = pedido.total * percentual_para_loja  # Ambos os operandos agora são Decimal
+    pedido.loja.saldo += valor_a_transferir
+    pedido.loja.save()
+
+    logger.info(f"Pedido {pedido_id} aceito com sucesso. R${valor_a_transferir} transferidos para a loja.")
+    return HttpResponse("Pedido aceito com sucesso!")
+
+
+        
+def revisar_pedido(request, pedido_id, acao):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    token_para_aceitar = gerar_token(pedido, 'aceite')
+    token_para_recusar = gerar_token(pedido, 'recusa')
+    if acao == 'aceitar':
+        return redirect(reverse('aceitar_pedido', args=[pedido_id, token_para_aceitar]))
+    elif acao == 'recusar':
+        return redirect(reverse('recusar_pedido', args=[pedido_id, token_para_recusar]))
+    else:
+        # Handle unexpected action
+        return HttpResponse("Ação inválida.", status=400)
+
+    return render(request, 'core/confirmar_acao.html', {
+        'pedido': pedido,
+        'acao': acao,
+        'token_para_aceitar': token_para_aceitar,
+        'token_para_recusar': token_para_recusar
+    })
+
+def recusar_pedido(request, pedido_id, token):
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'erro', 'mensagem': 'Usuário não autenticado'}, status=403)
+    
+    token_obj = TokenPedido.objects.filter(token=token, tipo='recusa', expiracao__gt=timezone.now(), pedido__id=pedido_id).first()
+    if not token_obj:
+        return JsonResponse({'status': 'erro', 'mensagem': 'Token inválido ou expirado'}, status=400)
+
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    #if pedido.loja != request.user.loja:
+        #return JsonResponse({'status': 'erro', 'mensagem': 'Permissão negada'}, status=403)
+
+    if pedido.status != 'pendente':
+        return JsonResponse({'status': 'erro', 'mensagem': 'Pedido não está em estado pendente'}, status=400)
+
+    # Realiza o reembolso antes de marcar o pedido como recusado
+    sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
+    payment_id = pedido.payment_id  # Asegure-se de armazenar o payment_id quando o pedido é criado
+    refund_response = sdk.refund().create(payment_id)
+
+    if refund_response["status"] == 201:
+        pedido.confirmado == False
+        pedido.save()
+        token_obj.delete()
+        return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado e pagamento reembolsado com sucesso'}, status=200)
+    else:
+        return JsonResponse({'status': 'erro', 'mensagem': 'Falha ao reembolsar o pagamento'}, status=500)
+
+#def cartao(request):
+#    publicKey = getPublicKey()
+#    context = {
+#        'publicKey':publicKey
+#    }
+#    return render(request, 'core/cartao.html', context)
+    

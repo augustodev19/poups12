@@ -19,9 +19,15 @@ urlpatterns = [
     path('remover_do_carrinho/<int:produto_id>/', remover_do_carrinho, name='remover_do_carrinho'),
     path('checkout/', checkout, name="checkout"),
     path('criar_pagamento_checkout/', criar_pagamento_checkout, name='criar_pagamento_checkout'),
-    path('transactions/', confirmar_pagamento, name='confirmar_pagamento'),
+    path('pagamento/sucesso/', confirmar_pagamento, name='pagamento_sucesso'),
     path('pagamento/falha/', pagamento_falha, name='pagamento_falha'),
     path('pagamento/pendente/', pagamento_pendente, name='pagamento_pendente'),
+    path('pedido_detalhe/<int:pedido_id>/', pedido_detalhe, name='pedido_detalhe'),
+     path('webhook/aceitar/<int:pedido_id>/<str:token>/', aceitar_pedido, name='aceitar_pedido'),
+    path('webhook/recusar/<int:pedido_id>/<str:token>/', recusar_pedido, name='recusar_pedido'),
+    path('revisar/<str:acao>/<int:pedido_id>/', revisar_pedido, name='revisar_pedido'),
+    path('pedido/pagamento/<int:pedido_id>/', pedido_pagamento, name='pedido_pagamento'),
+    path('verificar-status-pedido/<int:pedido_id>/', verificar_status_pedido, name='verificar-status-pedido'),
 
 
 

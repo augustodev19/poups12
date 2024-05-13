@@ -557,8 +557,6 @@
     margin: 15% auto; /* Centralizado verticalmente e horizontalmente */
     padding: 20px;
     border: 1px solid #888;
-    max-width: 80%;
-    width:50rem;
 }
 
 .close {
@@ -951,7 +949,6 @@
     padding: 20px;
     border-radius: 5px;
     width: 500px;
-    max-width: 90%;
 }
 
 

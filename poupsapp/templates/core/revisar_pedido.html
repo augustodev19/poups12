@@ -1,0 +1,12 @@
+<!-- Verifique se os nomes das variáveis estão corretos -->
+<form action="http://localhost:8976/webhook/aceitar/{{ pedido.id }}/" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token_para_aceitar }}">
+    <input type="submit" value="Aceitar Pedido">
+</form>
+
+<form action="http://localhost:8976/webhook/recusar/{{ pedido.id }}/" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token_para_recusar }}">
+    <input type="submit" value="Recusar Pedido">
+</form>

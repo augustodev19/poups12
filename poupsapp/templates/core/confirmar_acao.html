@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmar Ação do Pedido</title>
+</head>
+<body>
+    <h1>Detalhes do Pedido</h1>
+    <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
+    <p><strong>Total do Pedido:</strong> R${{ pedido.total }}</p>
+    <ul>
+        <h3>Itens do Pedido:</h3>
+        {% for item in pedido.itens_pedido.all %}
+        <li>{{ item.produto.nome }} - Quantidade: {{ item.quantidade }}, Preço Unitário: R${{ item.preco_unitario }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Verifica a ação necessária e mostra o formulário correspondente -->
+    {% if acao == 'aceitar' %}
+    <h2>Confirmar Aceitação do Pedido</h2>
+    {% if token_para_aceitar %}
+    <form action="{% url 'aceitar_pedido' pedido.id token_para_aceitar %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token_para_aceitar }}">
+        <input type="submit" value="Aceitar Pedido">
+    </form>
+    {% endif %}
+    {% elif acao == 'recusar' %}
+    <h2>Confirmar Recusa do Pedido</h2>
+    <form action="{% url 'recusar_pedido' pedido.id token_para_recusar %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token_para_recusar }}">
+        <input type="submit" value="Recusar Pedido">
+    </form>
+    {% endif %}
+
+    <p><a href="{{ pedido_url }}">Voltar aos detalhes do pedido</a></p>
+</body>
+</html>

@@ -110,8 +110,10 @@
 
                            
                      
-                            <a href="{%url 'home'%}" class="nav-item nav-link active">Quem Somos</a>
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Dúvidas</a>
+                            
+                            {%if user.cliente%}<a href="{%url 'home'%}" class="nav-item nav-link active">Meus Pedidos</a>
+                            {%endif%}
 
                      
 

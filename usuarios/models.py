@@ -2,12 +2,15 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from datetime import datetime
-import logging
 from django.utils import timezone
+from datetime import timedelta
+import logging
 import stripe
 from django.utils.timezone import timedelta
 from django.utils.translation import gettext_lazy as _
 import uuid
+from decimal import Decimal
+
 from poupsapp import settings
 from django import forms
 from PIL import Image
@@ -110,6 +113,19 @@ class CEP(models.Model):
 
     def __str__(self):
         return self.codigo
+
+def default_expiration_date():
+    return timezone.now() + timedelta(days=1)
+
+
+class TokenPedido(models.Model):
+    pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE)
+    token = models.CharField(max_length=64)
+    tipo = models.CharField(max_length=10)  # 'aceite' ou 'recusa'
+    expiracao = models.DateTimeField(default=default_expiration_date)
+
+    def __str__(self):
+        return f"{self.tipo} token para pedido {self.pedido.id} expira em {self.expiracao}"
 
 class Endereco(models.Model):
     rua = models.CharField(max_length=255)
@@ -238,7 +254,15 @@ class Pedido(models.Model):
     pontos = models.IntegerField(default=0)
     data = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     localizacao = models.CharField(blank=True, null=True, max_length=400)
-    confirmado = models.BooleanField(default=False)
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=50, default='none')  # Alterado de confirmado para estado
+    
+    def save(self, *args, **kwargs):
+        if self.total is not None:
+            # Convertendo 0.4 para Decimal antes da multiplicação
+            pontos_decimal = Decimal('0.4')  
+            self.pontos = int(self.total * pontos_decimal)
+        super(Pedido, self).save(*args, **kwargs)
 
 class ItemPedido(models.Model):
     pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE)
