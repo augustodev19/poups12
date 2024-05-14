@@ -9,6 +9,12 @@ from django.contrib.auth import login as auth_login
 from .forms import LoginForm
 from django.contrib.auth import authenticate
 import logging
+from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncYear
+
+from django.utils.timezone import now, datetime
+from django.db.models import Sum
+
 from django.utils.http import urlencode
 from django.urls import reverse
 import googlemaps
@@ -328,15 +334,107 @@ def editar_cliente(request):
 
     return render(request, 'core/editar_perfil.html', context)
 
+def get_sales_data(request):
+    # Supõe-se que a loja do usuário esteja autenticada
+    loja = request.user.loja
 
+    # Agrupando os pedidos por mês
+    monthly_totals = Pedido.objects.filter(loja=loja, data__year=timezone.now().year)\
+                                   .annotate(month=TruncMonth('data'))\
+                                   .values('month')\
+                                   .annotate(total_sales=Sum('total'))\
+                                   .order_by('month')
+
+    months = [mt['month'].strftime('%B') for mt in monthly_totals]
+    totals = [mt['total_sales'] or 0 for mt in monthly_totals]
+
+    return months, totals
+
+
+def get_annual_sales_data(request):
+    # Supõe-se que a loja do usuário esteja autenticada
+    loja = request.user.loja
+
+    # Agrupando os pedidos por ano
+    annual_totals = Pedido.objects.filter(loja=loja)\
+                                  .annotate(year=TruncYear('data'))\
+                                  .values('year')\
+                                  .annotate(total_sales=Sum('total'))\
+                                  .order_by('year')
+
+    years = [at['year'].year for at in annual_totals]
+    totals = [at['total_sales'] or 0 for at in annual_totals]
+
+    return years, totals
+
+def get_current_year_sales(request):
+    loja = request.user.loja
+    current_year = timezone.now().year
+    total_sales_current_year = Pedido.objects.filter(
+        loja=loja,
+        data__year=current_year
+    ).aggregate(total_sales=Sum('total'))['total_sales'] or 0
+
+    return total_sales_current_year
+
+def get_sales_by_month(request):
+    month = request.GET.get('month')
+    loja = request.user.loja
+    vendas = Pedido.objects.filter(loja=loja, data__month=month).values('data__day').annotate(total_dia=Sum('total'))
+    dias = list(vendas.values_list('data__day', flat=True))
+    totais = list(vendas.values_list('total_dia', flat=True))
+    return JsonResponse({
+        'dias': dias,
+        'totais': totais
+    })
 
 
 def editar_loja(request):
-    if not request.user.loja:
-        return redirect('login')
-    user = request.user.loja
+    loja = request.user.loja
+    months, monthly_totals = get_sales_data(request)
+    years, annual_totals = get_annual_sales_data(request)
+    current_year_sales = get_current_year_sales(request)  # Obtem o total de vendas do ano atual
+
     context = {
-        'loja':user
+        'months': months,
+        'monthly_totals': monthly_totals,
+        'years': years,
+        'annual_totals': annual_totals,
+        'current_year_sales': current_year_sales,  # Passa o total para o contexto
+        'loja': loja
+    }
+    return render(request, 'core/editar_index.html', context)
+
+
+def editar_loja1(request):
+    # Obter o mês selecionado ou usar o mês atual como padrão
+    selected_month = request.GET.get('month', now().month)
+
+    loja = request.user.loja
+
+    loja_id = request.user.loja.id
+
+    # Filtra os pedidos no mês e ano selecionado
+    sales_data = Pedido.objects.filter(
+        loja_id=loja_id,
+        data__year=now().year,
+        data__month=selected_month
+    ).values('data').annotate(total_vendas=Sum('total')).order_by('data')
+
+    sales_dates = [data['data'].strftime('%Y-%m-%d') for data in sales_data]
+    sales_totals = [data['total_vendas'] for data in sales_data]
+    pedidos_recentes = Pedido.objects.filter(loja=loja, data__month=timezone.now().month).aggregate(Sum('total'))
+    total_vendas = pedidos_recentes['total__sum'] if pedidos_recentes['total__sum'] else 0
+
+
+    context = {
+        'sales_dates': sales_dates,
+        'sales_totals': sales_totals,
+        'selected_month': int(selected_month),
+        'total_vendas': total_vendas,
+        'pedidos': Pedido.objects.filter(loja=loja).order_by('-data')[:10],  # últimos 10 pedidos
+        'loja':loja
+    
     }
     return render(request, 'core/editar_index.html', context)
 
@@ -545,3 +643,66 @@ def criar_subperfil(request):
     else:
         form = SubperfilForm()
     return render(request, 'core/criarSubperfil.html', {'form': form})
+
+def perfil_usuario(request):
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
+    
+    context = {
+        'cliente':cliente
+    }
+    
+    return render(request, 'core/perfil_usuario.html', context)
+
+def ver_pedidos_loja(request):
+    loja = request.user.loja  # Supõe que cada usuário autenticado tem uma loja associada
+    pedidos = Pedido.objects.filter(loja=loja).order_by('-data')
+    context = {
+        'pedidos': pedidos,
+        'loja': loja
+        }
+    return render(request, 'core/pedidos_loja.html', context)
+
+
+def criar_pedido_loja(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        total = Decimal(request.POST.get('total'))
+        descricao = request.POST.get('descricao')
+        metodo_pagamento = request.POST.get('pagamento')
+
+        try:
+            cliente = CustomUser.objects.get(username=username).cliente
+        except CustomUser.DoesNotExist:
+            messages.error(request, "Usuário não encontrado.")
+            return redirect('criar_pedido_loja')
+
+        if metodo_pagamento == 'pontos' and cliente.pontos < total:
+            messages.error(request, "Pontos insuficientes.")
+            return redirect('criar_pedido_loja')
+
+        pedido = Pedido.objects.create(
+            cliente=cliente,
+            loja=request.user.loja,
+            total=total,
+            descricao=descricao,
+            pagamento=metodo_pagamento,
+            status='entregue',
+            localizacao='Na loja'
+        )
+
+        if metodo_pagamento == 'pontos':
+            cliente.pontos -= total  # Desconta os pontos
+        # Adiciona pontos baseado em 0.4 do total gasto em reais
+        cliente.pontos += total * Decimal('0.4')
+        cliente.save()
+
+        messages.success(request, "Pedido criado com sucesso.")
+        return redirect('criar_pedido_loja')
+
+    context = {
+        'loja': request.user.loja
+    }
+    return render(request, 'core/criar_pedido.html', context)

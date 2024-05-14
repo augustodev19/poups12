@@ -152,6 +152,7 @@
         <!-- Modal Search End -->
 
 
+{%if itens%}
 <div id="carrinho" class="container d-flex flex-column align-items-start" style="margin-top:10rem; flex-grow:1">
     <h3>Endereço de Entrega:</h3>
 
@@ -186,15 +187,19 @@
     <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
     <button style="color:#fff; !important" class="btn btn-primary" start type="submit" id="botao-pagamento">Finalizar Compra</button>
 </form>
+   
 
-    
-
-<form class="mt-4"  method="post">
+<form class="mt-4"  method="post" action="{% url 'pagar_com_pontos' %}">
     {% csrf_token %}
     <button style="color:#fff; !important" class="btn btn-primary"  type="submit">Comprar com Poups</button>
 </form>
 
 </div>
+{%else%}
+<div class="d-flex container justify-content-center align-items-center" style="flex-grow:1; margin-top:5rem">
+<h2> Seu carrinho está vazio. </h2>
+</div>
+{%endif%}
 
 <script>    
 document.addEventListener('DOMContentLoaded', function() {
@@ -635,6 +640,7 @@ errorModal.show();
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Owl Carousel JS -->
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
 </body>

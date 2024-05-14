@@ -28,7 +28,9 @@ urlpatterns = [
     path('revisar/<str:acao>/<int:pedido_id>/', revisar_pedido, name='revisar_pedido'),
     path('pedido/pagamento/<int:pedido_id>/', pedido_pagamento, name='pedido_pagamento'),
     path('verificar-status-pedido/<int:pedido_id>/', verificar_status_pedido, name='verificar-status-pedido'),
-
+    path('pagar-com-pontos/', pagar_com_pontos, name='pagar_com_pontos'),
+    path('meus-pedidos/', pedidos_cliente, name='pedidos_cliente'),
+    path('confirmar_compra_poups/', confirmar_compra_credito, name='confirmar_compra_credito')
 
 
     

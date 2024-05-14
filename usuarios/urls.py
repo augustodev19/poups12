@@ -27,6 +27,12 @@ urlpatterns = [
     path('criar_subperfil/', criar_subperfil, name='criarSubperfil'),
     path('perfil_familia/', perfil_familia, name='perfil_familia'),
     path('tipo_perfil/', tipo_perfil, name='tipoPerfil'),
+    path('meu_perfil/', perfil_usuario, name='perfil_usuario'),
+    path('ajax/sales-by-month/', get_sales_by_month, name='sales-by-month'),
+    path('pedidos-loja/', ver_pedidos_loja, name='ver_pedidos_loja'),
+    path('criar-pedido_loja/', criar_pedido_loja, name='criar_pedido_loja')
+    
+    
 
 
 

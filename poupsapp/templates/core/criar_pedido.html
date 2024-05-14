@@ -1,0 +1,51 @@
+
+{%extends 'core/base-dashboard.html'%}
+{%load static%}
+{%block 'conteudo' %}
+      <div class="container-fluid">
+        <div class="container-fluid">
+   
+
+          
+          
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Criar Pedido</h5>
+              <div class="card" style="max-width:40rem">
+                <div class="card-body" >
+                    <form method="post" action="{% url 'criar_pedido_loja' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                          <label for="username" class="form-label">C.P.F do Cliente:</label>
+                          <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+            
+                        <div class="mb-3">
+                          <label for="total" class="form-label">Total do Pedido (R$):</label>
+                          <input type="number" class="form-control" id="total" name="total" step="0.01" required>
+                        </div>
+            
+                        <div class="mb-3">
+                          <label for="descricao" class="form-label">Descrição:</label>
+                          <textarea class="form-control" id="descricao" name="descricao"></textarea>
+                        </div>
+            
+                        <div class="mb-3">
+                          <label for="pagamento" class="form-label">Método de Pagamento:</label>
+                          <select class="form-control" id="pagamento" name="pagamento">
+                            <option value="reais">Reais</option>
+                            <option value="pontos">Pontos</option>
+                          </select>
+                        </div>
+            
+                        <button type="submit" class="btn btn-primary">Criar Pedido</button>
+                      </form>
+                </div>
+              </div>
+            </div>
+        </div>
+    
+
+
+
+ {%endblock%}

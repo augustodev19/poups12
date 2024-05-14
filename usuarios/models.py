@@ -206,6 +206,12 @@ class Produto(models.Model):
     pontos = models.IntegerField(default=0)
 
     # outros campos do produto
+    def save(self, *args, **kwargs):
+        if self.preco is not None:
+            # Convertendo 0.4 para Decimal antes da multiplicação
+            pontos_decimal = Decimal('0.4')  
+            self.pontos = int(self.preco * pontos_decimal)
+        super(Produto, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.nome
@@ -256,13 +262,9 @@ class Pedido(models.Model):
     localizacao = models.CharField(blank=True, null=True, max_length=400)
     payment_id = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, default='none')  # Alterado de confirmado para estado
+    pagamento = models.CharField(max_length=50, default='none')
+
     
-    def save(self, *args, **kwargs):
-        if self.total is not None:
-            # Convertendo 0.4 para Decimal antes da multiplicação
-            pontos_decimal = Decimal('0.4')  
-            self.pontos = int(self.total * pontos_decimal)
-        super(Pedido, self).save(*args, **kwargs)
 
 class ItemPedido(models.Model):
     pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE)

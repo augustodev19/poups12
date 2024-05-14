@@ -78,6 +78,10 @@
 {%if not user.is_authenticated%}
 
 <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'tipoPerfil'%}"><span>Criar Conta</a>
+{%elif cliente%}
+
+<a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'perfil_usuario'%}"><span>Editar perfil</a>
+
 
 {%endif%}
 {%if cliente%}
@@ -102,7 +106,7 @@
                                 </div>
                             </div>
 
-                            {%if user.is_authenticated == loja%}
+                            {%if loja%}
 
                             <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'editar_loja'%}"><span>Editar Loja</a>
 
@@ -112,7 +116,7 @@
                      
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Dúvidas</a>
                             
-                            {%if user.cliente%}<a href="{%url 'home'%}" class="nav-item nav-link active">Meus Pedidos</a>
+                            {%if user.cliente%}<a href="{%url 'pedidos_cliente'%}" class="nav-item nav-link active">Meus Pedidos</a>
                             {%endif%}
 
                      
@@ -123,7 +127,11 @@
                             <a href="#" class="position-relative me-4 my-auto">
                                 <i style="color:#fff; " class="abrir-carrinho fa fa-shopping-bag fa-2x"></i>
                             </a>
+                            {%if not user.is_authenticated%}
                             <a href="{%url 'tipoPerfil' %}" class="my-auto me-4">
+                              {%elif cliente%}
+                              <a href="{%url 'perfil_usuario' %}" class="my-auto me-4">
+                              {%endif%}
                                 <i style="color:#fff; !important" class="fas fa-user fa-2x"></i>
                             </a>
                           
@@ -222,16 +230,16 @@
 </div>
 
 <!-- Map Modal -->
-<div id="mapModal" class="modal-location">
-  <div class="modal-content">
+<div id="mapModal"  class="modal-location" style="z-index:99999;">
+  <div class="modal-content" style="width:90%; max-width:60rem; z-index:99999;">
     <span class="close" onclick="closeModal('mapModal')">&times;</span>
     <h3>Confirme sua localização</h3>
     <div id="map" style="width: 100%; height: 400px;"></div>
     <button class="btn btn-primary" id="requestStreetNumber" onclick="showNumberModal()" style="margin-top: 10px; color:#fff;">Confirmar Localização</button>
   </div>
 </div>
-<div id="numberModal" class="modal-location">
-  <div class="modal-content">
+<div id="numberModal" class="modal-location" style="z-index:99999;">
+  <div class="modal-content" style="max-width:35rem; width:90%;">
       <span class="close" onclick="closeModal('numberModal')">&times;</span>
       <h3>Informe o número do endereço</h3>
       <input type="text" id="streetNumber" placeholder="Digite o número do endereço aqui">
@@ -323,7 +331,7 @@ function updateAddressFromMarker() {
 function showNumberModal() {
   var modal = document.getElementById('numberModal');
   if (modal) {
-      modal.style.display = 'block'; // Ou 'flex' ou outro conforme seu CSS
+      modal.style.display = 'flex'; // Ou 'flex' ou outro conforme seu CSS
   } else {
       console.error('Modal for street number is not found');
   }

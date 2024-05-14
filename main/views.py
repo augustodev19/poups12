@@ -8,6 +8,10 @@ from asgiref.sync import async_to_sync
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 import secrets  # Importe esta biblioteca no início do arquivo
+import os
+from email.mime.image import MIMEImage
+
+from django.urls import reverse
 
 from pagseguro import PagSeguro
 import qrcode
@@ -296,44 +300,66 @@ def payment_notification(request):
 
 
 stripe.api_key = 'sk_test_51OUOvLK0evm2fcdGJpwO9LInadGfiwH2U0ftWu4DIQo32A6c5bTeUYwiKmvdSsdL3GhZyjw9p3d75sqzTKHQF0VR001NrAgjhZ'
-
+@login_required
 def comprar_credito(request):
     if request.method == 'POST':
-        valor_credito = int(request.POST.get('valor_credito'))  # valor em Reais
+        valor_credito = Decimal(request.POST.get('valor_credito'))
 
-        # Verificar se request.user é uma instância de Cliente
-        try:
-            # Supondo que Cliente tenha uma relação um-para-um com User
-            cliente = request.user.cliente
-        except Cliente.DoesNotExist:
-            # Tratar caso em que o perfil de cliente não existe
-            return redirect('login')  # Redirecionar para um local apropriado
+        # Calculando pontos
+        pontos_a_adicionar = valor_credito / Decimal('0.4')
 
-        # Atualizar o saldo do cliente antecipadamente
-        cliente.saldo_poups += Decimal(valor_credito)
-        cliente.save()
+        # Configuração do SDK do Mercado Pago
+        sdk = mercadopago.SDK('TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242')
+        
+        preference_data = {
+            "items": [
+                {
+                    "title": "Compra de pontos",
+                    "quantity": 1,
+                    "unit_price": float(valor_credito),
+                    "currency_id": "BRL"
+                }
+            ],
+            "payer": {
+                "email": request.user.email
+            },
+            "back_urls": {
+                "success": request.build_absolute_uri(reverse('confirmar_compra_credito')),
+                "failure": request.build_absolute_uri('/credito_cancelado/'),
+                "pending": request.build_absolute_uri('/credito_pendente/')
+            },
+            "auto_return": "approved",
+        }
 
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'brl',
-                    'unit_amount': valor_credito * 100,  # Convertendo para centavos
-                    'product_data': {
-                        'name': 'Crédito para conta',
-                    },
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=request.build_absolute_uri('/credito_sucesso/'),
-            cancel_url=request.build_absolute_uri('/credito_cancelado/'),
-        )
-
-        return redirect(checkout_session.url, code=303)
-
-    # Certifique-se de que esta linha está alinhada corretamente com o "if" acima
+        preference_response = sdk.preference().create(preference_data)
+        
+        # Checando a resposta antes de redirecionar
+        if 'response' in preference_response and 'init_point' in preference_response['response']:
+            request.session['pontos_a_adicionar'] = str(pontos_a_adicionar)
+            return redirect(preference_response['response']['init_point'])
+        else:
+            # Loga a resposta para inspeção se algo der errado
+            print("Resposta da criação da preferência:", preference_response)
+            messages.error(request, "Houve um erro ao criar a preferência de pagamento. Por favor, tente novamente.")
+            return redirect('comprar_credito')
     return render(request, 'core/comprar_credito.html')
+
+
+@login_required
+def confirmar_compra_credito(request):
+    if 'pontos_a_adicionar' in request.session:
+        pontos_a_adicionar = Decimal(request.session.pop('pontos_a_adicionar'))
+        cliente = request.user.cliente
+        
+        # Adicionar pontos ao cliente
+        cliente.pontos += pontos_a_adicionar
+        cliente.save()
+        
+        messages.success(request, "Créditos convertidos em pontos com sucesso!")
+    else:
+        messages.error(request, "Erro ao converter créditos em pontos.")
+    
+    return redirect('home')  # Ou redirecione para a página de status do crédito
 
 
 def loja1(request):
@@ -342,6 +368,8 @@ def loja1(request):
         'lojas':lojas
     }
     return render(request, 'core/loja1.html', context)
+
+
 
 
 
@@ -607,6 +635,8 @@ def criar_pagamento_checkout(request):
     # Redirecionar o usuário para a página de pagamento do Mercado Pago
     return redirect(preference_response['response']['init_point'])
 
+
+
 def pedido_detalhe(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id)  # Substitua Pedido pelo seu modelo de pedido se for diferente
     return render(request, 'core/pedido_detalhe.html', {'pedido': pedido})   
@@ -666,17 +696,22 @@ def enviar_email_pedido(request, pedido, itens_pedido):
             'pedido_url': pedido_url
         }
 
-        # Renderiza o template HTML para o email
         html_content = render_to_string('core/email_pedido_detalhe.html', context)
-        text_content = strip_tags(html_content)  # Cria uma versão de texto puro do HTML
+        text_content = strip_tags(html_content)
 
-        # Configura o email com partes de texto e HTML
-        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
+        email = EmailMultiAlternatives(subject, text_content, 'from@example.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
-        email.send()
-        enviar_webhook_pedido(pedido)
 
-        messages.success(request, "Email e webhook com detalhes do pedido enviados com sucesso.")
+        # Carregar a imagem diretamente
+        image_path = os.path.join(settings.BASE_DIR, 'static/img/dev122062_faz_uma_logo_parecida_com_ifood_para_uma_plataforma_c_a6720ce1-23ea-425a-9b63-d7921326b252 (1).png')
+        image_cid = 'image_cid'
+        with open(image_path, 'rb') as img:
+            mime_image = MIMEImage(img.read())
+            mime_image.add_header('Content-ID', f'<{image_cid}>')
+            email.attach(mime_image)
+
+        email.send()
+        messages.success(request, "Email com detalhes do pedido enviado com sucesso.")
     except Exception as e:
         messages.error(request, f"Erro ao enviar email: {str(e)}")
 
@@ -703,6 +738,7 @@ def confirmar_pagamento(request):
                 pontos=total_pontos_carrinho,
                 status='pendente',
                 payment_id=payment_id,
+                pagamento = 'reais',
                 localizacao=endereco
             )
             itens_pedido = []
@@ -764,16 +800,73 @@ def pedido_pagamento(request, pedido_id):
         'cliente':cliente
     }
     return render(request, 'core/pedido_pendente.html', context)
+@login_required
+def pagar_com_pontos(request):
+    carrinho = request.session.get('carrinho', {'itens': {}})
+    endereco = request.POST.get('endereco')
 
+    if not carrinho['itens']:
+        messages.error(request, "Seu carrinho está vazio.")
+        return redirect('carrinho')
+
+    cliente = request.user.cliente
+    total_geral_carrinho = Decimal('0.00')  # Inicializando como Decimal
+
+    for item_id, item in carrinho['itens'].items():
+        produto = Produto.objects.get(id=item_id)
+        quantidade = int(item['quantidade'])
+        preco = Decimal(item['preco'])
+        total_geral_carrinho += preco * quantidade
+
+    # Convertendo o total do carrinho em reais para pontos
+    # Cada ponto vale R$0.4, então o total de pontos necessário é total em reais dividido por 0.4
+    total_pontos_necessarios = total_geral_carrinho / Decimal('0.4')
+
+    if cliente.pontos >= total_pontos_necessarios:
+        pedido = Pedido.objects.create(
+            cliente=cliente,
+            loja=produto.categoria.loja,  # A loja pode ser acessada diretamente do primeiro produto
+            pagamento='pontos',
+            localizacao=endereco,
+            total=total_geral_carrinho,
+            status='pendente',
+        )
+
+        # Criando os itens do pedido
+        itens_pedido = []
+        for item_id, item in carrinho['itens'].items():
+            produto = Produto.objects.get(id=item_id)
+            item_pedido = ItemPedido.objects.create(
+                pedido=pedido,
+                produto=produto,
+                quantidade=quantidade,
+                preco_unitario=preco
+            )
+            itens_pedido.append(item_pedido)
+
+        # Atualizar os pontos do cliente
+        cliente.pontos -= total_pontos_necessarios
+        cliente.save()
+
+        # Enviar email com os detalhes do pedido
+        enviar_email_pedido(request, pedido, itens_pedido)
+
+        # Limpar o carrinho na sessão após a compra
+        del request.session['carrinho']
+
+        messages.success(request, "Pedido realizado com sucesso! Aguardando confirmação da loja.")
+        return redirect('home')  # Redirecione para a página que você considera apropriada
+    else:
+        messages.error(request, "Você não tem pontos suficientes para completar esta compra.")
+        return redirect('carrinho')
 def aceitar_pedido(request, pedido_id, token):
     logger.debug("Recebendo token...")
-    
     logger.debug(f"Token recebido: {token}")
+
     if not token:
         logger.error("Token não fornecido.")
         return HttpResponse("Token não fornecido.", status=400)
 
-    logger.debug(f"Procurando por token válido para pedido {pedido_id}")
     token_obj = TokenPedido.objects.filter(token=token, tipo='aceite', expiracao__gt=timezone.now(), pedido__id=pedido_id).first()
     if not token_obj:
         logger.error("Token inválido ou expirado.")
@@ -784,18 +877,23 @@ def aceitar_pedido(request, pedido_id, token):
         logger.error("Pedido não está pendente.")
         return HttpResponse("Pedido já foi processado.", status=400)
 
+    # Verificação do método de pagamento
+    if pedido.pagamento != 'pontos':
+        # Lógica de atualização de saldo para pagamentos que não são com pontos
+        percentual_para_loja = Decimal('0.85')
+        valor_a_transferir = pedido.total * percentual_para_loja
+        pedido.loja.saldo += valor_a_transferir
+        pedido.loja.save()
+        logger.info(f"Pedido {pedido_id} aceito com sucesso. R${valor_a_transferir} transferidos para a loja.")
+
     # Confirmar pedido
     pedido.status = 'confirmado'
     pedido.save()
     token_obj.delete()
 
-    # Atualizar saldo da loja
-    percentual_para_loja = Decimal('0.85')  # Convertendo para Decimal
-    valor_a_transferir = pedido.total * percentual_para_loja  # Ambos os operandos agora são Decimal
-    pedido.loja.saldo += valor_a_transferir
-    pedido.loja.save()
+    pedido.cliente.pontos += pedido.pontos
+    pedido.cliente.save()
 
-    logger.info(f"Pedido {pedido_id} aceito com sucesso. R${valor_a_transferir} transferidos para a loja.")
     return HttpResponse("Pedido aceito com sucesso!")
 
 
@@ -828,24 +926,46 @@ def recusar_pedido(request, pedido_id, token):
         return JsonResponse({'status': 'erro', 'mensagem': 'Token inválido ou expirado'}, status=400)
 
     pedido = get_object_or_404(Pedido, id=pedido_id)
-    #if pedido.loja != request.user.loja:
-        #return JsonResponse({'status': 'erro', 'mensagem': 'Permissão negada'}, status=403)
-
     if pedido.status != 'pendente':
         return JsonResponse({'status': 'erro', 'mensagem': 'Pedido não está em estado pendente'}, status=400)
 
-    # Realiza o reembolso antes de marcar o pedido como recusado
+    # Se o pagamento foi feito com pontos
+    if pedido.pagamento == 'pontos':
+        pedido.status = 'recusado'
+        pedido.save()
+        token_obj.delete()
+        return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado com sucesso'}, status=200)
+
+    # Realiza o reembolso para pagamentos que não são com pontos
     sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
-    payment_id = pedido.payment_id  # Asegure-se de armazenar o payment_id quando o pedido é criado
+    payment_id = pedido.payment_id
     refund_response = sdk.refund().create(payment_id)
 
     if refund_response["status"] == 201:
-        pedido.confirmado == False
+        pedido.status = 'recusado'
         pedido.save()
         token_obj.delete()
         return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado e pagamento reembolsado com sucesso'}, status=200)
     else:
         return JsonResponse({'status': 'erro', 'mensagem': 'Falha ao reembolsar o pagamento'}, status=500)
+
+def pedidos_cliente(request):
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
+        
+    if cliente is None:
+        return redirect('home')  # Certifique-se de que 'home' é o nome correto da sua URL para a página inicial
+
+    # Ordena os pedidos pelo campo 'data' em ordem decrescente
+    pedidos = Pedido.objects.filter(cliente=cliente).prefetch_related('itempedido_set').order_by('-data')
+    
+    context = {
+        'pedidos': pedidos,
+        'cliente': cliente
+    }
+    return render(request, 'core/pedidos_cliente.html', context)
 
 #def cartao(request):
 #    publicKey = getPublicKey()
