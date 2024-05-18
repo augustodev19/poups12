@@ -1,0 +1,21 @@
+<html>
+<head>
+</head>
+<body style="font-family: 'Arial', sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; line-height: 1.6;">
+    <h1 style="color: #4A90E2;">Detalhes do Pedido</h1>
+    <img style="border-radius: 50%; width: 100px; height: 100px;" src="cid:image_cid" alt="Imagem">
+    <p>Olá {{ pedido.loja.nome }},</p>
+    <p>Seu pedido foi criado com sucesso!</p>
+    <ul>
+        {% for item in itens_pedido %}
+        <li>{{ item.produto.nome }} - Quantidade: {{ item.quantidade }}, Preço: R${{ item.preco_unitario }}</li>
+        {% endfor %}
+    </ul>
+    <p>Total do Pedido: R${{ pedido.total }}</p>
+    <!-- <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}" style="color: #ffffff; text-decoration: none; background-color: #4A90E2; padding: 10px 20px; border-radius: 5px;">Clique aqui</a></p> -->
+    <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
+    <a href="http://localhost:8976/revisar/aceitar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
+    <a href="http://localhost:8976/revisar/recusar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
+    <p>Obrigado por comprar conosco!</p>
+</body>
+</html>

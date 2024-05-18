@@ -21,7 +21,7 @@
       </script>
       <div class="fluid-container d-flex justify-content-center" style="flex-grow:1">
       <div class="container mt-5">
-        <div class="d-flex mobile-flex justify-content-center align-items-start" style="gap:1rem;">
+        <div class="d-flex mobile-flex justify-content-center align-items-center" style="gap:1rem;">
           <div class="d-flex justify-content-center align-items-start flex-column mt-1">
             <!-- Imagem do Produto -->
             <img style="height:15rem; width:15rem; object-fit:cover; border-radius:4px;" src="{{ produto.foto.url }}" alt="{{ produto.nome }}" class="img-fluid">
@@ -38,7 +38,7 @@
             {%endif%}
             
             <!-- Input para Comentários -->
-            <div class="mb-3">
+            <div class="mb-3 d-none">
               <label for="comentarios" class="form-label">Comentários:</label>
               <textarea class="form-control" id="comentarios" rows="3"></textarea>
             </div>

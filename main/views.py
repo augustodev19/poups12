@@ -511,7 +511,7 @@ def remover_do_carrinho(request, produto_id):
         return JsonResponse({'status': 'error', 'message': 'Item não encontrado no carrinho.'})
 
 
-def checkout(request):
+def checkout1(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
     endereco = cliente.endereco if cliente else None
@@ -558,25 +558,35 @@ def pagamento_notificacao(request):
     return HttpResponse(status=200)
 
 def pagamento_sucesso(request):
-    keys_to_delete = ['carrinho', 'endereco', 'loja_id', 'cliente_id', 'total_geral_carrinho', 'total_pontos_carrinho']
-    for key in keys_to_delete:
-        if key in request.session:
-            del request.session[key]
     session_id = request.session.get('stripe_session_id')
     if session_id:
+        session = stripe.checkout.Session.retrieve(session_id)
+        metadata = session.metadata
+        frete = metadata.get('frete', '0.00')
+        
         pedido_id = cache.get(f'pedido_id_{session_id}')
         if pedido_id:
+            # Limpeza da sessão
+            keys_to_delete = [
+                'preference_id', 'total_geral_carrinho', 'total_pontos_carrinho',
+                'carrinho', 'endereco', 'loja_id', 'cliente_id', 'stripe_session_id'
+            ]
+            for key in keys_to_delete:
+                if key in request.session:
+                    del request.session[key]
+            
             messages.success(request, 'Pedido criado com sucesso!')
             return redirect('pedido_pagamento', pedido_id=pedido_id)
         else:
             messages.error(request, "Não foi possível encontrar o pedido.")
+            return redirect('home')
     else:
         messages.error(request, "Sessão de pagamento não encontrada.")
-    
-    return redirect('home')
+        return redirect('home')
 def pagamento_falha(request):
     # View para lidar com o redirecionamento de falha do pagamento
-    return HttpResponse("O pagamento falhou. Por favor, tente novamente.")
+    messages.error(request, 'O pagamento falhou. Por favor, tente novamente.')
+    return redirect('checkout')
 
 def pagamento_pendente(request):
     # View para lidar com o redirecionamento de pagamento pendente
@@ -636,6 +646,22 @@ def criar_pagamento_checkout(request):
         if loja is None:
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
 
+        # Adicionar o valor do frete ao total do pedido
+        valor_frete = Decimal(loja.valor_frete)
+        total_geral_carrinho += valor_frete
+
+        # Adicionar o frete como um item separado no Stripe
+        items.append({
+            'price_data': {
+                'currency': 'brl',
+                'product_data': {
+                    'name': 'Frete',
+                },
+                'unit_amount': int(valor_frete * 100),
+            },
+            'quantity': 1,
+        })
+
         endereco = request.POST.get('endereco')
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['total_pontos_carrinho'] = total_pontos_carrinho
@@ -654,7 +680,8 @@ def criar_pagamento_checkout(request):
                 'loja_id': loja.id,
                 'total_geral_carrinho': str(total_geral_carrinho),
                 'total_pontos_carrinho': total_pontos_carrinho,
-                'endereco': endereco
+                'endereco': endereco,
+                'frete': str(valor_frete)
             }
         )
         request.session['stripe_session_id'] = session.id
@@ -682,6 +709,16 @@ class StripeWebhookView(View):
             session = event['data']['object']
             if session.payment_status == 'paid':
                 handle_checkout_session(session)
+        elif event['type'] == 'charge.refunded':
+            charge = event['data']['object']
+            payment_intent_id = charge['payment_intent']
+            try:
+                pedido = Pedido.objects.get(payment_id=payment_intent_id)
+                pedido.status = 'reembolsado'
+                pedido.save()
+                # Aqui você pode notificar o cliente ou executar outras ações necessárias
+            except Pedido.DoesNotExist:
+                print(f"Pedido com payment_intent {payment_intent_id} não encontrado.")
 
         return JsonResponse({'status': 'success'}, status=200)
 
@@ -727,11 +764,16 @@ def handle_order_purchase(session, metadata, user_id):
             pontos=total_geral_carrinho * 0.4,
             status='pendente',
             pagamento='reais',
-            localizacao=endereco
+            localizacao=endereco,
+            payment_id=session.payment_intent  # Armazenando o payment_intent
         )
 
         line_items = stripe.checkout.Session.list_line_items(session.id)
         for item in line_items.data:
+            # Se o item for "Frete", não procurar um produto correspondente
+            if item.description.lower() == "frete":
+                continue
+            
             produto = Produto.objects.get(nome=item.description)
             ItemPedido.objects.create(
                 pedido=pedido,
@@ -1059,7 +1101,8 @@ def aceitar_pedido(request, pedido_id, token):
     pedido.cliente.pontos += pedido.pontos
     pedido.cliente.save()
 
-    return HttpResponse("Pedido aceito com sucesso!")
+    messages.success(request, 'Pedido aceito com sucesso!')
+    return redirect('home')
 
 
         
@@ -1082,6 +1125,7 @@ def revisar_pedido(request, pedido_id, acao):
         'token_para_recusar': token_para_recusar
     })
 
+@login_required
 def recusar_pedido(request, pedido_id, token):
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'erro', 'mensagem': 'Usuário não autenticado'}, status=403)
@@ -1102,17 +1146,16 @@ def recusar_pedido(request, pedido_id, token):
         return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado com sucesso'}, status=200)
 
     # Realiza o reembolso para pagamentos que não são com pontos
-    sdk = mercadopago.SDK("APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242")
-    payment_id = pedido.payment_id
-    refund_response = sdk.refund().create(payment_id)
-
-    if refund_response["status"] == 201:
+    try:
+        refund = stripe.Refund.create(payment_intent=pedido.payment_id)
         pedido.status = 'recusado'
         pedido.save()
         token_obj.delete()
-        return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado e pagamento reembolsado com sucesso'}, status=200)
-    else:
-        return JsonResponse({'status': 'erro', 'mensagem': 'Falha ao reembolsar o pagamento'}, status=500)
+        messages.success(request, 'Pedido recusado e pagamento reembolsado com sucesso')
+        return redirect('home')
+    except stripe.error.StripeError as e:
+        messages.error(request, 'Erro ao reembolsar o pagamento')
+        return redirect('home')
 
 
 
@@ -1133,7 +1176,38 @@ def pedidos_cliente(request):
         'cliente': cliente
     }
     return render(request, 'core/pedidos_cliente.html', context)
+def checkout(request):
+    carrinho = request.session.get('carrinho', {'itens': {}})
+    cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
+    endereco = cliente.endereco if cliente else None
+    total_geral_carrinho = Decimal('0.00')
+    total_frete = Decimal('0.00')
+    loja = None
+    # Aqui, vamos garantir que a imagem_url está sendo passada corretamente
+    itens_completos = []
+    for produto_id, item in carrinho.get('itens', {}).items():
+        produto = get_object_or_404(Produto, id=produto_id)
+        try:
+            loja = produto.categoria.loja
+        except:
+            loja = None
+        item['imagem_url'] = produto.foto.url if produto.foto else None
+        item['nome'] = produto.nome  # Já deve estar definido, mas só para garantir
+        preco = Decimal(item['preco'])
+        quantidade = item['quantidade']
+        total_geral_carrinho += preco * quantidade
+        frete = loja.valor_frete
+        total_frete += total_geral_carrinho + frete
+        itens_completos.append(item)  # Adiciona o item atualizado à lista
 
+    return render(request, 'core/checkout_test.html', {
+        'itens': itens_completos,  # Passa os itens atualizados para o template
+        'cliente': cliente,
+        'endereco': endereco,
+        'total_geral': total_geral_carrinho,
+        'total_frete': total_frete,
+        'loja':loja
+    })
 #def cartao(request):
 #    publicKey = getPublicKey()
 #    context = {

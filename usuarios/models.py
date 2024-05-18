@@ -298,6 +298,7 @@ class Subperfil(models.Model):
     titular = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='subperfis')
     nome = models.CharField(max_length=100)
     foto_perfil = models.ImageField(upload_to='subclientes_fotos/', blank=True, null=True)
+    is_titular = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nome
@@ -307,3 +308,12 @@ class Subperfil(models.Model):
             raise ValidationError('Não é possível adicionar mais de 4 subperfis para um titular.')
         super(Subperfil, self).save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        if self.is_titular:
+            raise ValidationError('O subperfil do titular não pode ser excluído.')
+        super(Subperfil, self).delete(*args, **kwargs)
+
+@receiver(post_save, sender=Cliente)
+def create_subperfil_titular(sender, instance, created, **kwargs):
+    if created and instance.plano_familia:
+        Subperfil.objects.create(titular=instance, nome=instance.username, is_titular=True)

@@ -32,7 +32,6 @@ urlpatterns = [
     path('meus-pedidos/', pedidos_cliente, name='pedidos_cliente'),
     path('confirmar_compra_poups/', confirmar_compra_credito, name='confirmar_compra_credito'),
     path('webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
-    
     # URL para o webhook (notificações do Mercado Pago)
 
 
