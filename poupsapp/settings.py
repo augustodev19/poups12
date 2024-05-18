@@ -38,16 +38,17 @@ SECRET_KEY = 'django-insecure-1q$$n3hh=h1f*n8i2lwjivc2dz2_ics324t0&5i7k10nmd3x69
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['poupecomprando.onrender.com.br', 'localhost', 'poupecomprando.com.br', 'poups12.onrender.com', '127.0.0.1', 'poupecomprando.com', 'www.poupecomprando.com', 'www.poupecomprando.com.br']
-CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'http://localhost:8976/*','http://localhost/*', 'https://poupecomprando.com/*', 'https://poups12.onrender.com/*', 'https://www.poupecomprando.com/*', 'https://www.poupecomprando.com.br/*']
+ALLOWED_HOSTS = ['poupecomprando.onrender.com.br', 'localhost', 'e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app', 'poupecomprando.com.br', 'poups12.onrender.com', '127.0.0.1', 'poupecomprando.com', 'www.poupecomprando.com', 'www.poupecomprando.com.br']
+CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'http://localhost:8976/*', 'https://e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app/*', 'http://localhost/*', 'https://poupecomprando.com/*', 'https://poups12.onrender.com/*', 'https://www.poupecomprando.com/*', 'https://www.poupecomprando.com.br/*']
     
 
 LOGOUT_REDIRECT_URL = 'home'
 
 
 AUTH_USER_MODEL = 'usuarios.CustomUser'
-
-
+MERCADO_PAGO_SECRET_KEY = '6947fa76368c6d59aae0f9934e64322507934292126d14931dd72ed35dc1d843'
+MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
+STRIPE_WEBHOOK_SECRET = 'whsec_d3qCuzswDz7H7muH7PbMbhYyyPKCVY6y'
 # Application definition
 
 INSTALLED_APPS = [
@@ -61,7 +62,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'usuarios',
     'main',
+    #'channels',
+    #'chat'
 ]
+
+#ASGI_APPLICATION = 'chat.asgi.application'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -81,7 +87,7 @@ STRIPE_PUBLIC_KEY = 'pk_test_51Mx8SXH8FtYk9H6oLmOmwNP8yKO29XU5tcspHDLo12OcNcgwLK
 STRIPE_SECRET_KEY = 'sk_test_51Mx8SXH8FtYk9H6oOyXhyLDWQDsb1buTECeanmrPt0FqXmsrFqFZHOl4Hbmh8eDeraiPCr3UJsXszK3zk2qNp6P3002L472K2E'
 
 ROOT_URLCONF = 'poupsapp.urls'
-
+MY_BASE_URL = 'https://poupecomprando.com.br'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

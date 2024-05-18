@@ -6,9 +6,17 @@ from django.db import transaction
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.core.mail import send_mail
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 import secrets  # Importe esta biblioteca no início do arquivo
 import os
+import hashlib
+from django.core.cache import cache
+
+import hmac
+from django.views import View
+from mercadopago import SDK
+
 from email.mime.image import MIMEImage
 
 from django.urls import reverse
@@ -299,7 +307,7 @@ def payment_notification(request):
     return JsonResponse({'error': 'invalid request'}, status=400)
 
 
-stripe.api_key = 'sk_test_51OUOvLK0evm2fcdGJpwO9LInadGfiwH2U0ftWu4DIQo32A6c5bTeUYwiKmvdSsdL3GhZyjw9p3d75sqzTKHQF0VR001NrAgjhZ'
+stripe.api_key = 'sk_test_51PHMq7CFqCCeinfhM7MDQ086AzXSszH5S6SbmHzNo2GnysN3AfZvJeVYzD8myLBvTHdCWqFQRfxTfFciwf2DFc3m00k6zHcMzu'
 @login_required
 def comprar_credito(request):
     if request.method == 'POST':
@@ -308,40 +316,39 @@ def comprar_credito(request):
         # Calculando pontos
         pontos_a_adicionar = valor_credito / Decimal('0.4')
 
-        # Configuração do SDK do Mercado Pago
-        sdk = mercadopago.SDK('TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242')
+        # Configuração do SDK do Stripe
         
-        preference_data = {
-            "items": [
-                {
-                    "title": "Compra de pontos",
-                    "quantity": 1,
-                    "unit_price": float(valor_credito),
-                    "currency_id": "BRL"
+        try:
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'brl',
+                        'product_data': {
+                            'name': 'Compra de pontos',
+                        },
+                        'unit_amount': int(valor_credito * 100),  # Converte para centavos
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=request.build_absolute_uri(reverse('editar_cliente')),
+                cancel_url=request.build_absolute_uri('/credito_cancelado/'),
+                metadata={
+                    'user_id': request.user.id,
+                    'pontos_a_adicionar': str(pontos_a_adicionar),
+                    'is_credit_purchase': 'true'  # Flag para indicar compra de crédito
                 }
-            ],
-            "payer": {
-                "email": request.user.email
-            },
-            "back_urls": {
-                "success": request.build_absolute_uri(reverse('confirmar_compra_credito')),
-                "failure": request.build_absolute_uri('/credito_cancelado/'),
-                "pending": request.build_absolute_uri('/credito_pendente/')
-            },
-            "auto_return": "approved",
-        }
+            )
 
-        preference_response = sdk.preference().create(preference_data)
-        
-        # Checando a resposta antes de redirecionar
-        if 'response' in preference_response and 'init_point' in preference_response['response']:
-            request.session['pontos_a_adicionar'] = str(pontos_a_adicionar)
-            return redirect(preference_response['response']['init_point'])
-        else:
-            # Loga a resposta para inspeção se algo der errado
-            print("Resposta da criação da preferência:", preference_response)
-            messages.error(request, "Houve um erro ao criar a preferência de pagamento. Por favor, tente novamente.")
-            return redirect('comprar_credito')
+            request.session['stripe_session_id'] = session.id  # Guardando o ID da sessão para uso futuro
+            return redirect(session.url)
+
+        except Exception as e:
+            print("Erro ao criar sessão de checkout:", str(e))
+            messages.error(request, "Houve um erro ao criar a sessão de pagamento. Por favor, tente novamente.")
+            return redirect('confirmar_compra_credito')
+
     return render(request, 'core/comprar_credito.html')
 
 
@@ -462,7 +469,6 @@ def adicionar_ao_carrinho(request, produto_id):
             'pontos': str(produto.pontos),
             'nome': produto.nome,
             'imagem_url': produto.foto.url if produto.foto else None  # Salvando a URL da imagem
-
         }
 
     request.session.modified = True
@@ -552,9 +558,22 @@ def pagamento_notificacao(request):
     return HttpResponse(status=200)
 
 def pagamento_sucesso(request):
-    # View para lidar com o redirecionamento de sucesso do pagamento
-    return HttpResponse("Pagamento bem-sucedido! Obrigado por sua compra.")
-
+    keys_to_delete = ['carrinho', 'endereco', 'loja_id', 'cliente_id', 'total_geral_carrinho', 'total_pontos_carrinho']
+    for key in keys_to_delete:
+        if key in request.session:
+            del request.session[key]
+    session_id = request.session.get('stripe_session_id')
+    if session_id:
+        pedido_id = cache.get(f'pedido_id_{session_id}')
+        if pedido_id:
+            messages.success(request, 'Pedido criado com sucesso!')
+            return redirect('pedido_pagamento', pedido_id=pedido_id)
+        else:
+            messages.error(request, "Não foi possível encontrar o pedido.")
+    else:
+        messages.error(request, "Sessão de pagamento não encontrada.")
+    
+    return redirect('home')
 def pagamento_falha(request):
     # View para lidar com o redirecionamento de falha do pagamento
     return HttpResponse("O pagamento falhou. Por favor, tente novamente.")
@@ -571,69 +590,219 @@ def get_pagseguro_api():
     pg = PagSeguro(email="augusto.webdeveloping@gmail.com", token="39FD640937A14E0A91310DEDE47AFF72", config={'sandbox': True})
     return pg
 
+
+# Configurações iniciais
+ACCESS_TOKEN = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
+sdk = SDK(ACCESS_TOKEN)
+
+import json
+logger = logging.getLogger(__name__)  # Configuração do logger para a view
+
+
+
+
 @login_required
 @require_http_methods(["POST"])
 def criar_pagamento_checkout(request):
-    access_token = 'TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242'
-    sdk = mercadopago.SDK(access_token)
-    carrinho = request.session.get('carrinho', {'itens': {}})
+    try:
+        carrinho = request.session.get('carrinho', {'itens': {}})
+        if not carrinho['itens']:
+            return JsonResponse({"erro": "Carrinho vazio."}, status=400)
 
-    if not carrinho['itens']:
-        return JsonResponse({"erro": "Carrinho vazio."}, status=400)
+        items = []
+        total_geral_carrinho = Decimal('0.00')
+        total_pontos_carrinho = 0
+        loja = None
 
-    # Supondo que você esteja armazenando IDs de produtos no carrinho
-    primeiro_produto_id = next(iter(carrinho['itens']))
-    primeiro_produto = Produto.objects.get(id=primeiro_produto_id)
-    loja = primeiro_produto.categoria.loja
-    endereco = request.POST.get('endereco')
-    items = [{
-        "title": item['nome'],
-        "quantity": int(item['quantidade']),
-        "unit_price": float(item['preco'])
-    } for item_id, item in carrinho['itens'].items()]
-    total_geral_carrinho = 0
-    total_pontos_carrinho = 0
-    for item_id, item in carrinho['itens'].items():
-        produto = Produto.objects.get(id=item_id)
-        quantidade = int(item['quantidade'])
-        total_geral_carrinho += float(item['preco']) * quantidade
-        total_pontos_carrinho += produto.pontos * quantidade
+        for item_id, item in carrinho['itens'].items():
+            produto = Produto.objects.get(id=item_id)
+            if not loja:
+                loja = produto.categoria.loja
 
-        request.session['total_geral_carrinho'] = total_geral_carrinho
+            items.append({
+                'price_data': {
+                    'currency': 'brl',
+                    'product_data': {
+                        'name': produto.nome,
+                    },
+                    'unit_amount': int(produto.preco * 100),
+                },
+                'quantity': item['quantidade'],
+            })
+            quantidade = int(item['quantidade'])
+            total_geral_carrinho += Decimal(produto.preco) * quantidade
+            total_pontos_carrinho += produto.pontos * quantidade
+
+        if loja is None:
+            return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
+
+        endereco = request.POST.get('endereco')
+        request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['total_pontos_carrinho'] = total_pontos_carrinho
-        request.session['endereco'] = endereco  # Armazenando o endereço
+        request.session['endereco'] = endereco
         request.session['loja_id'] = loja.id
         request.session['cliente_id'] = request.user.cliente.id
-  # Armazenando o ID da loja
-    items = [{
-        "title": Produto.objects.get(id=item_id).nome,
-        "quantity": int(item['quantidade']),
-        "unit_price": float(item['preco'])
-    } for item_id, item in carrinho['itens'].items()]
 
-    preference_data = {
-        "items": items,
-        "back_urls": {
-            "success": request.build_absolute_uri(reverse('pagamento_sucesso')),
-            "failure": request.build_absolute_uri(reverse('pagamento_falha')),
-            "pending": request.build_absolute_uri(reverse('pagamento_pendente'))
-        },
-        "auto_return": "approved",
-        "metadata": {
-            "cliente_id": request.user.cliente.id if hasattr(request.user, 'cliente') else None,
-            "total_geral_carrinho": total_geral_carrinho,
-            "total_pontos_carrinho": total_pontos_carrinho
-        }
-    }
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=items,
+            mode='payment',
+            success_url=request.build_absolute_uri(reverse('pagamento_sucesso')),
+            cancel_url=request.build_absolute_uri(reverse('pagamento_falha')),
+            metadata={
+                'user_id': request.user.id,
+                'loja_id': loja.id,
+                'total_geral_carrinho': str(total_geral_carrinho),
+                'total_pontos_carrinho': total_pontos_carrinho,
+                'endereco': endereco
+            }
+        )
+        request.session['stripe_session_id'] = session.id
+        return redirect(session.url)
+    except Exception as e:
+        messages.error(request, f"Erro ao criar pagamento: {str(e)}")
+        return redirect('checkout')
 
-    preference_response = sdk.preference().create(preference_data)
-    preference_id = preference_response['response']['id']
+@method_decorator(csrf_exempt, name='dispatch')
+class StripeWebhookView(View):
+    def post(self, request, *args, **kwargs):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
-    # Armazenar o ID da preferência na sessão também pode ser uma boa ideia
-    request.session['preference_id'] = preference_id
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError as e:
+            return JsonResponse({'status': 'invalid payload'}, status=400)
+        except stripe.error.SignatureVerificationError as e:
+            return JsonResponse({'status': 'invalid signature'}, status=400)
 
-    # Redirecionar o usuário para a página de pagamento do Mercado Pago
-    return redirect(preference_response['response']['init_point'])
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            if session.payment_status == 'paid':
+                handle_checkout_session(session)
+
+        return JsonResponse({'status': 'success'}, status=200)
+
+def handle_checkout_session(session):
+    metadata = session.get('metadata', {})
+    user_id = metadata.get('user_id')
+    is_credit_purchase = metadata.get('is_credit_purchase', 'false') == 'true'
+
+    if is_credit_purchase:
+        pontos_a_adicionar = Decimal(metadata.get('pontos_a_adicionar', '0'))
+        handle_credit_purchase(user_id, pontos_a_adicionar)
+    else:
+        # Aqui vamos assumir que podemos acessar a sessão do Django diretamente
+        handle_order_purchase(session, metadata, user_id)
+
+def handle_credit_purchase(user_id, pontos_a_adicionar):
+    try:
+        cliente = Cliente.objects.get(id=user_id)
+        cliente.pontos += pontos_a_adicionar
+        cliente.save()
+        
+        # Log successful handling
+        print(f"Créditos adicionados para o cliente {cliente.id}.")
+    except Cliente.DoesNotExist:
+        print(f"Cliente ID {user_id} não encontrado.")
+    except Exception as e:
+        print(f"Erro ao processar a sessão do checkout: {str(e)}")
+
+def handle_order_purchase(session, metadata, user_id):
+    loja_id = metadata.get('loja_id')
+    total_geral_carrinho = float(metadata.get('total_geral_carrinho', 0))
+    total_pontos_carrinho = int(metadata.get('total_pontos_carrinho', 0))
+    endereco = metadata.get('endereco', '')
+
+    try:
+        cliente = Cliente.objects.get(id=user_id)
+        loja = Loja.objects.get(id=loja_id)
+        
+        pedido = Pedido.objects.create(
+            cliente=cliente,
+            loja=loja,
+            total=total_geral_carrinho,
+            pontos=total_geral_carrinho * 0.4,
+            status='pendente',
+            pagamento='reais',
+            localizacao=endereco
+        )
+
+        line_items = stripe.checkout.Session.list_line_items(session.id)
+        for item in line_items.data:
+            produto = Produto.objects.get(nome=item.description)
+            ItemPedido.objects.create(
+                pedido=pedido,
+                produto=produto,
+                quantidade=item.quantity,
+                preco_unitario=produto.preco
+            )
+
+        enviar_email_pedido(None, pedido, pedido.itempedido_set.all())
+
+        # Aqui vamos usar um armazenamento intermediário
+        cache.set(f"pedido_id_{session.id}", pedido.id, timeout=300)
+
+        print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{session.id}')}")
+
+    except Cliente.DoesNotExist:
+        print(f"Cliente ID {user_id} não encontrado.")
+    except Loja.DoesNotExist:
+        print(f"Loja ID {loja_id} não encontrada.")
+    except Produto.DoesNotExist:
+        print(f"Produto não encontrado.")
+    except Exception as e:
+        print(f"Erro ao processar a sessão do checkout: {str(e)}")
+@csrf_exempt
+def confirmar_pagamento(request):
+    session_id = request.session.get('stripe_session_id')
+    if session_id:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
+            loja_id = request.session.get('loja_id')
+            cliente_id = request.user.id  # Assuming the user ID is the customer ID
+
+            loja = Loja.objects.get(id=loja_id)
+            print(loja)
+            cliente = Cliente.objects.get(id=cliente_id)
+
+            pedido = Pedido.objects.create(
+                cliente=cliente,
+                loja=loja,
+                total=session.amount_total / 100,  # Convert from cents
+                status='pendente',
+                pagamento='reais',
+                localizacao=request.session.get('endereco')
+            )
+            
+            line_items = stripe.checkout.Session.list_line_items(session.id)
+            for item in line_items.data:
+                produto = Produto.objects.get(nome=item.description)
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    produto=produto,
+                    quantidade=item.quantity,
+                    preco_unitario=produto.preco
+                )
+
+            # Chamando a função enviar_email_pedido com o request
+            enviar_email_pedido(request, pedido, ItemPedido.objects.filter(pedido=pedido))
+            keys_to_delete = ['carrinho', 'endereco', 'loja_id', 'cliente_id', 'total_geral_carrinho', 'total_pontos_carrinho']
+            for key in keys_to_delete:
+                if key in session:
+                    del session[key]
+            messages.success(request, 'Pedido criado com sucesso!')
+            return redirect('pedido_pagamento', pedido_id=pedido.id)
+        else:
+            messages.error(request, 'Pagamento não foi aprovado.')
+            return redirect('home')
+    else:
+        messages.error(request, 'Nenhuma sessão de pagamento encontrada.')
+        return redirect('home')
+
+
 
 
 
@@ -688,18 +857,18 @@ def gerar_token(pedido, tipo):
     
 def enviar_email_pedido(request, pedido, itens_pedido):
     try:
-        pedido_url = request.build_absolute_uri(reverse('pedido_detalhe', args=[pedido.id]))
         subject = 'Detalhes do Seu Pedido'
         context = {
             'pedido': pedido,
+            'loja': loja,
             'itens_pedido': itens_pedido,
-            'pedido_url': pedido_url
+            'pedido_url': f'https://e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app//pedido/{pedido.id}'
         }
 
         html_content = render_to_string('core/email_pedido_detalhe.html', context)
         text_content = strip_tags(html_content)
 
-        email = EmailMultiAlternatives(subject, text_content, 'from@example.com', [pedido.loja.email])
+        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
 
         # Carregar a imagem diretamente
@@ -711,69 +880,58 @@ def enviar_email_pedido(request, pedido, itens_pedido):
             email.attach(mime_image)
 
         email.send()
-        messages.success(request, "Email com detalhes do pedido enviado com sucesso.")
+        print("Email com detalhes do pedido enviado com sucesso.")
     except Exception as e:
-        messages.error(request, f"Erro ao enviar email: {str(e)}")
+        print(f"Erro ao enviar email: {str(e)}")
+# urls.py
+from django.urls import path
+from .views import handle_checkout_session, enviar_email_pedido
 
-def confirmar_pagamento(request):
-    sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
-    payment_id = request.GET.get('collection_id')
-    preference_id_from_get = request.GET.get('preference_id')
-    
-    if 'preference_id' in request.session and request.session['preference_id'] == preference_id_from_get:
-        payment_info = sdk.payment().get(payment_id)
-        if payment_info["status"] == 200 and payment_info["response"]["status"] == "approved":
-            endereco = request.session.get('endereco')
+urlpatterns = [
+    path('handle-checkout/', handle_checkout_session, name='handle_checkout'),
+    path('enviar-email-pedido/', enviar_email_pedido, name='enviar_email_pedido'),
+    # Adicione outras URLs aqui conforme necessário
+]
+
+
+def confirmar_pagamento1(request):
+    session_id = request.session.get('stripe_session_id')
+    if session_id:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
             loja_id = request.session.get('loja_id')
-            cliente_id = request.session.get('cliente_id')
-            total_geral_carrinho = request.session.get('total_geral_carrinho')
-            total_pontos_carrinho = request.session.get('total_pontos_carrinho')
+            cliente_id = request.user.id  # Assuming the user ID is the customer ID
 
             loja = Loja.objects.get(id=loja_id)
             cliente = Cliente.objects.get(id=cliente_id)
+
             pedido = Pedido.objects.create(
                 cliente=cliente,
                 loja=loja,
-                total=total_geral_carrinho,
-                pontos=total_pontos_carrinho,
+                total=session.amount_total / 100,  # Convert from cents
                 status='pendente',
-                payment_id=payment_id,
-                pagamento = 'reais',
-                localizacao=endereco
+                pagamento='reais',
+                localizacao=request.session.get('endereco')
             )
-            itens_pedido = []
-            carrinho = request.session.get('carrinho', {'itens': {}})
-            for item_id, item_details in carrinho['itens'].items():
-                produto = Produto.objects.get(id=item_id)
-                item_pedido = ItemPedido.objects.create(
+            
+            # Iterate over cart items again or use stored info in session
+            for item in session.line_items:
+                produto = Produto.objects.get(nome=item['name'])
+                ItemPedido.objects.create(
                     pedido=pedido,
                     produto=produto,
-                    quantidade=int(item_details['quantidade']),
-                    preco_unitario=float(item_details['preco']),
-                    imagem_url=item_details.get('imagem_url', None)
+                    quantidade=item['quantity'],
+                    preco_unitario=produto.preco
                 )
-                itens_pedido.append(item_pedido)
 
-            # Enviando o email com os detalhes do pedido
-            enviar_email_pedido(request, pedido, itens_pedido)  # Chamada para enviar o email
-            # Limpeza da sessão após criar o pedido
-            keys_to_delete = [
-                'preference_id', 'total_geral_carrin ho', 'total_pontos_carrinho',
-                'carrinho', 'endereco', 'loja_id', 'cliente_id'
-            ]
-            for key in keys_to_delete:
-                if key in request.session:
-                    del request.session[key]
-
-            request.session['last_payment_id'] = payment_id  # Preservando payment_id para uso posterior
-
+            enviar_email_pedido(request, pedido)
             messages.success(request, 'Pedido criado com sucesso!')
             return redirect('pedido_pagamento', pedido_id=pedido.id)
         else:
             messages.error(request, 'Pagamento não foi aprovado.')
             return redirect('home')
     else:
-        messages.error(request, 'Informação de pagamento não corresponde ou sessão expirada.')
+        messages.error(request, 'Nenhuma sessão de pagamento encontrada.')
         return redirect('home')
 
 
@@ -850,12 +1008,19 @@ def pagar_com_pontos(request):
 
         # Enviar email com os detalhes do pedido
         enviar_email_pedido(request, pedido, itens_pedido)
-
+        #channel_layer = get_channel_layer()
+        #async_to_sync(channel_layer.group_send)(
+        #    f'pedido_{loja.id}',  # Nome do grupo é o ID da loja
+        #    {
+        #        'type': 'pedido_message',
+        #        'message': f'Novo pedido {pedido.id} confirmado para sua loja.'
+        #    }
+        #)
         # Limpar o carrinho na sessão após a compra
         del request.session['carrinho']
 
         messages.success(request, "Pedido realizado com sucesso! Aguardando confirmação da loja.")
-        return redirect('home')  # Redirecione para a página que você considera apropriada
+        return redirect('pedido_pagamento', pedido_id=pedido.id)  # Redirecione para a página que você considera apropriada
     else:
         messages.error(request, "Você não tem pontos suficientes para completar esta compra.")
         return redirect('carrinho')
@@ -937,7 +1102,7 @@ def recusar_pedido(request, pedido_id, token):
         return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado com sucesso'}, status=200)
 
     # Realiza o reembolso para pagamentos que não são com pontos
-    sdk = mercadopago.SDK("TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242")
+    sdk = mercadopago.SDK("APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242")
     payment_id = pedido.payment_id
     refund_response = sdk.refund().create(payment_id)
 
@@ -948,6 +1113,8 @@ def recusar_pedido(request, pedido_id, token):
         return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado e pagamento reembolsado com sucesso'}, status=200)
     else:
         return JsonResponse({'status': 'erro', 'mensagem': 'Falha ao reembolsar o pagamento'}, status=500)
+
+
 
 def pedidos_cliente(request):
     try:
@@ -973,4 +1140,3 @@ def pedidos_cliente(request):
 #        'publicKey':publicKey
 #    }
 #    return render(request, 'core/cartao.html', context)
-    

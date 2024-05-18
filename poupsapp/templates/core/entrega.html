@@ -15,7 +15,7 @@
                         
                         <div class="mb-3">
                             <div id="emailHelp" class="mb-3 form-text">
-                                <p><strong>Deixe em branco em caso de frete gratuito</strong></p>
+                                <p><strong>Deixe em branco em caso de frete gratuito, e use '.' ao invés de ',' para definir valores decimais. </strong></p>
                             </div>
                     
                             <label for="valor_frete" class="form-label">Valor:</label>
@@ -40,7 +40,10 @@
                             <p><strong>Coloque o tempo estimado em minutos</strong></p>
 
                           <label for="exampleInputEmail1"  class="form-label">Tempo estimado:</label>
-                          <input type="text" class="form-control" name="tempo_entrega" value="{{loja.tempo_entrega}}" id="exampleInputEmail1" aria-describedby="emailHelp">
+                          <input type="text" class="mb-3 form-control" value="{{loja.tempo_entrega_min}}" aria-describedby="emailHelp"  type="number" name="tempo_entrega_min" placeholder="Mínimo">
+                          <input type="text" class="form-control" value="{{loja.tempo_entrega_max}}"  aria-describedby="emailHelp" type="number" name="tempo_entrega_max" placeholder="Máximo">
+                      
+                      
                         </div>
                        
                         <button type="submit" class="btn btn-primary">Enviar</button>

@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate
 import logging
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import TruncYear
+import mercadopago
 
 from django.utils.timezone import now, datetime
 from django.db.models import Sum
@@ -47,7 +48,7 @@ def registerCliente(request):
                 user.save()
 
                 cep = request.POST.get('cep')
-                complemento = request.POST.get('complemento')
+                numero = request.POST.get('numero')
 
                 if cep:
                     response = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
@@ -63,13 +64,13 @@ def registerCliente(request):
 
                         endereco, _ = Endereco.objects.get_or_create(
                             rua=data['logradouro'],
-                            complemento=complemento,
                             bairro=bairro,
                             cidade=cidade,
                             estado=estado,
                             cep=cep_obj,
                             latitude=latitude,
-                            longitude=longitude
+                            longitude=longitude,
+                            numero=numero
                         )
 
                         user.endereco = endereco
@@ -491,6 +492,17 @@ def remover_produto(request, produto_id):
         messages.error(request, 'Método inválido.')
         return redirect('catalogo')
 
+
+def remover_categoria(request, categoria_id):
+    if request.method == 'POST':
+        categoria = get_object_or_404(CategoriaProduto, id=categoria_id)
+        categoria.delete()
+        messages.success(request, 'Categoria removida com sucesso.')
+        return redirect('catalogo')
+    else:
+        messages.error(request, 'Método inválido.')
+        return redirect('catalogo')
+
 def buscar_produto(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
     dados = {
@@ -517,8 +529,11 @@ def entrega(request):
             
 
         elif 'tempo' in request.POST and form.is_valid():
-            tempo = form.cleaned_data['tempo_entrega']
-            loja.tempo_entrega = tempo  # Aqui é onde a correção foi feita
+            tempo_min = form.cleaned_data['tempo_entrega_min']
+            tempo_max = form.cleaned_data['tempo_entrega_max']
+
+            loja.tempo_entrega_max = tempo_max
+            loja.tempo_entrega_min = tempo_min  # Aqui é onde a correção foi feita
             loja.save()
             return redirect('entrega')
 
@@ -560,36 +575,55 @@ def criar_produto(request):
 
     loja = request.user.loja
     produto_form = ProdutoForm()
+    categoria_form = CategoriaForm()  # Adiciona o formulário de categoria
 
     if request.method == 'POST':
-        produto_form = ProdutoForm(request.POST, request.FILES)
-        if produto_form.is_valid():
-            novo_produto = produto_form.save(commit=False)
-            categoria_id = request.POST.get('categoriaId')
-            novo_produto.categoria = CategoriaProduto.objects.get(id=categoria_id)
-            novo_produto.save()
-            opcaoIndex = 0
-            while True:
-                opcao_nome = request.POST.get(f'nome_opcao_{opcaoIndex}')
-                if not opcao_nome:
-                    break
+        if 'produto_submit' in request.POST:
+            produto_form = ProdutoForm(request.POST, request.FILES)
+            if produto_form.is_valid():
+                novo_produto = produto_form.save(commit=False)
+                categoria_id = request.POST.get('categoriaId')
+                novo_produto.categoria = CategoriaProduto.objects.get(id=categoria_id)
+                novo_produto.save()
 
-                opcao_data = {
-                    'nome': opcao_nome,
-                    'descricao': request.POST.get(f'descricao_opcao_{opcaoIndex}')
-                }
-                opcao_form = OpcaoForm(opcao_data, {'foto': request.FILES.get(f'foto_opcao_{opcaoIndex}')})
-                if opcao_form.is_valid():
-                    nova_opcao = opcao_form.save(commit=False)
-                    nova_opcao.produto = novo_produto
-                    nova_opcao.save()
+                opcaoIndex = 0
+                while True:
+                    opcao_nome = request.POST.get(f'nome_opcao_{opcaoIndex}')
+                    if not opcao_nome:
+                        break
 
-                opcaoIndex += 1
+                    opcao_data = {
+                        'nome': opcao_nome,
+                        'descricao': request.POST.get(f'descricao_opcao_{opcaoIndex}'),
+                        'foto': request.FILES.get(f'foto_opcao_{opcaoIndex}')
+                    }
+                    opcao_form = OpcaoForm(opcao_data)
+                    if opcao_form.is_valid():
+                        nova_opcao = opcao_form.save(commit=False)
+                        nova_opcao.produto = novo_produto
+                        nova_opcao.save()
+                    opcaoIndex += 1
+
                 return redirect('catalogo')
-        else:
-            print(produto_form.errors)
 
-    context = {'produto_form': produto_form, 'loja': loja}
+            else:
+                print(produto_form.errors)
+
+        elif 'categoria_submit' in request.POST:
+            categoria_form = CategoriaForm(request.POST)
+            if categoria_form.is_valid():
+                nova_categoria = categoria_form.save(commit=False)
+                nova_categoria.loja = loja
+                nova_categoria.save()
+                return redirect('catalogo')  # Redireciona após salvar a categoria
+            else:
+                print(categoria_form.errors)
+
+    context = {
+        'produto_form': produto_form,
+        'categoria_form': categoria_form,  # Adiciona o formulário de categoria no contexto
+        'loja': loja
+    }
     return render(request, 'core/catalogo.html', context)
 
 # View para editar um produto existente
@@ -666,6 +700,32 @@ def ver_pedidos_loja(request):
     return render(request, 'core/pedidos_loja.html', context)
 
 
+def marcar_como_entregue(request):
+    try:
+        loja = request.user.loja
+    except: 
+        loja = None
+        return redirect('home')
+    pedidos = Pedido.objects.filter(loja=loja).order_by('-data')
+    pedido_id = request.POST.get('pedido_id')
+    if request.method == 'POST':
+        pedido = get_object_or_404(Pedido, id=pedido_id, loja=request.user.loja)
+
+        if pedido.status == 'confirmado':
+            pedido.status = 'entregue'
+            pedido.save()
+            messages.success(request, "Pedido marcado como entregue com sucesso.")
+        else:
+            messages.error(request, "Pedido não pode ser marcado como entregue.")
+
+    context = {
+        'loja':loja,
+        'pedidos':pedidos
+    }
+    return render(request, 'core/confirmar_entrega.html', context)
+    
+
+
 def criar_pedido_loja(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -706,3 +766,40 @@ def criar_pedido_loja(request):
         'loja': request.user.loja
     }
     return render(request, 'core/criar_pedido.html', context)
+
+def sacar_dinheiro(request):
+    loja = request.user.loja
+    if request.method == 'POST':
+        valor = request.POST.get('valor')
+        chave_pix = request.POST.get('chave_pix')
+        sdk = mercadopago.SDK('TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242')
+
+        # Criando um pagamento PIX
+        payment_data = {
+            "transaction_amount": float(valor),
+            "payment_method_id": "pix",
+            "payer": {
+                "email": request.user.email  # Email da conta do usuário/loja no Mercado Pago
+            },
+            "description": "Saque da loja via PIX"
+        }
+
+        payment_response = sdk.payment().create(payment_data)
+        payment_status = payment_response.get("status")
+
+        if payment_status == 201:
+            # Subtraindo o valor do saldo da loja
+            loja.saldo -= Decimal(valor)
+            loja.save()  # Não esqueça de salvar as alterações no modelo da loja
+
+            messages.success(request, "Saque realizado com sucesso!")
+            return redirect('sacar_dinheiro')
+        else:
+            error_message = payment_response.get("response", {}).get("message", "Erro desconhecido")
+            messages.error(request, f"Falha ao realizar saque: {error_message}")
+            return redirect('sacar_dinheiro')
+
+    context = {
+        'loja': loja
+    }
+    return render(request, 'core/financeiro.html', context)

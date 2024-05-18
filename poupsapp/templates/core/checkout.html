@@ -191,6 +191,8 @@
 
 <form class="mt-4"  method="post" action="{% url 'pagar_com_pontos' %}">
     {% csrf_token %}
+    <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form2" />
+
     <button style="color:#fff; !important" class="btn btn-primary"  type="submit">Comprar com Poups</button>
 </form>
 

@@ -19,6 +19,7 @@
             <!-- Formulário para criar nova categoria -->
             <form method="POST" id="categoriaForm">
                 {% csrf_token %}
+
                 <div class="form-group mb-3">
                     <label for="nomeCategoria">Nome da Categoria:</label>
                     <input type="text" id="nomeCategoria" name="nome" class="form-control">
@@ -59,6 +60,10 @@
                           <button class="mb-3 btn btn-secondary" onclick="abrirFormularioProduto({{ categoria.id }}, '{{categoria.nome}}')">
                               Criar Produto para "{{ categoria.nome }}"
                           </button>
+                          <form action="{% url 'remover_categoria' categoria.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit">Remover Categoria</button>
+                        </form>
                       </div>
                     </div>
                     </div>
@@ -75,10 +80,11 @@
                 <h5 class="card-title fw-semibold mb-4">Produtos Criados</h5>
             
             
-         <!-- Lista de categorias --><div class="card">
-          <div class="card-body">
+         <!-- Lista de categorias -->
             <div id="categorias" class="mt-5 d-flex flex-column">
               {% for categoria in loja.categoriaproduto_set.all %}
+              <div class="card">
+                <div class="card-body">
               <h3>{{ categoria.nome }}</h3>
               {% for produto in categoria.produto_set.all %}
                   <div class="categoria-item mb-4">
@@ -100,9 +106,10 @@
         <img style="height:6rem;" src="{{opcao.foto.url}}"></div>
     {% endfor %}
                   {%endfor%}
+        </div>
+      </div>
           {% endfor %}
-            </div>
-            </div>
+          
             </div>
             </div>
 

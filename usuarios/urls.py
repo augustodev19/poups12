@@ -30,16 +30,10 @@ urlpatterns = [
     path('meu_perfil/', perfil_usuario, name='perfil_usuario'),
     path('ajax/sales-by-month/', get_sales_by_month, name='sales-by-month'),
     path('pedidos-loja/', ver_pedidos_loja, name='ver_pedidos_loja'),
-    path('criar-pedido_loja/', criar_pedido_loja, name='criar_pedido_loja')
-    
-    
-
-
-
-
-
-
-
+    path('criar-pedido_loja/', criar_pedido_loja, name='criar_pedido_loja'),
+    path('sacar/', sacar_dinheiro, name='sacar_dinheiro'),
+    path('categoria/remover/<int:categoria_id>/', remover_categoria, name='remover_categoria'),
+    path('pedidos_pendentes/', marcar_como_entregue, name='pedidos_pendentes'),
 
 ]
 

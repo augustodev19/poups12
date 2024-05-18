@@ -8,7 +8,8 @@
       <!-- left column -->
       <div class="col-md-3">
         <div class="text-center">
-          <img style="height:3rem; width:3rem; border-radius:50%;" src="{{cliente.foto.url}}" class="avatar img-circle" alt="avatar">
+          {%if cliente.foto %}<img style="height:3rem; width:3rem; border-radius:50%;" src="{{cliente.foto.url}}" class="avatar img-circle" alt="avatar">
+          {%endif%}
           <h6>{{cliente.nome}}</h6>
           <h6>Poups: {{cliente.pontos}}</h6>
           <input type="file" class="form-control">

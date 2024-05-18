@@ -7,7 +7,7 @@
     </div>
 
     {% for pedido in pedidos %}
-    {%if pedido.status == 'entregue'%}
+    {%if pedido.status == 'confirmado' or pedido.status == 'pendente'%}
     <div class="mt-4">
         <h4 style="color:#000">Pedido #{{ pedido.id }}</h4>
         <div class="d-flex justify-content-between">
@@ -20,9 +20,16 @@
         </div>
         <div class="d-flex justify-content-between">
             <p style="color:#333 !important;">Status:</span> 
-        
+                
             <p style="color:#333 !important; text-transform:capitalize;" class="fw-bold">{{ pedido.status}}</p>
         </div>
+        {% if pedido.status == 'confirmado' %}
+    <form action="{% url 'pedidos_pendentes' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+        <button type="submit" class="btn btn-success">Marcar como Entregue</button>
+    </form>
+    {% endif %}
         <div class="d-flex justify-content-between">
             <p style="color:#333 !important;">Meio de Pagamento:</span> 
             {%if pedido.pagamento == 'pontos'%}<p style="color:#333 !important;" class="fw-bold">Pontos</p>
@@ -55,4 +62,5 @@
     <p>Não há pedidos realizados.</p>
     {% endfor %}
 </div>
+
 {% endblock %}

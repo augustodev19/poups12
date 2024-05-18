@@ -33,7 +33,7 @@ class LojaRegistrationForm(UserCreationForm):
 class LojaForm(ModelForm):
     class Meta:
         model = Loja
-        fields = [ 'valor_frete', 'tempo_entrega']
+        fields = [ 'valor_frete', 'tempo_entrega', 'tempo_entrega_min', 'tempo_entrega_max']
 
 
 class EditarClienteForm(ModelForm):

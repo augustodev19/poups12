@@ -114,12 +114,54 @@
     </div>
 
     <div class="wrap-input100 validate-input" data-validate = "CEP is required">
-        <input class="input100" type="text" name="cep" placeholder="CEP">
+        <input class="input100" type="text" name="cep" id="cep" placeholder="CEP">
         <span class="focus-input100"></span>
         <span class="symbol-input100">
-            <i>&#xf124;</i>
+            <i class="fa fa-home" aria-hidden="true"></i>
         </span>
     </div>
+    <div class="wrap-input100 validate-input" data-validate = "Endereço is required">
+        <input class="input100" type="text" name="endereco" id="endereco" placeholder="Endereço">
+        <span class="focus-input100"></span>
+        <span class="symbol-input100">
+            <i class="fa fa-road" aria-hidden="true"></i>
+        </span>
+    </div>
+    <div class="wrap-input100 validate-input" data-validate = "Logradouro is required">
+        <input class="input100" type="text" name="bairro" id="bairro" placeholder="Bairro">
+        <span class="focus-input100"></span>
+        <span class="symbol-input100">
+            <i class="fa fa-map-marker" aria-hidden="true"></i>
+        </span>
+    </div>
+    <div class="wrap-input100 validate-input" data-validate = "Número is required">
+        <input class="input100" type="text" name="numero" id="numero" placeholder="Número">
+        <span class="focus-input100"></span>
+        <span class="symbol-input100">
+            <i class="fa fa-building" aria-hidden="true"></i>
+        </span>
+    </div>
+    <script>
+        document.getElementById('cep').addEventListener('blur', function(e) {
+            var cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('endereco').value = data.logradouro;
+                        document.getElementById('bairro').value = data.bairro;
+                        // O número geralmente não é fornecido pela API
+                    } else {
+                        alert("CEP não encontrado.");
+                    }
+                })
+                .catch(() => alert("Erro ao buscar o CEP."));
+            } else {
+                alert("Formato de CEP inválido.");
+            }
+        });
+    </script>
     <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
     <!-- Botão para ir para o Passo 2 -->
     <div class="d-flex align-items-center" style="gap:1rem;">
@@ -183,32 +225,9 @@
 </div>
 
                  <!-- Passo 3: Informações Básicas -->
-                 <div id="step5" class="step" style="display:none;">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="email_pagseguro" placeholder="Email PAGBANK">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-phone" aria-hidden="true"></i>
-						</span>
-					</div>
-
-					<div class="wrap-input100 validate-input" data-validate = "CEP is required">
-						<input class="input100" type="text" name="token_pagseguro" placeholder="Token PAGBANK">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-                            <i>&#xf124;</i>
-						</span>
-					</div>
-                    <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
-                    <!-- Botão para ir para o Passo 2 -->
-                    <div class="d-flex align-items-center" style="gap:1rem;">
-                        <button type="button" onclick="showStep(4)">Anterior</button>
-                        <button type="button" onclick="showStep(6)">Próximo</button>
-                        </div>
-                </div>
-                
+                 
                 <!-- Passo 4: Confirmação -->
-                <div id="step6" class="step" style="display:none;">
+                <div id="step5" class="step" style="display:none;">
                     <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
 						<input class="input100" type="password" name="password1" placeholder="Senha">
 						<span class="focus-input100"></span>
@@ -225,7 +244,7 @@
 						</span>
 					</div>
                     <div class="d-flex align-items-center" style="gap:1rem;">
-                    <button type="button" onclick="showStep(5)">Anterior</button>
+                    <button type="button" onclick="showStep(4)">Anterior</button>
                     <button type="submit">Enviar</button>
 
                     </div>

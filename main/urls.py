@@ -19,7 +19,7 @@ urlpatterns = [
     path('remover_do_carrinho/<int:produto_id>/', remover_do_carrinho, name='remover_do_carrinho'),
     path('checkout/', checkout, name="checkout"),
     path('criar_pagamento_checkout/', criar_pagamento_checkout, name='criar_pagamento_checkout'),
-    path('pagamento/sucesso/', confirmar_pagamento, name='pagamento_sucesso'),
+    path('pagamento/sucesso/', pagamento_sucesso, name='pagamento_sucesso'),
     path('pagamento/falha/', pagamento_falha, name='pagamento_falha'),
     path('pagamento/pendente/', pagamento_pendente, name='pagamento_pendente'),
     path('pedido_detalhe/<int:pedido_id>/', pedido_detalhe, name='pedido_detalhe'),
@@ -30,9 +30,8 @@ urlpatterns = [
     path('verificar-status-pedido/<int:pedido_id>/', verificar_status_pedido, name='verificar-status-pedido'),
     path('pagar-com-pontos/', pagar_com_pontos, name='pagar_com_pontos'),
     path('meus-pedidos/', pedidos_cliente, name='pedidos_cliente'),
-    path('confirmar_compra_poups/', confirmar_compra_credito, name='confirmar_compra_credito')
-
-
+    path('confirmar_compra_poups/', confirmar_compra_credito, name='confirmar_compra_credito'),
+    path('webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
     
     # URL para o webhook (notificações do Mercado Pago)
 

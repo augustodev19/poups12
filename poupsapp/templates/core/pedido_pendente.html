@@ -8,7 +8,11 @@
     <div style="margin-top:10rem;" class="container flex-column align-items-center justify-content-center d-flex w-100 main-container mb-4">
         <span class="text-center fw-bold" style="font-size:1.4rem; color:#333">
             Previsão de Entrega:<br>
-            {{pedido.loja.tempo_entrega|default:"60 - 75min"}}
+            {%if pedido.loja.tempo_entrega_min%}
+            {{pedido.loja.tempo_entrega_min}} - {{pedido.loja.tempo_entrega_max}}min
+            {%else%}
+            60 - 75min
+            {%endif%}
         </span>
     
 

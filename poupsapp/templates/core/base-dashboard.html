@@ -53,15 +53,23 @@
                 <span>
                   <i class="ti ti-article"></i>
                 </span>
-                <span class="hide-menu">Pedidos</span>
+                <span class="hide-menu">Pedidos Entregues</span>
               </a>
             </li>
-            <li class="sidebar-item d-none">
-              <a class="sidebar-link" href="./ui-alerts.html" aria-expanded="false">
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="{%url 'pedidos_pendentes'%}" aria-expanded="false">
+                <span>
+                  <i class="ti ti-article"></i>
+                </span>
+                <span class="hide-menu">Pedidos Pendentes</span>
+              </a>
+            </li>
+            <li class="sidebar-item ">
+              <a class="sidebar-link" href="{%url 'sacar_dinheiro' %}" aria-expanded="false">
                 <span>
                   <i class="ti ti-alert-circle"></i>
                 </span>
-                <span class="d-none hide-menu">Financeiro</span>
+                <span class=" hide-menu">Saque</span>
               </a>
             </li>
             <li class="sidebar-item ">

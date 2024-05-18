@@ -5,6 +5,8 @@ from datetime import datetime
 from django.utils import timezone
 from datetime import timedelta
 import logging
+from channels.generic.websocket import AsyncWebsocketConsumer
+import json
 import stripe
 from django.utils.timezone import timedelta
 from django.utils.translation import gettext_lazy as _
@@ -165,6 +167,8 @@ class Loja(CustomUser):
     frete_gratis = models.BooleanField(default=False)
     vale_refeicao = models.ManyToManyField(ValeRefeicao, related_name='vale_refeicao', blank=True)
     tempo_entrega = models.IntegerField(blank=True, null=True)
+    tempo_entrega_min = models.IntegerField(blank=True, null=True)
+    tempo_entrega_max = models.IntegerField(blank=True, null=True)
     token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
@@ -238,6 +242,8 @@ class ItemOpcao(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.opcao.nome}"
+
+
 
 
 
