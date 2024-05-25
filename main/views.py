@@ -787,8 +787,13 @@ def criar_pagamento_pix(request):
 
         request.session['pix_charge_id'] = charge.charge_id
 
-        # Renderizar a página HTML com o QR Code
-        return render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge']})
+        # Renderizar a página HTML com o QR Code e agendar a tarefa
+        response = render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge']})
+        
+        # Schedule the task to check charge status after rendering the page
+        check_charge_status.apply_async((charge.charge_id,), countdown=60)
+        
+        return response
 
     except Exception as e:
         messages.error(request, f"Erro ao criar pagamento Pix: {str(e)}")
@@ -803,7 +808,7 @@ def check_charge_status(charge_id):
         response = requests.get(f"{API_URL}/{charge_id}", headers=HEADERS)
         charge_data = response.json()
 
-        if charge_data['charge']['status'] == 'paid':
+        if 'charge' in charge_data and charge_data['charge']['status'] == 'PAID':
             charge.status = 'paid'
             charge.save()
             handle_pix_payment(charge_id)
