@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from usuarios.forms import *
 from .models import *
+from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -24,67 +26,70 @@ from .forms import *
 from geopy.geocoders import Nominatim
 from django.contrib.auth import authenticate, login
 
+# Configuração básica do logger
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-# Create your views here.
 def registerCliente(request):
+    logger.debug("Iniciando o processo de registro do cliente")
     form = ClienteRegistrationForm()
 
     if request.method == 'POST':
         form = ClienteRegistrationForm(request.POST, request.FILES)
-        
+        logger.debug(f"Form POST recebido: {form}")
+
         if form.is_valid():
-           
-                user = Cliente.objects.create_user(
-                    nome = form.cleaned_data['nome'],
-                    username = form.cleaned_data['username'],
-                    telefone = form.cleaned_data['telefone'],
-                    email=form.cleaned_data['email'],
-                    foto = form.cleaned_data['foto'],
-                    password=form.cleaned_data['password1'],
-              
-                 
-                  
-                )
-                user.save()
+            logger.debug("Formulário é válido")
+            user = Cliente.objects.create_user(
+                nome=form.cleaned_data['nome'],
+                username=form.cleaned_data['username'],
+                telefone=form.cleaned_data['telefone'],
+                email=form.cleaned_data['email'],
+                foto=form.cleaned_data['foto'],
+                password=form.cleaned_data['password1'],
+            )
+            user.save()
+            logger.debug(f"Usuário criado: {user}")
 
-                cep = request.POST.get('cep')
-                numero = request.POST.get('numero')
+            cep = request.POST.get('cep')
+            numero = request.POST.get('numero')
 
-                if cep:
-                    response = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
-                    data = response.json()
+            if cep:
+                logger.debug(f"CEP recebido: {cep}")
+                response = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
+                data = response.json()
+                logger.debug(f"Resposta da API ViaCEP: {data}")
 
-                    if response.status_code == 200 and not data.get('erro'):
-                        estado, _ = Estado.objects.get_or_create(nome=data['uf'])
-                        cidade, _ = Cidade.objects.get_or_create(nome=data['localidade'], estado=estado)
-                        bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
-                        cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
-                        endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
-                        latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
+                if response.status_code == 200 and not data.get('erro'):
+                    estado, _ = Estado.objects.get_or_create(nome=data['uf'])
+                    cidade, _ = Cidade.objects.get_or_create(nome=data['localidade'], estado=estado)
+                    bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
+                    cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
+                    endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
+                    latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
 
-                        endereco, _ = Endereco.objects.get_or_create(
-                            rua=data['logradouro'],
-                            bairro=bairro,
-                            cidade=cidade,
-                            estado=estado,
-                            cep=cep_obj,
-                            latitude=latitude,
-                            longitude=longitude,
-                            numero=numero
-                        )
+                    endereco, _ = Endereco.objects.get_or_create(
+                        rua=data['logradouro'],
+                        bairro=bairro,
+                        cidade=cidade,
+                        estado=estado,
+                        cep=cep_obj,
+                        latitude=latitude,
+                        longitude=longitude,
+                        numero=numero
+                    )
+                    logger.debug(f"Endereço criado/obtido: {endereco}")
 
-                        user.endereco = endereco
-                        user.save()
+                    user.endereco = endereco
+                    user.save()
 
-             
-               
-               
-                    
-                messages.success(request, 'Cadastro Realizado com sucesso!')
-                return redirect('login')
+            messages.success(request, 'Cadastro realizado com sucesso!')
+            logger.debug("Cadastro realizado com sucesso, redirecionando para login")
+            return redirect('login')
         else:
+            logger.error(f"Formulário inválido: {form.errors}")
             messages.error(request, form.errors)
-    
+
     return render(request, 'core/registroClientes.html', {'form': form})
 
 
@@ -93,17 +98,41 @@ def perfil_familia(request):
 
 def tipo_perfil(request):
     return render(request, 'core/tipoPerfil.html')
-def criar_subperfil(request):
+
+def create_subperfil(request):
     if request.method == 'POST':
         form = SubperfilForm(request.POST, request.FILES)
         if form.is_valid():
             subperfil = form.save(commit=False)
-            subperfil.titular = request.user.cliente  # Assumindo que o cliente está relacionado ao User
-            subperfil.save()
-            return redirect('subperfil')  # Redirecionar conforme necessário
+            if hasattr(request.user, 'cliente'):
+                subperfil.titular = request.user.cliente
+                if request.user.cliente.subperfis.count() < 4:
+                    subperfil.save()
+                    return redirect('subperfil_list')
+                else:
+                    form.add_error(None, 'Você não pode criar mais de 4 subperfis.')
+            else:
+                form.add_error(None, 'Usuário não é um cliente válido.')
     else:
         form = SubperfilForm()
-    return render(request, 'core/subperfil.html', {'form': form})
+    return render(request, 'core/create_subperfil.html', {'form': form})
+
+
+def subperfil_list(request):
+    if hasattr(request.user, 'cliente'):
+        subperfis = request.user.cliente.subperfis.all()
+        return render(request, 'core/subperfil_list.html', {'subperfis': subperfis})
+    else:
+        return redirect('some_error_page')
+
+def select_subperfil(request, subperfil_id):
+    subperfil = get_object_or_404(Subperfil, id=subperfil_id, titular=request.user.cliente)
+    # Simulando login de subperfil
+    request.session['subperfil_id'] = subperfil.id
+    return redirect('home')
+
+def selecionar_perfil(request):
+    return render(request, 'core/perfisFamilia.html')
 
 def selecionar_perfil(request):
     return render(request, 'core/perfisFamilia.html')
@@ -181,37 +210,40 @@ def obter_coordenadas(endereco_completo, google_maps_api_key):
     
     return None, None
 
-# Create your views here.
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 def registerLoja(request):
+    logger.debug("Iniciando o processo de registro da loja")
     categorias = Categoria.objects.all()
     form = LojaRegistrationForm()
 
     if request.method == 'POST':
         form = LojaRegistrationForm(request.POST, request.FILES)
-        
+        logger.debug(f"Form POST recebido: {form}")
+
         if form.is_valid():
-           
+            logger.debug("Formulário é válido")
             user = Loja.objects.create_user(
-                nomeLoja = form.cleaned_data['nomeLoja'],
-                nomeDono = form.cleaned_data['nomeDono'],
-                foto = form.cleaned_data['foto'],
-                username = form.cleaned_data['username'],
-                telefone = form.cleaned_data['telefone'],
+                nomeLoja=form.cleaned_data['nomeLoja'],
+                nome=form.cleaned_data['nome'],
+                foto=form.cleaned_data['foto'],
+                username=form.cleaned_data['username'],
+                telefone=form.cleaned_data['telefone'],
                 email=form.cleaned_data['email'],
                 password=form.cleaned_data['password1'],
-                email_pagseguro = form.cleaned_data['email_pagseguro'],
-                token_pagseguro = form.cleaned_data['token_pagseguro'],
-
-            
-                
-                
             )
+            logger.debug(f"Usuário criado: {user}")
+
             cep = request.POST.get('cep')
             complemento = request.POST.get('complemento')
+            numero = request.POST.get('numero')
 
             if cep:
+                logger.debug(f"CEP recebido: {cep}")
                 response = requests.get(f'https://viacep.com.br/ws/{cep}/json/')
                 data = response.json()
+                logger.debug(f"Resposta da API ViaCEP: {data}")
 
                 if response.status_code == 200 and not data.get('erro'):
                     estado, _ = Estado.objects.get_or_create(nome=data['uf'])
@@ -229,30 +261,26 @@ def registerLoja(request):
                         estado=estado,
                         cep=cep_obj,
                         latitude=latitude,
-                        longitude=longitude
+                        longitude=longitude,
+                        numero=numero
                     )
+                    logger.debug(f"Endereço criado/obtido: {endereco}")
 
                     user.endereco = endereco
                     user.save()
 
                 selected_categorias = form.cleaned_data['categorias']
-
+                logger.debug(f"Categorias selecionadas: {selected_categorias}")
                 user.categorias.set(selected_categorias)
 
-
-             
-               
-               
-                    
-                messages.success(request, 'Cadastro Realizado com sucesso!')
+                messages.success(request, 'Cadastro realizado com sucesso!')
+                logger.debug("Cadastro realizado com sucesso, redirecionando para login")
                 return redirect('login')
-                
         else:
-            print("Formulário inválido")
+            logger.error(f"Formulário inválido: {form.errors}")
             messages.error(request, form.errors)
 
-        
-    context = {'categorias':categorias}
+    context = {'categorias': categorias}
     return render(request, 'core/registroEmpresas.html', context)
 
 from django.contrib.auth import login as auth_login
@@ -277,7 +305,7 @@ def user_login(request):
             if cliente:
                 if cliente.plano_familia:
                     messages.success(request, "Usuário logado com sucesso!")
-                    return redirect('perfil_familia')
+                    return redirect('subperfil_list')
             messages.success(request, "Usuário logado com sucesso!")
             return redirect('loja')
         else:
@@ -479,7 +507,33 @@ def catalogo(request):
 
     return render(request, 'core/catalogo.html', context)
 
+@login_required
+def gerenciar_promocoes(request):
+    loja = request.user.loja
+    promocoes = Promocao.objects.filter(loja=loja)
+    if request.method == 'POST':
+        promocao_form = PromocaoForm(request.POST, request.FILES, loja=loja)
+        if promocao_form.is_valid():
+            nova_promocao = promocao_form.save(commit=False)
+            nova_promocao.loja = loja
+            nova_promocao.save()
+            
+            # Atualizar o campo promocao do produto associado
+            produto = nova_promocao.produto
+            produto.promocao = nova_promocao
+            produto.save()
 
+            return redirect('gerenciar_promocoes')
+    else:
+        promocao_form = PromocaoForm(loja=loja)
+
+    context = {
+        'promocao_form': promocao_form,
+        'promocoes': promocoes,
+        'loja': loja,
+    }
+
+    return render(request, 'core/gerenciar_promocoes.html', context)
 
 def remover_produto(request, produto_id):
     if request.method == 'POST':
@@ -491,6 +545,21 @@ def remover_produto(request, produto_id):
         # Redireciona ou mostra uma mensagem de erro se não for um POST
         messages.error(request, 'Método inválido.')
         return redirect('catalogo')
+
+@login_required
+def remover_promocao(request, promocao_id):
+    loja = request.user.loja
+    promocao = get_object_or_404(Promocao, id=promocao_id, loja=loja)
+    
+    if request.method == 'POST':
+        promocao.delete()
+        messages.success(request, 'Promoção removida com sucesso.')
+        return redirect('gerenciar_promocoes')
+    context = {
+        {'promocao': promocao,
+        'loja': loja }
+    }
+
 
 
 def remover_categoria(request, categoria_id):
@@ -767,39 +836,3 @@ def criar_pedido_loja(request):
     }
     return render(request, 'core/criar_pedido.html', context)
 
-def sacar_dinheiro(request):
-    loja = request.user.loja
-    if request.method == 'POST':
-        valor = request.POST.get('valor')
-        chave_pix = request.POST.get('chave_pix')
-        sdk = mercadopago.SDK('TEST-59977399911432-110210-9f155ba4b48e040302fcb7bd231346ed-1323304242')
-
-        # Criando um pagamento PIX
-        payment_data = {
-            "transaction_amount": float(valor),
-            "payment_method_id": "pix",
-            "payer": {
-                "email": request.user.email  # Email da conta do usuário/loja no Mercado Pago
-            },
-            "description": "Saque da loja via PIX"
-        }
-
-        payment_response = sdk.payment().create(payment_data)
-        payment_status = payment_response.get("status")
-
-        if payment_status == 201:
-            # Subtraindo o valor do saldo da loja
-            loja.saldo -= Decimal(valor)
-            loja.save()  # Não esqueça de salvar as alterações no modelo da loja
-
-            messages.success(request, "Saque realizado com sucesso!")
-            return redirect('sacar_dinheiro')
-        else:
-            error_message = payment_response.get("response", {}).get("message", "Erro desconhecido")
-            messages.error(request, f"Falha ao realizar saque: {error_message}")
-            return redirect('sacar_dinheiro')
-
-    context = {
-        'loja': loja
-    }
-    return render(request, 'core/financeiro.html', context)

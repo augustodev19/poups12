@@ -1,25 +1,37 @@
 <div class="carrinho-container">
-    {% if carrinho.itens %}
+    {% if itens_normais or itens_promocionais %}
         <ul class="lista-de-itens">
-            {% for produto_id, produto_info in carrinho.itens.items %}
+            {% for produto_info in itens_normais %}
                 <li class="item-carrinho mb-5">
                     <!-- Detalhes do produto -->
                     <div class="detalhes-produto d-flex" style="gap:.5rem;">
-                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       <div class="d-block">
-                        <h5>{{ produto_info.nome }}</h5>
-                        <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
-                        <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
-                        <p>Pontos: {{ produto_info.pontos }}</p>
-
+                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       
+                        <div class="d-block">
+                            <h5>{{ produto_info.nome }}</h5>
+                            <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
+                            <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                            <p>Pontos: {{ produto_info.pontos }}</p>
                         </div>
-                        <!-- Você pode adicionar uma imagem aqui se disponível -->
-                        <!-- <img src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}"> -->
                     </div>
                     <!-- Botões de ação -->
                     <div class="acoes">
-                        <!-- Botão para remover o item do carrinho -->
-                        <button class="btn btn-danger remover-item" data-produto-id="{{ produto_id }}">Remover</button>
+                        <button class="btn btn-danger remover-item" data-produto-id="{{ produto_info.produto_id }}">Remover</button>
                     </div>
+                </li>
+            {% endfor %}
+            {% for produto_info in itens_promocionais %}
+                <li class="item-carrinho mb-5">
+                    <!-- Detalhes do produto promocional -->
+                    <div class="detalhes-produto d-flex" style="gap:.5rem;">
+                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       
+                        <div class="d-block">
+                            <h5>{{ produto_info.nome }} (Promoção)</h5>
+                            <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
+                            <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                        </div>
+                    </div>
+                    <!-- Botões de ação -->
+                   
                 </li>
             {% endfor %}
         </ul>
@@ -27,9 +39,7 @@
         <div class="total-geral-carrinho">
             <h3>Total Geral: R$ {{ total_geral_carrinho|floatformat:2 }}</h3>
             <h3>Total Pontos: {{total_pontos_carrinho}}</h3>
-
-          </div>
-        <!-- Aqui você pode adicionar o total do carrinho e botões de checkout -->
+        </div>
     {% else %}
         <p>Seu carrinho está vazio.</p>
     {% endif %}

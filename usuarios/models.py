@@ -12,6 +12,8 @@ from django.utils.timezone import timedelta
 from django.utils.translation import gettext_lazy as _
 import uuid
 from decimal import Decimal
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 from poupsapp import settings
 from django import forms
@@ -167,6 +169,7 @@ class Loja(CustomUser):
     frete_gratis = models.BooleanField(default=False)
     vale_refeicao = models.ManyToManyField(ValeRefeicao, related_name='vale_refeicao', blank=True)
     tempo_entrega = models.IntegerField(blank=True, null=True)
+    stripe_payout_id = models.CharField(max_length=255, null=True, blank=True)
     tempo_entrega_min = models.IntegerField(blank=True, null=True)
     tempo_entrega_max = models.IntegerField(blank=True, null=True)
     token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
@@ -208,6 +211,7 @@ class Produto(models.Model):
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
     pontos = models.IntegerField(default=0)
+    promocao = models.ForeignKey('Promocao', on_delete=models.SET_NULL, null=True, blank=True, related_name='produtos')
 
     # outros campos do produto
     def save(self, *args, **kwargs):
@@ -313,7 +317,47 @@ class Subperfil(models.Model):
             raise ValidationError('O subperfil do titular não pode ser excluído.')
         super(Subperfil, self).delete(*args, **kwargs)
 
+
 @receiver(post_save, sender=Cliente)
 def create_subperfil_titular(sender, instance, created, **kwargs):
     if created and instance.plano_familia:
         Subperfil.objects.create(titular=instance, nome=instance.username, is_titular=True)
+
+
+class Promocao(models.Model):
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE)
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name='promocoes')
+    quantidade_necessaria = models.PositiveIntegerField()
+    imagem = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.produto.nome} - Compre {self.quantidade_necessaria}, Ganhe 1"
+
+class CompraAcumulada(models.Model):
+    promocao = models.ForeignKey(Promocao, on_delete=models.CASCADE, null=True, blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
+    quantidade_comprada = models.PositiveIntegerField(default=0)
+    pontos_para_proxima_promocao = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.cliente.nome} - {self.produto.nome}: {self.quantidade_comprada}"
+
+    def quantidade_promocoes(self):
+        if self.promocao:
+            return self.quantidade_comprada // self.promocao.quantidade_necessaria
+        return 0
+
+class Charge(models.Model):
+    charge_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=50)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    endereco = models.CharField(max_length=255, null=True, blank=True)
+    loja_id = models.IntegerField()
+    cliente_id = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.charge_id

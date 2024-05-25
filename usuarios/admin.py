@@ -22,6 +22,8 @@ admin.site.register(Cliente, ClienteAdmin)
 
 admin.site.register(CategoriaProduto)
 admin.site.register(Produto)
+admin.site.register(Promocao)
+admin.site.register(CompraAcumulada)
 admin.site.register(Categoria)
 admin.site.register(Endereco)
 admin.site.register(Pedido)

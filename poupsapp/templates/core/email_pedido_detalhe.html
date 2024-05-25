@@ -12,8 +12,12 @@
         {% endfor %}
     </ul>
     <p>Localização: {{pedido.localizacao}}</p>
-    <p>Total do pedido: R${{ pedido.total }}</p>
+    <p>Total do pedido: R${{ pedido.total }}</p>    
+    {% if not subperfil_nome %}
     <p>Nome do cliente: {{pedido.cliente.nome}}</p>
+    {%elif subperfil_nome %}
+    <p>Nome do cliente: {{ subperfil_nome }}</p>
+    {% endif %}
     <p>Celular do cliente: {{pedido.cliente.telefone}}</p>
     <p>Tempo estimado para entrega: {{pedido.loja.tempo_entrega_min}} - {{pedido.loja.tempo_entrega_max}}min </p>
     <!-- <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}" style="color: #ffffff; text-decoration: none; background-color: #4A90E2; padding: 10px 20px; border-radius: 5px;">Clique aqui</a></p> -->

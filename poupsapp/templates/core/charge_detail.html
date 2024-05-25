@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento via Pix</title>
+
+</head>
+<body>
+    <div class="qr-code-container">
+        <h1>Pagamento via Pix</h1>
+        <img src="{{ charge_data.qrCodeImage }}" alt="QR Code">
+        <div class="payment-details">
+            <p>Valor: R$ {{ charge_data.value|floatformat:2 }}</p>
+            <p>Status: {{ charge_data.status }}</p>
+            <p>Expira em: {{ charge_data.expiresDate }}</p>
+        </div>
+    </div>
+</body>
+</html>

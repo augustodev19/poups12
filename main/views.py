@@ -12,6 +12,7 @@ import secrets  # Importe esta biblioteca no início do arquivo
 import os
 import hashlib
 from django.core.cache import cache
+from celery import shared_task
 
 import hmac
 from django.views import View
@@ -415,6 +416,7 @@ def perfil_loja(request, loja_id):
         cliente = request.user.cliente
     else:
         cliente = None
+        return redirect('login')
 
     
     context = {
@@ -433,6 +435,37 @@ def detalhes_produto(request, id):
     'loja': loja}
     return render(request, 'core/detalhes_produto.html', context )
 
+def detalhes_promocao(request, promocao_id):
+    promocao = get_object_or_404(Promocao, id=promocao_id)
+    print("Promoção:", promocao)
+
+    try:
+        cliente = request.user.cliente
+    except Cliente.DoesNotExist:
+        messages.error(request, 'Cliente não encontrado.')
+        return redirect('home')
+
+    # Corrigindo a obtenção de itens comprados
+    compra_acumulada = CompraAcumulada.objects.filter(cliente=cliente, promocao=promocao).first()
+    print("Compra Acumulada:", compra_acumulada)
+    itens_comprados = compra_acumulada.quantidade_comprada if compra_acumulada else 0
+    print("Itens Comprados:", itens_comprados)
+
+    try:
+        loja = promocao.loja
+    except Loja.DoesNotExist:
+        messages.error(request, 'Loja não encontrada.')
+        return redirect('home')
+
+    context = {
+        'promocao': promocao,
+        'loja': loja,
+        'cliente': cliente,
+        'itens_comprados': itens_comprados
+    }
+    return render(request, 'core/produtos_promocoes.html', context)
+
+
 from django.shortcuts import get_object_or_404, redirect
 
 
@@ -450,12 +483,13 @@ def adicionar_ao_carrinho(request, produto_id):
         return JsonResponse({'erro': 'Produto sem loja associada'}, status=400)
 
     if 'carrinho' not in request.session:
-        request.session['carrinho'] = {'loja_id': loja_id, 'itens': {}}
+        request.session['carrinho'] = {'loja_id': loja_id, 'itens': {}, 'pontos_para_proxima_promocao': {}}
 
     carrinho = request.session['carrinho']
 
     if carrinho['loja_id'] != loja_id:
         carrinho['itens'] = {}
+        carrinho['pontos_para_proxima_promocao'] = {}
         carrinho['loja_id'] = loja_id
 
     item_key = str(produto_id)
@@ -468,8 +502,44 @@ def adicionar_ao_carrinho(request, produto_id):
             'preco': str(produto.preco),
             'pontos': str(produto.pontos),
             'nome': produto.nome,
-            'imagem_url': produto.foto.url if produto.foto else None  # Salvando a URL da imagem
+            'imagem_url': produto.foto.url if produto.foto else None,
+            'promocao': False
         }
+
+    # Verificar se o produto tem promoção
+    if produto.promocao and produto.promocao.ativo:
+        promocao = produto.promocao
+        compra_acumulada, created = CompraAcumulada.objects.get_or_create(
+            cliente=request.user.cliente,
+            produto=produto,
+            promocao=promocao
+        )
+        
+        if item_key not in carrinho['pontos_para_proxima_promocao']:
+            carrinho['pontos_para_proxima_promocao'][item_key] = compra_acumulada.pontos_para_proxima_promocao
+
+        # Atualiza a quantidade comprada acumulada e os pontos para a próxima promoção
+        compra_acumulada.quantidade_comprada += 1
+        carrinho['pontos_para_proxima_promocao'][item_key] += 1
+        pontos_acumulados = carrinho['pontos_para_proxima_promocao'][item_key]
+        num_promocoes = pontos_acumulados // promocao.quantidade_necessaria
+
+        # Atualiza o carrinho com a quantidade de itens promocionais
+        promocao_key = f'promocao_{promocao.id}'
+        if promocao_key not in carrinho['itens']:
+            carrinho['itens'][promocao_key] = {
+                'produto_id': produto_id,
+                'quantidade': 0,
+                'nome': f"Promoção: {produto.nome}",
+                'imagem_url': promocao.imagem.url if promocao.imagem else None,
+                'promocao': True,
+                'preco': '0.00'
+            }
+        carrinho['itens'][promocao_key]['quantidade'] = num_promocoes
+
+        # Atualiza a compra acumulada no banco de dados
+        compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
+        compra_acumulada.save()
 
     request.session.modified = True
     return JsonResponse({
@@ -477,39 +547,84 @@ def adicionar_ao_carrinho(request, produto_id):
         'sucesso': True,
         'mensagem': 'Adicionado ao Carrinho'
     })
-
-def ver_carrinho(request):
-    carrinho = request.session.get('carrinho', {'itens': {}})
-    total_geral_carrinho = Decimal('0.00')
-    total_pontos_carrinho = 0
-
-
-    for produto_id, produto_info in carrinho.get('itens', {}).items():
-        produto = get_object_or_404(Produto, id=produto_id)
-        produto_info['imagem_url'] = produto.foto.url if produto.foto else None
-
-        preco = Decimal(produto_info['preco'])
-        quantidade = int(produto_info['quantidade'])
-        pontos = int(produto_info['pontos'])
-
-        total_geral_carrinho += preco * quantidade
-        total_pontos_carrinho += pontos * quantidade
-
-    return render(request, 'core/carrinho.html', {
-        'carrinho': carrinho,
-        'total_geral_carrinho': total_geral_carrinho,
-        'total_pontos_carrinho': total_pontos_carrinho
-    })
-
+@require_http_methods(["POST"])
 def remover_do_carrinho(request, produto_id):
-    carrinho = request.session.get('carrinho', {'itens': {}})
-    if str(produto_id) in carrinho['itens']:
-        del carrinho['itens'][str(produto_id)]
+    carrinho = request.session.get('carrinho', {'itens': {}, 'pontos_para_proxima_promocao': {}})
+    produto_id_str = str(produto_id)
+
+    if produto_id_str in carrinho['itens']:
+        produto = get_object_or_404(Produto, id=produto_id)
+        quantidade_removida = carrinho['itens'][produto_id_str]['quantidade']
+        
+        # Verificar se o produto tem promoção
+        if produto.promocao and produto.promocao.ativo:
+            promocao = produto.promocao
+            compra_acumulada = CompraAcumulada.objects.get(
+                cliente=request.user.cliente,
+                produto=produto,
+                promocao=promocao
+            )
+            
+            item_key = produto_id_str
+            if item_key in carrinho['pontos_para_proxima_promocao']:
+                carrinho['pontos_para_proxima_promocao'][item_key] -= quantidade_removida
+                if carrinho['pontos_para_proxima_promocao'][item_key] < 0:
+                    carrinho['pontos_para_proxima_promocao'][item_key] = 0
+
+                # Remover itens promocionais se não houver quantidade suficiente
+                promocao_key = f'promocao_{promocao.id}'
+                quantidade_promocional = carrinho['itens'].get(promocao_key, {}).get('quantidade', 0)
+                while quantidade_promocional > 0 and carrinho['pontos_para_proxima_promocao'][item_key] < promocao.quantidade_necessaria:
+                    carrinho['itens'][promocao_key]['quantidade'] -= 1
+                    quantidade_promocional -= 1
+                    if carrinho['itens'][promocao_key]['quantidade'] == 0:
+                        del carrinho['itens'][promocao_key]
+
+                # Atualiza a compra acumulada no banco de dados
+                compra_acumulada.quantidade_comprada -= quantidade_removida
+                if compra_acumulada.quantidade_comprada < 0:
+                    compra_acumulada.quantidade_comprada = 0
+
+                compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
+                compra_acumulada.save()
+
+        del carrinho['itens'][produto_id_str]
         request.session.modified = True
         return JsonResponse({'status': 'success', 'message': 'Item removido com sucesso.'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Item não encontrado no carrinho.'})
+def ver_carrinho(request):
+    carrinho = request.session.get('carrinho', {'itens': {}, 'pontos_para_proxima_promocao': {}})
+    total_geral_carrinho = Decimal('0.00')
+    total_pontos_carrinho = Decimal('0.00')
 
+    itens_normais = []
+    itens_promocionais = []
+
+    for item_key, produto_info in carrinho.get('itens', {}).items():
+        produto = get_object_or_404(Produto, id=produto_info['produto_id'])
+        produto_info['imagem_url'] = produto.foto.url if produto.foto else None
+
+        preco = Decimal(produto_info['preco'])
+        quantidade = int(produto_info['quantidade'])
+        pontos = Decimal(produto_info.get('pontos', '0.00'))
+
+        if produto_info['promocao']:
+            if quantidade > 0:
+                produto_info['preco'] = '0.00'
+                itens_promocionais.append(produto_info)
+        else:
+            total_geral_carrinho += preco * quantidade
+            total_pontos_carrinho += pontos * quantidade
+            itens_normais.append(produto_info)
+
+    return render(request, 'core/carrinho.html', {
+        'itens_normais': itens_normais,
+        'itens_promocionais': itens_promocionais,
+        'total_geral_carrinho': total_geral_carrinho,
+        'total_pontos_carrinho': total_pontos_carrinho,
+        'pontos_para_proxima_promocao': carrinho.get('pontos_para_proxima_promocao', {})
+    })
 
 def checkout1(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
@@ -609,6 +724,146 @@ import json
 logger = logging.getLogger(__name__)  # Configuração do logger para a view
 
 
+API_URL = "https://api.openpix.com.br/api/v1/charge"
+HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
+
+@login_required
+@require_http_methods(["POST"])
+def criar_pagamento_pix(request):
+    try:
+        # Código existente para gerar a cobrança Pix
+        carrinho = request.session.get('carrinho', {'itens': {}})
+        if not carrinho['itens']:
+            return JsonResponse({"erro": "Carrinho vazio."}, status=400)
+
+        total_geral_carrinho = Decimal('0.00')
+        loja = None
+
+        for item_key, item in carrinho['itens'].items():
+            if item_key.startswith('promocao_'):
+                continue  # Ignore promotional items in this loop
+
+            produto = get_object_or_404(Produto, id=item['produto_id'])
+            if not loja:
+                loja = produto.categoria.loja
+
+            quantidade = int(item['quantidade'])
+            total_geral_carrinho += Decimal(item['preco']) * quantidade
+
+        if loja is None:
+            return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
+
+        valor_frete = Decimal(loja.valor_frete)
+        total_geral_carrinho += valor_frete
+
+        endereco = request.POST.get('endereco')
+        request.session['total_geral_carrinho'] = str(total_geral_carrinho)
+        request.session['endereco'] = endereco
+        request.session['loja_id'] = loja.id
+        request.session['cliente_id'] = request.user.cliente.id
+
+        correlation_id = str(uuid.uuid4())
+        data = {
+            "value": int(total_geral_carrinho * 100),  # Valor em centavos
+            "correlationID": correlation_id,
+            "comment": "Pagamento via Pix",
+            "customer": {},
+        }
+
+        response = requests.post(API_URL, headers=HEADERS, json=data)
+        charge_data = response.json()
+
+        if 'charge' not in charge_data or 'identifier' not in charge_data['charge']:
+            raise ValueError("Erro ao criar a cobrança: resposta inesperada da API")
+
+        charge = Charge.objects.create(
+            charge_id=charge_data['charge']['identifier'],
+            status=charge_data['charge']['status'],
+            total=total_geral_carrinho,
+            endereco=endereco,
+            loja_id=loja.id,
+            cliente_id=request.user.cliente.id
+        )
+
+        request.session['pix_charge_id'] = charge.charge_id
+
+        # Renderizar a página HTML com o QR Code
+        return render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge']})
+
+    except Exception as e:
+        messages.error(request, f"Erro ao criar pagamento Pix: {str(e)}")
+        return redirect('checkout')
+API_URL = "https://api.openpix.com.br/api/v1/charge"
+HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
+
+@shared_task
+def check_charge_status(charge_id):
+    try:
+        charge = Charge.objects.get(charge_id=charge_id)
+        response = requests.get(f"{API_URL}/{charge_id}", headers=HEADERS)
+        charge_data = response.json()
+
+        if charge_data['charge']['status'] == 'paid':
+            charge.status = 'paid'
+            charge.save()
+            handle_pix_payment(charge_id)
+        else:
+            # Re-schedule the task to check again after some time
+            check_charge_status.apply_async((charge_id,), countdown=60)
+
+    except Charge.DoesNotExist:
+        print(f"Charge ID {charge_id} not found.")
+    except Exception as e:
+        print(f"Error checking charge status: {str(e)}")
+
+def handle_pix_payment(charge_id):
+    try:
+        charge = Charge.objects.get(charge_id=charge_id)
+        if charge.status == 'paid':
+            total_geral_carrinho = Decimal(charge.total)
+            endereco = charge.endereco
+            loja_id = charge.loja_id
+            cliente_id = charge.cliente_id
+
+            cliente = Cliente.objects.get(id=cliente_id)
+            loja = Loja.objects.get(id=loja_id)
+
+            pedido = Pedido.objects.create(
+                cliente=cliente,
+                loja=loja,
+                total=total_geral_carrinho,
+                pontos=total_geral_carrinho * 0.4,
+                status='pendente',
+                pagamento='pix',
+                localizacao=endereco,
+                payment_id=charge_id
+            )
+
+            carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
+            for item_key, item in carrinho['itens'].items():
+                if item_key.startswith('promocao_'):
+                    continue  # Ignore promotional items in this loop
+
+                produto = Produto.objects.get(id=item['produto_id'])
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    produto=produto,
+                    quantidade=item['quantidade'],
+                    preco_unitario=Decimal(item['preco'])
+                )
+
+            enviar_email_pedido(None, pedido, pedido.itempedido_set.all())
+            cache.set(f"pedido_id_{charge_id}", pedido.id, timeout=300)
+            print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{charge_id}')}")
+
+    except Cliente.DoesNotExist:
+        print(f"Cliente ID {cliente_id} não encontrado.")
+    except Loja.DoesNotExist:
+        print(f"Loja ID {loja_id} não encontrada.")
+    except Produto.DoesNotExist:
+        print(f"Produto não encontrado.")
+    except Exception as e:
+        print(f"Erro ao processar o pagamento Pix: {str(e)}")
 
 
 @login_required
@@ -624,33 +879,37 @@ def criar_pagamento_checkout(request):
         total_pontos_carrinho = 0
         loja = None
 
-        for item_id, item in carrinho['itens'].items():
-            produto = Produto.objects.get(id=item_id)
+        for item_key, item in carrinho['itens'].items():
+            produto = get_object_or_404(Produto, id=item['produto_id'])
             if not loja:
                 loja = produto.categoria.loja
 
+            quantidade = int(item['quantidade'])
+            if quantidade < 1:
+                continue
+
+            unit_amount = 0 if item['promocao'] else int(Decimal(item['preco']) * 100)
             items.append({
                 'price_data': {
                     'currency': 'brl',
                     'product_data': {
-                        'name': produto.nome,
+                        'name': item['nome'],
                     },
-                    'unit_amount': int(produto.preco * 100),
+                    'unit_amount': unit_amount,
                 },
-                'quantity': item['quantidade'],
+                'quantity': quantidade,
             })
-            quantidade = int(item['quantidade'])
-            total_geral_carrinho += Decimal(produto.preco) * quantidade
+
+            if not item['promocao']:
+                total_geral_carrinho += Decimal(item['preco']) * quantidade
             total_pontos_carrinho += produto.pontos * quantidade
 
         if loja is None:
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
 
-        # Adicionar o valor do frete ao total do pedido
         valor_frete = Decimal(loja.valor_frete)
         total_geral_carrinho += valor_frete
 
-        # Adicionar o frete como um item separado no Stripe
         items.append({
             'price_data': {
                 'currency': 'brl',
@@ -669,6 +928,12 @@ def criar_pagamento_checkout(request):
         request.session['loja_id'] = loja.id
         request.session['cliente_id'] = request.user.cliente.id
 
+        subperfil_id = request.session.get('subperfil_id')
+        subperfil_nome = None
+        if subperfil_id:
+            subperfil = get_object_or_404(Subperfil, id=subperfil_id)
+            subperfil_nome = subperfil.nome
+
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=items,
@@ -681,7 +946,8 @@ def criar_pagamento_checkout(request):
                 'total_geral_carrinho': str(total_geral_carrinho),
                 'total_pontos_carrinho': total_pontos_carrinho,
                 'endereco': endereco,
-                'frete': str(valor_frete)
+                'frete': str(valor_frete),
+                'subperfil_nome': subperfil_nome
             }
         )
         request.session['stripe_session_id'] = session.id
@@ -689,7 +955,6 @@ def criar_pagamento_checkout(request):
     except Exception as e:
         messages.error(request, f"Erro ao criar pagamento: {str(e)}")
         return redirect('checkout')
-
 @method_decorator(csrf_exempt, name='dispatch')
 class StripeWebhookView(View):
     def post(self, request, *args, **kwargs):
@@ -701,62 +966,69 @@ class StripeWebhookView(View):
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
         except ValueError as e:
+            print(f"Invalid payload: {e}")
             return JsonResponse({'status': 'invalid payload'}, status=400)
         except stripe.error.SignatureVerificationError as e:
+            print(f"Invalid signature: {e}")
             return JsonResponse({'status': 'invalid signature'}, status=400)
+
+        print(f"Event received: {event['type']}")
 
         if event['type'] == 'checkout.session.completed':
             session = event['data']['object']
-            if session.payment_status == 'paid':
-                handle_checkout_session(session)
+            if session['payment_status'] == 'paid':
+                handle_checkout_session(request, session)
         elif event['type'] == 'charge.refunded':
             charge = event['data']['object']
             payment_intent_id = charge['payment_intent']
-            try:
-                pedido = Pedido.objects.get(payment_id=payment_intent_id)
-                pedido.status = 'reembolsado'
-                pedido.save()
-                # Aqui você pode notificar o cliente ou executar outras ações necessárias
-            except Pedido.DoesNotExist:
-                print(f"Pedido com payment_intent {payment_intent_id} não encontrado.")
+            handle_refund(payment_intent_id)
+        elif event['type'] == 'payout.paid':
+            payout = event['data']['object']
+            handle_payout(payout)
 
         return JsonResponse({'status': 'success'}, status=200)
 
-def handle_checkout_session(session):
+def handle_checkout_session(request, session):
     metadata = session.get('metadata', {})
     user_id = metadata.get('user_id')
+    subperfil_nome = metadata.get('subperfil_nome', None)
     is_credit_purchase = metadata.get('is_credit_purchase', 'false') == 'true'
+
+    print(f"Handling checkout session for user: {user_id}")
 
     if is_credit_purchase:
         pontos_a_adicionar = Decimal(metadata.get('pontos_a_adicionar', '0'))
         handle_credit_purchase(user_id, pontos_a_adicionar)
     else:
-        # Aqui vamos assumir que podemos acessar a sessão do Django diretamente
-        handle_order_purchase(session, metadata, user_id)
+        handle_order_purchase(session, metadata, user_id, subperfil_nome)
 
+    # Limpar a sessão após o pagamento bem-sucedido
+    request.session['carrinho'] = {}
+    request.session['stripe_session_id'] = None
+    request.session.modified = True
 def handle_credit_purchase(user_id, pontos_a_adicionar):
     try:
         cliente = Cliente.objects.get(id=user_id)
         cliente.pontos += pontos_a_adicionar
         cliente.save()
-        
-        # Log successful handling
         print(f"Créditos adicionados para o cliente {cliente.id}.")
     except Cliente.DoesNotExist:
         print(f"Cliente ID {user_id} não encontrado.")
     except Exception as e:
         print(f"Erro ao processar a sessão do checkout: {str(e)}")
 
-def handle_order_purchase(session, metadata, user_id):
+def handle_order_purchase(session, metadata, user_id, subperfil_nome):
     loja_id = metadata.get('loja_id')
     total_geral_carrinho = float(metadata.get('total_geral_carrinho', 0))
     total_pontos_carrinho = int(metadata.get('total_pontos_carrinho', 0))
     endereco = metadata.get('endereco', '')
 
+    print(f"Processing order for user: {user_id}")
+
     try:
         cliente = Cliente.objects.get(id=user_id)
         loja = Loja.objects.get(id=loja_id)
-        
+
         pedido = Pedido.objects.create(
             cliente=cliente,
             loja=loja,
@@ -765,28 +1037,48 @@ def handle_order_purchase(session, metadata, user_id):
             status='pendente',
             pagamento='reais',
             localizacao=endereco,
-            payment_id=session.payment_intent  # Armazenando o payment_intent
+            payment_id=session['payment_intent']
         )
 
+        print(f"Pedido criado: {pedido.id}")
+
         line_items = stripe.checkout.Session.list_line_items(session.id)
+        carrinho = session.get('carrinho', {'itens': {}, 'pontos_para_proxima_promocao': {}})
         for item in line_items.data:
-            # Se o item for "Frete", não procurar um produto correspondente
             if item.description.lower() == "frete":
+                print("Item de frete encontrado, pulando...")
                 continue
-            
-            produto = Produto.objects.get(nome=item.description)
-            ItemPedido.objects.create(
-                pedido=pedido,
-                produto=produto,
-                quantidade=item.quantity,
-                preco_unitario=produto.preco
-            )
 
-        enviar_email_pedido(None, pedido, pedido.itempedido_set.all())
+            try:
+                produto = Produto.objects.get(nome=item.description)
+                preco_unitario = Decimal(item.amount_total) / 100 if not produto.promocao else Decimal('0.00')
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    produto=produto,
+                    quantidade=item.quantity,
+                    preco_unitario=preco_unitario
+                )
+                print(f"Item adicionado ao pedido: {produto.nome}, quantidade: {item.quantity}, preço unitário: {preco_unitario}")
 
-        # Aqui vamos usar um armazenamento intermediário
+                # Atualizar pontos para próxima promoção no banco de dados
+                if produto.promocao:
+                    compra_acumulada, created = CompraAcumulada.objects.get_or_create(
+                        cliente=cliente, produto=produto, promocao=produto.promocao
+                    )
+                    compra_acumulada.quantidade_comprada += item.quantity
+                    if str(produto.id) in carrinho['pontos_para_proxima_promocao']:
+                        compra_acumulada.pontos_para_proxima_promocao += carrinho['pontos_para_proxima_promocao'][str(produto.id)]
+                    compra_acumulada.save()
+
+            except Produto.DoesNotExist:
+                print(f"Produto não encontrado: {item.description}")
+
+        enviar_email_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
+        emitir_nota_fiscal_focus("34188759000161", "12345", "3205309")
+
+        print("Email de pedido enviado")
+
         cache.set(f"pedido_id_{session.id}", pedido.id, timeout=300)
-
         print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{session.id}')}")
 
     except Cliente.DoesNotExist:
@@ -797,6 +1089,66 @@ def handle_order_purchase(session, metadata, user_id):
         print(f"Produto não encontrado.")
     except Exception as e:
         print(f"Erro ao processar a sessão do checkout: {str(e)}")
+
+    # Limpar a sessão após o pagamento bem-sucedido
+    session['carrinho'] = {'itens': {}, 'promocoes': {}, 'pontos_para_proxima_promocao': {}}
+    session.modified = True
+
+def handle_payout(payout):
+    try:
+        loja = Loja.objects.get(stripe_payout_id=payout['id'])
+        loja.saldo -= Decimal(payout['amount']) / 100
+        loja.save()
+        print(f"Payout processado para a loja {loja.id}.")
+    except Loja.DoesNotExist:
+        print(f"Loja com payout ID {payout['id']} não encontrada.")
+    except Exception as e:
+        print(f"Erro ao processar o payout: {str(e)}")
+
+
+def sacar_dinheiro(request):
+    loja = request.user.loja
+    if request.method == 'POST':
+        valor = Decimal(request.POST.get('valor'))
+        stripe_token = request.POST.get('stripeToken')
+
+        if valor > loja.saldo:
+            messages.error(request, "Você não pode sacar um valor maior que o saldo disponível.")
+            return redirect('sacar_dinheiro')
+
+        print(f"Token recebido: {stripe_token}")  # Log temporário
+
+        try:
+            # Criando uma transferência para o cartão usando o token
+            charge = stripe.Charge.create(
+                amount=int(valor * 100),  # Valor em centavos
+                currency="brl",
+                source=stripe_token,
+                description="Saque da loja",
+                receipt_email=request.user.email
+            )
+
+            if charge.status == 'succeeded':
+                # Subtraindo o valor do saldo da loja
+                loja.saldo -= valor
+                loja.save()  # Salvando as alterações no modelo da loja
+
+                messages.success(request, "Saque realizado com sucesso!")
+                return redirect('sacar_dinheiro')
+            else:
+                messages.error(request, f"Falha ao realizar saque: {charge.failure_message}")
+                return redirect('sacar_dinheiro')
+
+        except stripe.error.StripeError as e:
+            messages.error(request, f"Falha ao realizar saque: {str(e)}")
+            return redirect('sacar_dinheiro')
+
+    context = {
+        'loja': loja,
+        'stripe_public_key': settings.STRIPE_PUBLIC_KEY  # Passa a chave pública Stripe para o template
+    }
+    return render(request, 'core/financeiro.html', context)
+
 @csrf_exempt
 def confirmar_pagamento(request):
     session_id = request.session.get('stripe_session_id')
@@ -897,14 +1249,15 @@ def gerar_token(pedido, tipo):
     return token_obj.token
 
     
-def enviar_email_pedido(request, pedido, itens_pedido):
+def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
     try:
         subject = 'Detalhes do Seu Pedido'
         context = {
             'pedido': pedido,
-            'loja': loja,
+            'loja': pedido.loja,
             'itens_pedido': itens_pedido,
-            'pedido_url': f'https://e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app//pedido/{pedido.id}'
+            'pedido_url': f'https://seu_dominio/pedido/{pedido.id}',  # Atualize com seu domínio real
+            'subperfil_nome': subperfil_nome
         }
 
         html_content = render_to_string('core/email_pedido_detalhe.html', context)
@@ -925,16 +1278,85 @@ def enviar_email_pedido(request, pedido, itens_pedido):
         print("Email com detalhes do pedido enviado com sucesso.")
     except Exception as e:
         print(f"Erro ao enviar email: {str(e)}")
-# urls.py
-from django.urls import path
-from .views import handle_checkout_session, enviar_email_pedido
 
-urlpatterns = [
-    path('handle-checkout/', handle_checkout_session, name='handle_checkout'),
-    path('enviar-email-pedido/', enviar_email_pedido, name='enviar_email_pedido'),
-    # Adicione outras URLs aqui conforme necessário
-]
 
+def emitir_nota_fiscal_focus(cnpj_prestador, inscricao_municipal, codigo_municipio_prestador):
+    token_homologacao_empresa = "xkRivLik9Wn4xbk4EaHq17d15L4vCtDO"
+    url = "https://homologacao.focusnfe.com.br/v2/nfse?ref=001"
+
+    # Dados fictícios para teste
+    data = {
+        "data_emissao": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "habilita_nfse": True,
+        "prestador": {
+            "cnpj": cnpj_prestador,
+            "inscricao_municipal": inscricao_municipal,
+            "codigo_municipio": codigo_municipio_prestador
+        },
+        "tomador": {
+            "cnpj": "07504505000132",
+            "razao_social": "Acras Tecnologia da Informação LTDA",
+            "email": "contato@focusnfe.com.br",
+            "endereco": {
+                "logradouro": "Rua Dias da Rocha Filho",
+                "numero": "999",
+                "complemento": "Prédio 04 - Sala 34C",
+                "bairro": "Alto da XV",
+                "codigo_municipio": "4106902",
+                "uf": "PR",
+                "cep": "80045165"
+            }
+        },
+        "servico": {
+            "aliquota": 3,
+            "discriminacao": "Nota fiscal referente a serviços prestados",
+            "iss_retido": "false",
+            "item_lista_servico": "0107",
+            "codigo_tributario_municipio": "620910000",
+            "valor_servicos": 1.0
+        }
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    print("Dados enviados para a API:")
+    print(json.dumps(data, indent=4))
+
+    try:
+        response = requests.post(url, headers=headers, auth=(token_homologacao_empresa, ''), data=json.dumps(data))
+        response.raise_for_status()
+
+        if response.status_code in [201, 202]:
+            nfse_data = response.json()
+            if response.status_code == 201:
+                nfse_url = nfse_data["caminho_danfe"]
+                nfse_id = nfse_data["numero"]
+
+                # Adicione aqui a lógica para salvar o URL e ID da NFS-e emitida
+
+                return nfse_url
+            else:
+                print("Nota fiscal enviada para processamento. Consulte posteriormente para verificar o status.")
+                return None
+        else:
+            print(f"Erro ao emitir NFS-e: {response.text}")
+            return None
+    except requests.exceptions.RequestException as e:
+        if e.response is not None:
+            print(f"Response status code: {e.response.status_code}")
+            print(f"Response headers: {e.response.headers}")
+            print(f"Response content: {e.response.text}")
+        else:
+            print(f"Request exception: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"Erro inesperado ao emitir NFS-e: {str(e)}")
+        raise
+
+# Chamar a função para teste com CNPJ configurável
+# Chamar a função para teste com CNPJ configurável
 
 def confirmar_pagamento1(request):
     session_id = request.session.get('stripe_session_id')
@@ -1176,7 +1598,120 @@ def pedidos_cliente(request):
         'cliente': cliente
     }
     return render(request, 'core/pedidos_cliente.html', context)
+
+
+    
 def checkout(request):
+    carrinho = request.session.get('carrinho', {'itens': {}})
+    cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
+    subperfil_nome = None
+    try:
+        subperfil_id = request.session.get('subperfil_id')
+    except:
+        subperfil_id = None
+    subperfil = None
+    if subperfil_id:
+        subperfil = get_object_or_404(Subperfil, id=subperfil_id, titular=cliente)
+    endereco = cliente.endereco if cliente else None
+    total_geral_carrinho = Decimal('0.00')
+    total_frete = Decimal('0.00')
+    loja = None
+    itens_completos = []
+
+    for produto_id, item in carrinho.get('itens', {}).items():
+        produto = get_object_or_404(Produto, id=item['produto_id'])  # Corrigido para obter o produto corretamente
+        try:
+            loja = produto.categoria.loja
+        except:
+            loja = None
+        item['imagem_url'] = produto.foto.url if produto.foto else None
+        item['nome'] = produto.nome  # Já deve estar definido, mas só para garantir
+        preco = Decimal(item['preco'])
+        quantidade = item['quantidade']
+        if not item['promocao']:  # Apenas adicionar o preço se não for promoção
+            total_geral_carrinho += preco * quantidade
+        itens_completos.append(item)  # Adiciona o item atualizado à lista
+
+    if loja:
+        total_frete = loja.valor_frete
+
+    total_geral_com_frete = total_geral_carrinho + total_frete
+
+    return render(request, 'core/checkout_test.html', {
+        'itens': itens_completos,  # Passa os itens atualizados para o template
+        'cliente': cliente,
+        'endereco': endereco,
+        'total_geral': total_geral_carrinho,
+        'total_frete': total_frete,
+        'total_geral_com_frete': total_geral_com_frete,
+        'loja': loja,
+        'subperfil': subperfil
+    })
+
+def search(request):
+    query = request.GET.get('query', '')
+    try:
+        cliente = request.user.cliente
+    except AttributeError:
+        cliente = None
+
+    produtos_list = []
+    lojas_list = []
+
+    if query and cliente and cliente.endereco:
+        latitude = cliente.endereco.latitude
+        longitude = cliente.endereco.longitude
+
+        if latitude is not None and longitude is not None:
+            produtos = Produto.objects.filter(nome__icontains=query)
+            lojas = Loja.objects.filter(nomeLoja__icontains=query)
+
+            for produto in produtos:
+                loja = produto.categoria.loja
+                if loja and loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
+                    distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
+                    if distancia <= 100:
+                        produtos_list.append({
+                            'id': produto.id,
+                            'nome': produto.nome,
+                            'foto': produto.foto.url if produto.foto else None
+                        })
+
+            for loja in lojas:
+                if loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
+                    distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
+                    if distancia <= 100:
+                        lojas_list.append({
+                            'id': loja.id,
+                            'nomeLoja': loja.nomeLoja,
+                            'foto': loja.foto.url if loja.foto else None
+                        })
+
+    return JsonResponse({
+        'produtos': produtos_list,
+        'lojas': lojas_list,
+    })
+def search_results(request):
+    query = request.GET.get('query', '')
+    produtos = Produto.objects.filter(nome__icontains=query)
+    lojas = Loja.objects.filter(nomeLoja__icontains=query)
+
+    context = {
+        'query': query,
+        'produtos': produtos,
+        'lojas': lojas
+    }
+
+    return render(request, 'core/search_results.html', context)
+
+
+#def cartao(request):
+#    publicKey = getPublicKey()
+#    context = {
+#        'publicKey':publicKey
+#    }
+#    return render(request, 'core/cartao.html', context)
+def pagar_com_pix(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
     endereco = cliente.endereco if cliente else None
@@ -1200,7 +1735,7 @@ def checkout(request):
         total_frete += total_geral_carrinho + frete
         itens_completos.append(item)  # Adiciona o item atualizado à lista
 
-    return render(request, 'core/checkout_test.html', {
+    return render(request, 'core/pix.html', {
         'itens': itens_completos,  # Passa os itens atualizados para o template
         'cliente': cliente,
         'endereco': endereco,
@@ -1208,9 +1743,3 @@ def checkout(request):
         'total_frete': total_frete,
         'loja':loja
     })
-#def cartao(request):
-#    publicKey = getPublicKey()
-#    context = {
-#        'publicKey':publicKey
-#    }
-#    return render(request, 'core/cartao.html', context)

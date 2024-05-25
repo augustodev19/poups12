@@ -62,7 +62,7 @@
                           </button>
                           <form action="{% url 'remover_categoria' categoria.id %}" method="post">
                             {% csrf_token %}
-                            <button type="submit">Remover Categoria</button>
+                            <button class="btn btn-danger mt-3 mb-3" type="submit">Remover Categoria</button>
                         </form>
                       </div>
                     </div>

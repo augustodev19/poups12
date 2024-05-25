@@ -6,7 +6,11 @@
 {%if user_location.address %}
 
 <div class="container" style="margin-top:10rem;">
-    <span style="color:#000">{{user_location.address}}</span>
+   {%if not cliente%}<span style="color:#000">{{user_location.address}}</span>
+   {%else%}
+   <span style="color:#000">
+    {{cliente.endereco.bairro}}, {{cliente.endereco.rua}}, {{cliente.endereco.numero}}
+   </span>{%endif%}
 </div>
 {%endif%}
 
@@ -220,7 +224,7 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
     <div class="mt-5 container-1">
 
 {%for loja in lojas%}
-<a  class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'registerCliente' %}?next=loja_{{loja.id}}{% endif %}">
+<a  class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'login' %}?next=loja_{{loja.id}}{% endif %}">
 
 <div >
 <h2>{{loja.nomeLoja}}</h2>

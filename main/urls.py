@@ -14,6 +14,7 @@ urlpatterns = [
     path('loja/<int:loja_id>/', perfil_loja, name='perfil_loja'),
     path('set_location/', set_location, name='set_location'),
     path('produto/<int:id>/', detalhes_produto, name='detalhes_produto'),
+    path('promocao/<int:promocao_id>/', detalhes_promocao, name='detalhes_promocao'),
     path('adicionar_ao_carrinho/<int:produto_id>/', adicionar_ao_carrinho, name='adicionar_ao_carrinho'),
     path('ver_carrinho/', ver_carrinho, name='ver_carrinho'),
     path('remover_do_carrinho/<int:produto_id>/', remover_do_carrinho, name='remover_do_carrinho'),
@@ -32,6 +33,12 @@ urlpatterns = [
     path('meus-pedidos/', pedidos_cliente, name='pedidos_cliente'),
     path('confirmar_compra_poups/', confirmar_compra_credito, name='confirmar_compra_credito'),
     path('webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
+    path('sacar/', sacar_dinheiro, name='sacar_dinheiro'),
+    path('pix/', pagar_com_pix, name='pix'),
+    path('search/', search, name='search'),
+    path('search_results/', search_results, name='search_results'),
+    path('create-pix/', criar_pagamento_pix, name='criar_pagamento_pix'),
+
     # URL para o webhook (notificações do Mercado Pago)
 
 

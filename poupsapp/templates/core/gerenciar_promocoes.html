@@ -1,0 +1,98 @@
+{% extends 'core/base-dashboard.html' %}
+{% load static %}
+{% block 'conteudo' %}
+<div class="container-fluid">
+    <div class="container-fluid">
+        <!-- Formulário para criar nova promoção -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Criar Promoção</h5>
+                <form method="POST" id="promocaoForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ promocao_form.as_p }}
+                    <button type="submit" class="mt-3 btn btn-primary">Criar Promoção</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Promoções -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Promoções Existentes</h5>
+                <div id="promocoes" class="mt-5">
+                    {% for promocao in promocoes %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="promocao-item">
+                                <span>{{ promocao.produto.nome }}</span> -
+                                <img style="max-width:5rem" src="{{promocao.imagem.url}}">
+                                <span>Quantidade Necessária: {{ promocao.quantidade_necessaria }}</span> -
+                                <span>Ativo: {{ promocao.ativo }}</span>
+                                <button class="mb-3 btn btn-secondary" onclick="abrirFormularioEdicaoPromocao({{ promocao.id }}, '{{ promocao.produto.nome }}', {{ promocao.quantidade_necessaria }}, {{ promocao.ativo }})">
+                                    Editar Promoção
+                                </button>
+                                  <form method="post" action="{% url 'remover_promocao' promocao.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button class="btn btn-danger mt-3 mb-3" type="submit">Remover Promoção</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Edição de Promoção -->
+        <div id="editarPromocaoFormContainer" style="display:none; position:fixed; width:100%; height:100%; background:rgb(0 0 0 / 45%); z-index:999; top:0; right:0;">
+            <div class="p-4 d-flex flex-column align-items-start" style="width:50%; height:100%; background:#fff; position:absolute; right:0; overflow-y:auto;">
+                <h3 class="card-title fw-semibold mb-4" style="font-size:1.4rem;">Editando Promoção para <span id="produtoNome"></span></h3>
+                <button class="fechar-promocao" style="position:absolute; top:10px; right:10px;">x</button>
+                <form class="w-100" action="" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="promocaoId" name="promocao_id" value="">
+                    <div class="form-group mb-3">
+                        <label for="editarQuantidadeNecessaria">Quantidade Necessária:</label>
+                        <input type="number" id="editarQuantidadeNecessaria" name="quantidade_necessaria" class="form-control">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="editarAtivo">Ativo:</label>
+                        <input type="checkbox" id="editarAtivo" name="ativo" class="form-check-input">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="editarImagem">Imagem:</label>
+                        <input type="file" id="editarImagem" name="imagem" class="form-control">
+                    </div>
+                    <button type="submit" class="mt-3 btn btn-primary">Salvar Alterações</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Função para abrir o formulário de edição de promoção
+            function abrirFormularioEdicaoPromocao(promocaoId, produtoNome, quantidadeNecessaria, ativo) {
+                document.getElementById('promocaoId').value = promocaoId;
+                document.getElementById('produtoNome').textContent = produtoNome;
+                document.getElementById('editarQuantidadeNecessaria').value = quantidadeNecessaria;
+                document.getElementById('editarAtivo').checked = ativo;
+                document.getElementById('editarPromocaoFormContainer').style.display = 'block';
+            }
+
+            // Fechar o formulário de edição de promoção ao clicar fora dele ou no botão fechar
+            let fecharPromocao = document.querySelector('.fechar-promocao');
+            let editarPromocaoFormContainer = document.querySelector('#editarPromocaoFormContainer');
+
+            editarPromocaoFormContainer.addEventListener('click', function(event) {
+                event.stopPropagation();
+                if (event.target === editarPromocaoFormContainer) {
+                    editarPromocaoFormContainer.style.display = 'none';
+                }
+            });
+
+            fecharPromocao.addEventListener('click', function() {
+                editarPromocaoFormContainer.style.display = 'none';
+            });
+        </script>
+    </div>
+</div>
+{% endblock %}

@@ -61,7 +61,7 @@
             </div>
             <div class="container px-0">
                 <nav class="navbar navbar-light navbar-expand-xl">
-                    <a class="d-flex align-items-center" style="gap:.5rem;" href="{%url 'home'%}" class="navbar-brand"><img style="height:2.5rem; border-radius:50%;" src="{%static 'img\dev122062_faz_uma_logo_parecida_com_ifood_para_uma_plataforma_c_a6720ce1-23ea-425a-9b63-d7921326b252 (1).png' %}"><h5 class="mb-0 text-primary display-6; " style="color:#fff !important">PoupeComprando</h5></a>
+                    <a class="d-flex align-items-center" style="gap:.5rem;" href="{%url 'home'%}" class="navbar-brand"><h4 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important">Poupe<span style="color:#fff">Comprando</span></h4></a>
                     <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                         <span class="fa fa-bars text-primary"></span>
                     </button>
@@ -78,10 +78,11 @@
 {%if not user.is_authenticated%}
 
 <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'tipoPerfil'%}"><span>Criar Conta</a>
-{%elif cliente%}
+  {% elif cliente and not cliente.plano_familia %}
+  <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'perfil_usuario'%}"><span>Editar perfil</a>
 
-<a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'perfil_usuario'%}"><span>Editar perfil</a>
-
+    {% elif cliente and cliente.plano_familia %}
+    <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'subperfil_list'%}"><span>Editar perfil</a>
 
 {%endif%}
 {%if cliente%}
@@ -127,10 +128,163 @@
                             <a href="#" class="position-relative me-4 my-auto">
                                 <i style="color:#fff; " class="abrir-carrinho fa fa-shopping-bag fa-2x"></i>
                             </a>
+                           {%if user.is_authenticated%}
+                          <div class="search-icon me-4" style="background:transparent !important;" id="search-icon"><i style="font-size:2rem; color:#fff;" class="fa fa-search"></i>
+                           {%else%}
+                           <a href="{%url 'login' %}"><div class="search-icon me-4" style="background:transparent !important;"><i style="font-size:2rem; color:#fff;" class="fa fa-search"></i></a>
+                           {%endif%}
+                          </div>
+                          <div id="search-modal" class="modal">
+                            <div class="modal-content px-4 py-5 container" style="width:95%; max-width:35rem;">
+                              <h4 class="text-center"> Pesquise o nome da loja ou produto: </h4>
+                                <span class="close d-none" id="close-modal">&times;</span>
+                                <input style="border-radius:4px 4px 0 0 !important; outline:none !important; border:solid 1px #333;" type="text" id="search-input" placeholder="Pesquisar...">
+                                <div class="suggestions w-100" style="position:static" id="suggestions">
+                                    <ul id="suggestions-list"></ul>
+                                </div>
+                                <button id="search-button" class="d-none">Pesquisar</button>
+                            </div>
+                        </div>
+                        <script>
+                          document.addEventListener('DOMContentLoaded', function() {
+                              const searchIcon = document.getElementById('search-icon');
+                              const modal = document.getElementById('search-modal');
+                              const closeModal = document.getElementById('close-modal');
+                              const searchInput = document.getElementById('search-input');
+                              const searchButton = document.getElementById('search-button');
+                              const suggestions = document.getElementById('suggestions');
+                              const suggestionsList = document.getElementById('suggestions-list');
+                  
+                              searchIcon.onclick = function() {
+                                  modal.style.display = 'block';
+                              }
+                  
+                              closeModal.onclick = function() {
+                                  modal.style.display = 'none';
+                              }
+                  
+                              window.onclick = function(event) {
+                                  if (event.target == modal) {
+                                      modal.style.display = 'none';
+                                  }
+                              }
+                  
+                              searchInput.addEventListener('input', function() {
+                                  const query = searchInput.value.trim();
+                                  if (query.length > 0) {
+                                      fetch(`/search/?query=${query}`)
+                                          .then(response => response.json())
+                                          .then(data => {
+                                              suggestionsList.innerHTML = '';
+                                              const produtos = data.produtos;
+                                              const lojas = data.lojas;
+                  
+                                              produtos.forEach(produto => {
+                                                  const li = document.createElement('li');
+                                                  li.textContent = produto.nome;
+                                                  li.addEventListener('click', () => {
+                                                      window.location.href = `/produto/${produto.id}/`;
+                                                  });
+                                                  suggestionsList.appendChild(li);
+                                              });
+                  
+                                              lojas.forEach(loja => {
+                                                  const li = document.createElement('li');
+                                                  li.textContent = loja.nomeLoja;
+                                                  li.addEventListener('click', () => {
+                                                      window.location.href = `/loja/${loja.id}/`;
+                                                  });
+                                                  suggestionsList.appendChild(li);
+                                              });
+                  
+                                              suggestions.style.display = 'block';
+                                          });
+                                  } else {
+                                      suggestions.style.display = 'none';
+                                  }
+                              });
+                  
+                              searchButton.addEventListener('click', function() {
+                                  const query = searchInput.value.trim();
+                                  if (query.length > 0) {
+                                      window.location.href = `/search_results/?query=${query}`;
+                                  }
+                              });
+                  
+                              document.addEventListener('click', function(e) {
+                                  if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+                                      suggestions.style.display = 'none';
+                                  }
+                              });
+                          });
+                      </script>
+                          <div>
+    <button class="d-none" id="search-button">Pesquisar</button>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const suggestions = document.getElementById('suggestions');
+        const suggestionsList = document.getElementById('suggestions-list');
+
+        searchInput.addEventListener('input', function() {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                fetch(`/search/?query=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsList.innerHTML = '';
+                        const produtos = data.produtos;
+                        const lojas = data.lojas;
+
+                        produtos.forEach(produto => {
+                            const li = document.createElement('li');
+                            li.textContent = produto.nome;
+                            li.addEventListener('click', () => {
+                                window.location.href = `/produto/${produto.id}/`;
+                            });
+                            suggestionsList.appendChild(li);
+                        });
+
+                        lojas.forEach(loja => {
+                            const li = document.createElement('li');
+                            li.textContent = loja.nomeLoja;
+                            li.addEventListener('click', () => {
+                                window.location.href = `/loja/${loja.id}/`;
+                            });
+                            suggestionsList.appendChild(li);
+                        });
+
+                        suggestions.style.display = 'block';
+                    });
+            } else {
+                suggestions.style.display = 'none';
+            }
+        });
+
+        searchButton.addEventListener('click', function() {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                window.location.href = `/search_results/?query=${query}`;
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+                suggestions.style.display = 'none';
+            }
+        });
+    });
+</script>
                             {%if not user.is_authenticated%}
                             <a href="{%url 'tipoPerfil' %}" class="my-auto me-4">
-                              {%elif cliente%}
+                              {%elif cliente and not plano_familia%}
                               <a href="{%url 'perfil_usuario' %}" class="my-auto me-4">
+                              {%elif cliente and plano_familia%}
+                              <a href="{%url 'subperfil_list' %}" class="my-auto me-4">
                               {%endif%}
                                 <i style="color:#fff; !important" class="fas fa-user fa-2x"></i>
                             </a>
@@ -146,6 +300,10 @@
 
 
         <!-- Modal Search Start -->
+          <!-- Modal Search End -->
+        <div class="container suggestions" id="suggestions" style="margin-top:7rem; display:none;" >
+          <ul id="suggestions-list"></ul>
+      </div>
         <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-fullscreen">
               <div class="container" style="width:50rem; max-width:100%">
@@ -164,8 +322,7 @@
               </div>
             </div>
         </div>
-        <!-- Modal Search End -->
-
+      
 
         {%block 'conteudo'%}
         {%endblock%}

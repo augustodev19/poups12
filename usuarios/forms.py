@@ -27,7 +27,30 @@ class LojaRegistrationForm(UserCreationForm):
 
     class Meta:
         model = Loja
-        fields = ['nomeLoja', 'username', 'foto', 'categorias', 'endereco', 'valor_frete', 'tempo_entrega', 'email_pagseguro', 'email', 'token_pagseguro', 'telefone', 'nome']
+        fields = ['nomeLoja', 'username', 'foto', 'categorias', 'email', 'telefone', 'nome']
+
+class PromocaoForm(forms.ModelForm):
+    class Meta:
+        model = Promocao
+        fields = ['produto', 'quantidade_necessaria', 'ativo', 'imagem']
+        widgets = {
+            'produto': forms.Select(attrs={'class': 'form-control'}),
+            'quantidade_necessaria': forms.NumberInput(attrs={'class': 'form-control'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'imagem': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        loja = kwargs.pop('loja', None)
+        super().__init__(*args, **kwargs)
+        if loja:
+            self.fields['produto'].queryset = Produto.objects.filter(categoria__loja=loja)
+
+
+class SubperfilForm(forms.ModelForm):
+    class Meta:
+        model = Subperfil
+        fields = ['nome', 'foto_perfil', 'is_titular']
 
 
 class LojaForm(ModelForm):

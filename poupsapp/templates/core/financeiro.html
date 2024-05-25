@@ -1,32 +1,112 @@
-
-{%extends 'core/base-dashboard.html'%}
-{%load static%}
-{%block 'conteudo' %}
-      <div class="container-fluid">
-        <div class="container-fluid">
-   
-
-          
-          
-          <div class="card">
+{% extends 'core/base-dashboard.html' %}
+{% load static %}
+{% block 'conteudo' %}
+<div class="container-fluid">
+    <div class="container-fluid">
+        <div class="card">
             <div class="card-body">
-              <h5 class="card-title fw-semibold mb-4">Sacar Dinheiro</h5>
-              <div class="card" style="max-width:40rem">
-                <div class="card-body" >
-                    <form method="post">
-                        {% csrf_token %}
-                        <label class="form-label" for="valor">Valor:</label>
-                        <input class="form-control mb-3" type="number" id="valor" name="valor" required>
-                        <label class="form-label" for="chave_pix">Chave PIX:</label>
-                        <input class="form-control" type="text" id="chave_pix" name="chave_pix" required>
-                        <button class="mt-3 btn btn-primary" style="color:#fff" type="submit">Sacar</button>
-                    </form>
+                <h5 class="card-title fw-semibold mb-4">Sacar Dinheiro</h5>
+                <div class="card" style="max-width:40rem">
+                    <div class="card-body">
+                        <form id="payment-form" method="post">
+                            {% csrf_token %}
+                            <label class="form-label" for="valor">Valor:</label>
+                            <input class="form-control mb-3" type="number" id="valor" name="valor" required>
+                            
+                            <label class="form-label" for="card-element">Número do Cartão:</label>
+                            <div id="card-number-element" class="form-control mb-3"></div>
+                            
+                            <label class="form-label" for="card-expiry-element">Data de Expiração:</label>
+                            <div id="card-expiry-element" class="form-control mb-3"></div>
+                            
+                            <label class="form-label" for="card-cvc-element">CVC:</label>
+                            <div id="card-cvc-element" class="form-control mb-3"></div>
+                            
+                            <div id="card-errors" role="alert"></div>
+                            
+                            <button class="mt-3 btn btn-primary" style="color:#fff" type="submit">Sacar</button>
+                        </form>
+                    </div>
                 </div>
-              </div>
             </div>
         </div>
-    
+    </div>
+</div>
 
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    // Crie uma instância do Stripe
+    var stripe = Stripe('{{ stripe_public_key }}'); // Certifique-se de passar sua chave pública Stripe
 
+    // Crie uma instância do Elements
+    var elements = stripe.elements();
 
- {%endblock%}
+    // Crie elementos individuais para o cartão
+    var cardNumber = elements.create('cardNumber');
+    cardNumber.mount('#card-number-element');
+
+    var cardExpiry = elements.create('cardExpiry');
+    cardExpiry.mount('#card-expiry-element');
+
+    var cardCvc = elements.create('cardCvc');
+    cardCvc.mount('#card-cvc-element');
+
+    // Lide com mudanças de validação nos elementos de cartão
+    cardNumber.on('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    cardExpiry.on('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    cardCvc.on('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    // Lide com o envio do formulário
+    var form = document.getElementById('payment-form');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        stripe.createToken(cardNumber).then(function(result) {
+            if (result.error) {
+                // Informe o usuário se houve um erro
+                var errorElement = document.getElementById('card-errors');
+                errorElement.textContent = result.error.message;
+            } else {
+                // Envie o token para o seu servidor
+                stripeTokenHandler(result.token);
+            }
+        });
+    });
+
+    // Envie o token para o seu servidor
+    function stripeTokenHandler(token) {
+        var form = document.getElementById('payment-form');
+        var hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'stripeToken');
+        hiddenInput.setAttribute('value', token.id);
+        form.appendChild(hiddenInput);
+
+        // Envie o formulário
+        form.submit();
+    }
+</script>
+{% endblock %}

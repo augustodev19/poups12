@@ -1,94 +1,91 @@
+{% extends 'core/base.html' %}
+{% load static %}
 
-{%extends 'core/base.html'%}
-
-{%load static%}
-
-
-{%block 'conteudo'%}
-<div class="fluid-container p-4" style="background:#fff !important; margin-top:6rem;" >
-   <div class="container d-flex align-items-center" style="gap:2rem;">
-      <a class="voltar-btn" style="color:#b11000;">
-         <i style="color:#b11000; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
-      </a>
-      <span style="color:#b11000; font-size:1.6rem;">{{perfil_loja.nomeLoja}}</span>
-   </div>
+{% block 'conteudo' %}
+<div class="fluid-container p-4" style="background:#fff !important; margin-top:6rem;">
+    <div class="container d-flex align-items-center" style="gap:2rem;">
+        <a class="voltar-btn" style="color:#b11000;">
+            <i style="color:#b11000; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
+        </a>
+        <span style="color:#b11000; font-size:1.6rem;">{{perfil_loja.nomeLoja}}</span>
+    </div>
 </div>
-    <!-- Script JavaScript -->
-    <script>
-      function goBack() {
-          window.history.back();
-      }
-      </script>
-<div class="fluid-container  d-flex justify-content-start" style="gap:4rem; ">
-   <div class="capa-img-wrapper">
-   
-   {%if perfil_loja.capa %}<img  class="capa-img" style="width:100%; height:15rem; object-fit:cover;"  src="{{perfil_loja.capa.url}}"> 
-   {%else%}
-   <img class="capa-img"  style="width:100%; height:15rem; object-fit:cover;" src="{%static 'img/tim-toomey-STqHLqMne3k-unsplash (1).jpg'%}"> 
-   {%endif%}
-   <div class="profile-pic">
-      <img src="{{perfil_loja.foto.url}}">
-   </div>
- 
-   </div>
-
+<!-- Script JavaScript -->
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>
+<div class="fluid-container d-flex justify-content-start" style="gap:4rem;">
+    <div class="capa-img-wrapper">
+        {% if perfil_loja.capa %}
+            <img class="capa-img" style="width:100%; height:15rem; object-fit:cover;" src="{{perfil_loja.capa.url}}">
+        {% else %}
+            <img class="capa-img" style="width:100%; height:15rem; object-fit:cover;" src="{% static 'img/tim-toomey-STqHLqMne3k-unsplash (1).jpg' %}">
+        {% endif %}
+        <div class="profile-pic">
+            <img src="{{perfil_loja.foto.url}}">
+        </div>
+    </div>
 </div>
-   <div class=" mt-4" style="padding: 0 20px">
-      <span class="fw-bold"    style="font-size:1.4rem; color:#333;">{{perfil_loja.nomeLoja}}</span>
-   </div>
-   <div class="container d-flex justify-content-between align-items-center">
 
-      <div> 
-      </div>
-      <div> 
-      </div>
-      <div> 
-      </div>
-      <div> 
-      </div>
+<!-- Bloco de Promoções -->
+<div class="container accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem;">
 
-   </div>
-
-
-</div><div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem;">
-   {% for categoria in perfil_loja.categoriaproduto_set.all %}
-   <div class="accordion-item">
-     <h2 class="accordion-header" id="heading{{ categoria.id }}">
-
-      
-
-       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ categoria.id }}" aria-expanded="false" aria-controls="collapse{{ categoria.id }}">
-         {{ categoria.nome }}
-       </button>
-     </h2>
-     <div id="collapse{{ categoria.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ categoria.id }}" data-bs-parent="#accordionProduto{{ categoria.id }}">
-       <div class="accordion-body">
-         {% for produto in categoria.produto_set.all %}
-         <a href="{% url 'detalhes_produto' produto.id %}">
-
-         <div class="produto d-flex justify-content-between mb-3" style="border-bottom:solid 1px #b2afaf; padding-bottom:.5rem;">
-            <div class="d-flex" style="gap:.5rem;">
-              {%if produto.foto%} <img style="height:4rem; width:4rem; object-fit:cover;" src="{{produto.foto.url}}">
-              {%endif%}
-
-           <div class="d-flex flex-column align-items-start justify-content-center">
-            <span class="fw-bold" style="font-weight:600; color:#333;"> {{produto.nome}}</span>
-
-            {%if produto.descricao%}<span>{{produto.descricao}}</span>
-            {%endif%}
-           </div>
-      
+    <h3 class="fw-bold" style="color:#333;">Promoções</h3>
+    <div class="row">
+        {% for promocao in perfil_loja.promocao_set.all %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                {% if promocao.imagem %}
+                <img style="height:auto; object-fit:cover; width:5rem; border-radius:0 0 12px 0;" src="{{ promocao.imagem.url }}" class="card-img-top" alt="{{ promocao.produto.nome }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ promocao.produto.nome }}</h5>
+                    <p class="card-text">Compre {{ promocao.quantidade_necessaria }} e ganhe um grátis!</p>
+                    <a href="{%url 'detalhes_promocao' promocao.id %}" class="btn btn-primary">Ver Detalhes</a>
+                </div>
             </div>
-
-         <span class="d-flex align-items-center fw-bold produtoPreco">
-            R$ {{produto.preco}}
-         </span>
-      </div>
-         {%endfor%}
-      </div>
-     </div>
-   </div>
-</a>
-   {% endfor %}
+        </div>
+        {% empty %}
+        <p>Nenhuma promoção disponível no momento.</p>
+        {% endfor %}
+    </div>
 </div>
-{%endblock%}
+
+
+
+<div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem;">
+    {% for categoria in perfil_loja.categoriaproduto_set.all %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="heading{{ categoria.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ categoria.id }}" aria-expanded="false" aria-controls="collapse{{ categoria.id }}">
+                {{ categoria.nome }}
+            </button>
+        </h2>
+        <div id="collapse{{ categoria.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ categoria.id }}" data-bs-parent="#accordionProduto{{ categoria.id }}">
+            <div class="accordion-body">
+                {% for produto in categoria.produto_set.all %}
+                <a href="{% url 'detalhes_produto' produto.id %}">
+                    <div class="produto d-flex justify-content-between mb-3" style="border-bottom:solid 1px #b2afaf; padding-bottom:.5rem;">
+                        <div class="d-flex" style="gap:.5rem;">
+                            {% if produto.foto %}
+                            <img style="height:4rem; width:4rem; object-fit:cover;" src="{{ produto.foto.url }}">
+                            {% endif %}
+                            <div class="d-flex flex-column align-items-start justify-content-center">
+                                <span class="fw-bold" style="font-weight:600; color:#333;">{{ produto.nome }}</span>
+                                {% if produto.descricao %}
+                                <span>{{ produto.descricao }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="d-flex align-items-center fw-bold produtoPreco">R$ {{ produto.preco }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -80,7 +80,7 @@
     transition: 0.5s;
     background: var(--bs-white);
     border: 0;
-    background:#b11000 !important
+    background:#1094F5 !important
 }
 
 .topbar {
@@ -144,7 +144,7 @@
 #navbarCollapse
 
 {
-    background:#b11000 !important;
+    background:#1094F5 !important;
     border-radius: 0 0 4px 4px;
 }
 
@@ -163,7 +163,7 @@
 }
 .nav-bar
 {
-    background: #b11000 !important;
+    background: #1094F5 !important;
 }
 
 .navbar .dropdown-toggle::after {
@@ -557,8 +557,6 @@
     margin: 15% auto; /* Centralizado verticalmente e horizontalmente */
     padding: 20px;
     border: 1px solid #888;
-    max-width: 80%;
-    width:50rem;
 }
 
 .close {
@@ -791,7 +789,7 @@
 
 .btn-filter
 {
-    background: #b11000;
+    background: #1094F5;
     color:#fff;
     padding:.7rem 1rem;
     border-radius:30px;
@@ -805,6 +803,32 @@
     color:#fff;
 }
 
+.suggestions {
+    border-bottom:solid 1px #333;
+    border-right:solid 1px #333;
+    border-left:solid 1px #333;
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    width: 100%;
+    background-color: white;
+    color:#333;
+}
+
+.suggestions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.suggestions ul li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestions ul li:hover {
+    background-color: #f0f0f0;
+}
 
   
 .pagination a.active {
@@ -951,7 +975,6 @@
     padding: 20px;
     border-radius: 5px;
     width: 500px;
-    max-width: 90%;
 }
 
 

@@ -24,17 +24,19 @@ urlpatterns = [
     path('buscar_produto/<int:produto_id>/', buscar_produto, name='buscar_produto'),
     path('editar_produto/', editar_produto, name='editar_produto'),
     path('tipo_cliente/', tipo_cliente, name='tipoCliente'),
-    path('criar_subperfil/', criar_subperfil, name='criarSubperfil'),
+    path('criar_subperfil/', create_subperfil, name='criarSubperfil'),
     path('perfil_familia/', perfil_familia, name='perfil_familia'),
     path('tipo_perfil/', tipo_perfil, name='tipoPerfil'),
     path('meu_perfil/', perfil_usuario, name='perfil_usuario'),
     path('ajax/sales-by-month/', get_sales_by_month, name='sales-by-month'),
     path('pedidos-loja/', ver_pedidos_loja, name='ver_pedidos_loja'),
     path('criar-pedido_loja/', criar_pedido_loja, name='criar_pedido_loja'),
-    path('sacar/', sacar_dinheiro, name='sacar_dinheiro'),
     path('categoria/remover/<int:categoria_id>/', remover_categoria, name='remover_categoria'),
     path('pedidos_pendentes/', marcar_como_entregue, name='pedidos_pendentes'),
-
+    path('promocoes/', gerenciar_promocoes, name='gerenciar_promocoes'),
+    path('remover_promocao/<int:promocao_id>/', remover_promocao, name='remover_promocao'),
+    path('subperfil_list/', subperfil_list, name='subperfil_list'),
+    path('select_subperfil/<int:subperfil_id>/', select_subperfil, name='select_subperfil')
 ]
 
 

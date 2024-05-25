@@ -37,10 +37,14 @@
                         {%csrf_token%}
                         <input type="hidden" name="tempo" value="tempo">
                         <div class="mb-3">
-                            <p><strong>Coloque o tempo estimado em minutos</strong></p>
+                          <div class=" form-text">
 
-                          <label for="exampleInputEmail1"  class="form-label">Tempo estimado:</label>
+                            <p><strong>Coloque o tempo estimado em minutos</strong></p>
+                          </div>
+                          <label for="exampleInputEmail1"  class="form-label">Tempo mínimo estimado:</label>
                           <input type="text" class="mb-3 form-control" value="{{loja.tempo_entrega_min}}" aria-describedby="emailHelp"  type="number" name="tempo_entrega_min" placeholder="Mínimo">
+                          <label for="exampleInputEmail1"  class="form-label">Tempo máximo estimado:</label>
+
                           <input type="text" class="form-control" value="{{loja.tempo_entrega_max}}"  aria-describedby="emailHelp" type="number" name="tempo_entrega_max" placeholder="Máximo">
                       
                       
