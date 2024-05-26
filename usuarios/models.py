@@ -349,15 +349,19 @@ class CompraAcumulada(models.Model):
             return self.quantidade_comprada // self.promocao.quantidade_necessaria
         return 0
 
+
+
 class Charge(models.Model):
     charge_id = models.CharField(max_length=100, unique=True)
-    status = models.CharField(max_length=50)
+    status = models.CharField(max_length=20)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     endereco = models.CharField(max_length=255, null=True, blank=True)
     loja_id = models.IntegerField()
     cliente_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    attempts = models.IntegerField(default=0)  # Número de tentativas de verificação
 
     def __str__(self):
         return self.charge_id
+

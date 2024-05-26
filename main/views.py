@@ -813,14 +813,16 @@ def check_charge_status(charge_id):
             charge.save()
             handle_pix_payment(charge_id)
         else:
-            # Re-schedule the task to check again after some time
+            # Incrementar o número de tentativas
+            charge.attempts += 1
+            charge.save()
+            # Re-agendar a tarefa para verificar novamente em 60 segundos
             check_charge_status.apply_async((charge_id,), countdown=60)
 
     except Charge.DoesNotExist:
         print(f"Charge ID {charge_id} not found.")
     except Exception as e:
         print(f"Error checking charge status: {str(e)}")
-
 def handle_pix_payment(charge_id):
     try:
         charge = Charge.objects.get(charge_id=charge_id)
