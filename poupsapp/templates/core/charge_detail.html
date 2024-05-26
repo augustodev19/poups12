@@ -21,6 +21,11 @@
             <p>Status: {{ charge_data.status }}</p>
             <p>Expira em: {{ charge_data.expiresDate }}</p>
             <p>Tentativas de verificação: {{ attempts }}</p>
+            {% if last_error %}
+                <div class="error-message">
+                    <p>Erro na última tentativa: {{ last_error }}</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </body>

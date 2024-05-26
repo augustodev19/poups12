@@ -731,7 +731,6 @@ HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWY
 @require_http_methods(["POST"])
 def criar_pagamento_pix(request):
     try:
-        # Código existente para gerar a cobrança Pix
         carrinho = request.session.get('carrinho', {'itens': {}})
         if not carrinho['itens']:
             return JsonResponse({"erro": "Carrinho vazio."}, status=400)
@@ -782,13 +781,15 @@ def criar_pagamento_pix(request):
             total=total_geral_carrinho,
             endereco=endereco,
             loja_id=loja.id,
-            cliente_id=request.user.cliente.id
+            cliente_id=request.user.cliente.id,
+            attempts=0,  # Iniciar o número de tentativas em 0
+            last_error=None  # Iniciar sem erros
         )
 
         request.session['pix_charge_id'] = charge.charge_id
 
         # Renderizar a página HTML com o QR Code e agendar a tarefa
-        response = render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge']})
+        response = render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge'], 'attempts': charge.attempts, 'last_error': charge.last_error})
         
         # Schedule the task to check charge status after rendering the page
         check_charge_status.apply_async((charge.charge_id,), countdown=60)
