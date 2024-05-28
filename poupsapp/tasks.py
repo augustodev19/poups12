@@ -4,6 +4,9 @@ from usuarios.models import *
 import stripe
 from django.utils import timezone
 import time
+from main.views import *
+
+
 
 @shared_task(bind=True)
 def test_func(self):
