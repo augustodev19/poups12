@@ -55,15 +55,15 @@ CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'https://f5fa-2804-58
 LOGOUT_REDIRECT_URL = 'home'
 
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  # substitua pelo seu endereço e porta do Redis
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django_redis.cache.RedisCache',
+#        'LOCATION': 'redis://127.0.0.1:6379/1',  # substitua pelo seu endereço e porta do Redis
+#        'OPTIONS': {
+#            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#        }
+#    }
+#}
 
 # Opcional: Definir cache de sessão
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
