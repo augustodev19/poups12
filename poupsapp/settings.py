@@ -30,13 +30,13 @@ PASSWORD_RESET_TEMPLATE_NAME = 'core/mudarSenha.html'
 LOGIN_URL = 'login'
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Sao_Paulo'
-CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 
 # Quick-start development settings - unsuitable for production
@@ -58,7 +58,7 @@ LOGOUT_REDIRECT_URL = 'home'
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://red-cparbs4f7o1s73alhdqg:6379',  # substitua pelo seu endereço e porta do Redis
+        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),  # substitua pelo seu endereço e porta do Redis
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
