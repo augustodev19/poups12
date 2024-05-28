@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-# Certifique-se de que este código está no __init__.py da pasta principal
+# This will make sure the app is always imported when
+# Django starts so that shared_task will use this app.
 from .celery import app as celery_app
 
 __all__ = ('celery_app',)

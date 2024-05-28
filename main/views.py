@@ -12,8 +12,7 @@ import secrets  # Importe esta biblioteca no início do arquivo
 import os
 import hashlib
 from django.core.cache import cache
-from celery import shared_task
-
+from poupsapp.tasks import *
 import hmac
 from django.views import View
 from mercadopago import SDK
@@ -91,6 +90,16 @@ def home_view(request):
 
 
 import math
+
+
+def teste_tarefa(request):
+    pedido_id_novo = 291  # ID do pedido para teste
+    charge_id = 2
+    check_charge_status.apply_async((charge_id,), countdown=3)
+    #recusar_pedido_automaticamente.apply_async((pedido_id_novo,), countdown=10)  # Atraso de 10 minutos
+    return JsonResponse({'status': 'Pix checkado'})
+
+
 def haversine(lon1, lat1, lon2, lat2):
     # Raio da Terra em Km
     raio_terra_km = 6371.0
@@ -205,6 +214,9 @@ def loja(request):
 
     return render(request, 'core/loja.html', context)
 
+def add_view(request):
+    result = add.delay(4, 6)
+    return JsonResponse({'task_id': result.id})
 
 def listar_lojas(request):
     categorias = request.GET.get('categorias')
@@ -727,8 +739,8 @@ logger = logging.getLogger(__name__)  # Configuração do logger para a view
 API_URL = "https://api.openpix.com.br/api/v1/charge"
 HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 
-@login_required
-@require_http_methods(["POST"])
+
+
 def criar_pagamento_pix(request):
     try:
         carrinho = request.session.get('carrinho', {'itens': {}})
@@ -770,6 +782,7 @@ def criar_pagamento_pix(request):
         }
 
         response = requests.post(API_URL, headers=HEADERS, json=data)
+        print(f"Resposta da API ao criar cobrança: {response.status_code}, {response.text}")
         charge_data = response.json()
 
         if 'charge' not in charge_data or 'identifier' not in charge_data['charge']:
@@ -777,6 +790,7 @@ def criar_pagamento_pix(request):
 
         charge = Charge.objects.create(
             charge_id=charge_data['charge']['identifier'],
+            correlation_id=correlation_id,
             status=charge_data['charge']['status'],
             total=total_geral_carrinho,
             endereco=endereco,
@@ -788,13 +802,16 @@ def criar_pagamento_pix(request):
 
         request.session['pix_charge_id'] = charge.charge_id
 
-        # Renderizar a página HTML com o QR Code e agendar a tarefa
-        response = render(request, 'core/charge_detail.html', {'charge_data': charge_data['charge'], 'attempts': charge.attempts, 'last_error': charge.last_error})
-        
-        # Schedule the task to check charge status after rendering the page
-        check_charge_status.apply_async((charge.charge_id,), countdown=60)
-        
-        return response
+        # Agendar a tarefa para verificar o status da cobrança
+        check_charge_status.apply_async((correlation_id, timezone.now().isoformat()), countdown=3)
+        print(f"Tarefa agendada para verificar o status da cobrança com correlation_id {correlation_id} em 3 segundos")
+
+        # Renderizar a página HTML com o QR Code e status de verificação
+        return render(request, 'core/charge_detail.html', {
+            'charge_data': charge_data['charge'],
+            'attempts': charge.attempts,
+            'last_error': charge.last_error
+        })
 
     except Exception as e:
         messages.error(request, f"Erro ao criar pagamento Pix: {str(e)}")
@@ -802,28 +819,6 @@ def criar_pagamento_pix(request):
 API_URL = "https://api.openpix.com.br/api/v1/charge"
 HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 
-@shared_task
-def check_charge_status(charge_id):
-    try:
-        charge = Charge.objects.get(charge_id=charge_id)
-        response = requests.get(f"{API_URL}/{charge_id}", headers=HEADERS)
-        charge_data = response.json()
-
-        if 'charge' in charge_data and charge_data['charge']['status'] == 'PAID':
-            charge.status = 'paid'
-            charge.save()
-            handle_pix_payment(charge_id)
-        else:
-            # Incrementar o número de tentativas
-            charge.attempts += 1
-            charge.save()
-            # Re-agendar a tarefa para verificar novamente em 60 segundos
-            check_charge_status.apply_async((charge_id,), countdown=60)
-
-    except Charge.DoesNotExist:
-        print(f"Charge ID {charge_id} not found.")
-    except Exception as e:
-        print(f"Error checking charge status: {str(e)}")
 def handle_pix_payment(charge_id):
     try:
         charge = Charge.objects.get(charge_id=charge_id)
@@ -1082,7 +1077,6 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
                 print(f"Produto não encontrado: {item.description}")
 
         enviar_email_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
-        emitir_nota_fiscal_focus("34188759000161", "12345", "3205309")
 
         print("Email de pedido enviado")
 
@@ -1283,7 +1277,9 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
             email.attach(mime_image)
 
         email.send()
+        recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)  # 600 segundos = 10 minutos
         print("Email com detalhes do pedido enviado com sucesso.")
+        logger.info(f"Tarefa de recusa automática agendada para o pedido {pedido.id}.")
     except Exception as e:
         print(f"Erro ao enviar email: {str(e)}")
 

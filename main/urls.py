@@ -38,6 +38,7 @@ urlpatterns = [
     path('search/', search, name='search'),
     path('search_results/', search_results, name='search_results'),
     path('create-pix/', criar_pagamento_pix, name='criar_pagamento_pix'),
+    path('teste-tarefa/', teste_tarefa, name='teste_tarefa'),
 
     # URL para o webhook (notificações do Mercado Pago)
 

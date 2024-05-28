@@ -2,16 +2,16 @@ from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 
-# Defina o módulo de configurações padrão do Django para o Celery
+# Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'poupsapp.settings')
 
 app = Celery('poupsapp')
 
-# Usar uma string aqui significa que o worker não precisa serializar
-# a configuração do objeto para filhos.
+# Using a string here means the worker does not have to
+# pickle the object when using Windows.
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Carregar tasks do módulo 'tasks.py' em cada aplicativo do Django.
+# Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
 @app.task(bind=True)

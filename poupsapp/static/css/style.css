@@ -217,7 +217,7 @@
     width: 100%;
     background-repeat: no-repeat !important;
     background-size: cover !important;
-    background:linear-gradient(to right, rgba(237, 112, 3, 0.296), rgba(195, 105, 15, 0.487)), url('../img/0_3.webp');
+    background:linear-gradient(to right, rgba(3, 124, 237, 0.296), rgba(255, 255, 255, 0.487)), url('../img/ella-olsson-oPBjWBCcAEo-unsplash.jpg');
 }
 
 .carousel-item {
@@ -803,6 +803,97 @@
     color:#fff;
 }
 
+@media(max-width:768px)
+{   
+    .mobile-lojas
+    {
+        display: flex !important;
+    }
+
+    .categorias-mobile
+    {
+        display: block !important;
+    }
+
+    .categorias-desk, .categorias-desk-title
+    {
+        display: none !important;
+    }
+
+    .ver-lojas-mobile
+    {
+        display: flex !important;
+        justify-content: center;
+    }
+
+    h3 
+    {
+        font-size: 1.1rem !important;
+    }
+    .card-1 div
+    {
+        gap:.7rem;
+    }
+    .card-1 div div
+    {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .card-1 div div p
+    {
+        text-align: start !important;
+        margin-bottom: .5rem !important;
+    }
+
+
+    .card-1 div h2
+    {
+        font-size:1.2rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .card-1 div p
+    {
+        font-size: .8rem !important;
+    }
+    .desk-lojas
+    {
+        display: none !important;
+    }
+    .hero-header
+    {
+        height:10rem !important;
+        margin-top:6.2rem !important;
+    }
+
+    .hero-header .container
+    {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    .title-text
+    {
+        font-size:1.4rem !important;
+    }
+
+    .ver-lojas-desk
+    {
+        display: none !important;
+    }
+}
+
+
+.grid-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 16px;
+  }
+
 .suggestions {
     border-bottom:solid 1px #333;
     border-right:solid 1px #333;
@@ -922,7 +1013,7 @@
     border-radius: 8px;
     padding: 20px;
     box-sizing: border-box; /* Isso faz com que a margem seja incluída nos 33.333% de largura */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     width: calc(33.333% - 20px); /* Ajusta a largura para incluir a margem */
     text-align: center;
 }
@@ -942,7 +1033,26 @@
     color: #555;
 }
 
-
+.swiper-container {
+    width: 100%;
+    height: 100%;
+  }
+  .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    text-align: center;
+  }
+  .swiper-slide img {
+    max-width: 100px;
+    margin-bottom: 10px;
+  }
+  .swiper-slide p {
+    margin: 0;
+    font-size: 16px;
+  }
+  
 .modal1 {
     display: none;
     position: fixed;
@@ -975,6 +1085,7 @@
     padding: 20px;
     border-radius: 5px;
     width: 500px;
+    max-width: 95%;
 }
 
 

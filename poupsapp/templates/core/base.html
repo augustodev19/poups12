@@ -3,6 +3,8 @@
 <html lang="en">
 
     <head>
+      <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+
         <meta charset="utf-8">
         <title>PoupeComprando</title>
         <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -32,7 +34,7 @@
         <link rel="stylesheet" href="{% static 'css/style.css' %}">
     </head>
 
-    <body>
+    <body style="overflow-x:hidden;">
       {% if novos_pedidos %}
     <script>alert("Você tem novos pedidos!");</script>
 {% endif %}
@@ -350,14 +352,9 @@
           <div class="container">
               <div class="row align-items-center">
                   <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                      <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>PoupeComprando</a>, Todos os direitos reservados.</span>
+                      <span class="text-light" style="font-size:.8rem;"><a href="#"><i class="fas fa-copyright text-light me-2"></i>PoupeComprando</a>, Todos os direitos reservados.</span>
                   </div>
-                  <div class="col-md-6 my-auto text-center text-md-end text-white">
-                        <div class="d-flex justify-content-end pt-3">
-                              <a class="btn  btn-outline-secondary me-2 btn-md-square rounded-circle" href=""><i class="fab fa-instagram"></i></a>
-                              <a class="btn btn-outline-secondary me-2 btn-md-square rounded-circle" href=""><i class="fab fa-facebook-f"></i></a>
-                              <a class="btn btn-outline-secondary btn-md-square rounded-circle" href=""><i class="fab fa-linkedin-in"></i></a>
-                          </div>
+                 
               </div>
           </div>
       </div>
@@ -668,7 +665,7 @@ function confirmAddress() {
   </h3>
   <p class="text-center" style="max-width:60rem; font-size:1rem;color:#000;">
     Utilizamos cookies para oferecer uma melhor experiência de navegação em nosso site. Ao clicar em <strong>"ACEITO"</strong>, você concorda com o seu uso. Para maiores informações, consulte nossa Política de Privacidade. </p>
-  <button class="btn btn-primary aceitarCookies" style="color:#fff; font-size:1.2rem; padding:.5rem 2rem; border-radius:30px;">
+  <button class="btn btn-primary aceitarCookies" style="color:#fff; font-size:.9rem; padding:.5rem 2rem; border-radius:4px;">
     ACEITO
   </button>
 </div>

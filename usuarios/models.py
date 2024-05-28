@@ -358,10 +358,11 @@ class Charge(models.Model):
     endereco = models.CharField(max_length=255, null=True, blank=True)
     loja_id = models.IntegerField()
     cliente_id = models.IntegerField()
+    correlation_id = models.CharField(_(""), max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     attempts = models.IntegerField(default=0)  # Número de tentativas de verificação
-
+    last_error = models.TextField(null=True, blank=True)  # Última mensagem de erro
     def __str__(self):
         return self.charge_id
 

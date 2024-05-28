@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+from celery.schedules import crontab
 
 from pathlib import Path
 
@@ -29,12 +30,14 @@ PASSWORD_RESET_TEMPLATE_NAME = 'core/mudarSenha.html'
 LOGIN_URL = 'login'
 
 
-CELERY_BROKER_URL = 'redis://red-cp92o5sf7o1s739r2qdg:6379/0'
-CELERY_RESULT_BACKEND = 'redis://red-cp92o5sf7o1s739r2qdg:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_RESULT_BACKEND = 'django-db'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -52,10 +55,52 @@ CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'https://f5fa-2804-58
 LOGOUT_REDIRECT_URL = 'home'
 
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # substitua pelo seu endereço e porta do Redis
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Opcional: Definir cache de sessão
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+#LOGGING = {
+#    'version': 1,
+#    'disable_existing_loggers': False,
+#    'handlers': {
+#        'console': {
+#            'level': 'DEBUG',
+#            'class': 'logging.StreamHandler',
+#        },
+#        'file': {
+#            'level': 'DEBUG',
+#            'class': 'logging.FileHandler',
+#            'filename': os.path.join(BASE_DIR, 'debug.log'),
+#        },
+#    },
+#    'loggers': {
+#        'django': {
+#            'handlers': ['console', 'file'],
+#            'level': 'DEBUG',
+#            'propagate': True,
+#        },
+#        'celery': {
+#            'handlers': ['console', 'file'],
+#            'level': 'DEBUG',
+#            'propagate': True,
+#        },
+#    },
+#}
+
 AUTH_USER_MODEL = 'usuarios.CustomUser'
 MERCADO_PAGO_SECRET_KEY = '6947fa76368c6d59aae0f9934e64322507934292126d14931dd72ed35dc1d843'
 MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
-STRIPE_WEBHOOK_SECRET = 'whsec_TU9HyRpwvI18UzhFtHnSQFK3biXjHFpM'
+STRIPE_WEBHOOK_SECRET = 'whsec_IMHkfsYp2o9UZ0lvZ73uBGVWC9gNAwrp'
 # Application definition
 
 INSTALLED_APPS = [
@@ -69,6 +114,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'usuarios',
     'main',
+    'django_redis',
+    'django_celery_results',
     #'channels',
     #'chat'
 ]
