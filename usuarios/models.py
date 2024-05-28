@@ -174,8 +174,8 @@ class Loja(CustomUser):
     tempo_entrega_max = models.IntegerField(blank=True, null=True)
     token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
-    saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
-    ever_saldo = models.DecimalField(max_digits = 99999999999, decimal_places=2, blank=True, null=True, default="0")
+    saldo = models.DecimalField(max_digits = 999999, decimal_places=2, blank=True, null=True, default="0")
+    ever_saldo = models.DecimalField(max_digits = 999999, decimal_places=2, blank=True, null=True, default="0")
     is_active = models.BooleanField(default=True)
       # campo adicionado
     def delete(self, *args, **kwargs):
