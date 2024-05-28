@@ -822,7 +822,7 @@ HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWY
 def handle_pix_payment(charge_id):
     try:
         charge = Charge.objects.get(charge_id=charge_id)
-        if charge.status == 'paid':
+        if charge.status == 'COMPLETED':
             total_geral_carrinho = Decimal(charge.total)
             endereco = charge.endereco
             loja_id = charge.loja_id
