@@ -177,11 +177,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'NAME': 'poupecomprando',
+        'USER': 'poupecomprando_user',
+        'PASSWORD': 'uk4G84RyR2veH6hCuf5A9uLnKYnWdWCM',
+        'HOST': 'dpg-cn6udpol6cac73bqelfg-a.oregon-postgres.render.com',
+        'PORT': '5432',
     }
 }
 
