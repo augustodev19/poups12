@@ -6,7 +6,7 @@
     <div class="modal-content1">
       <div class="modal-header1">
         
-        <h2 class=" text-center" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
+        <h2 class=" text-center modal-title" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
         <div class="mb-3 d-flex justify-content-center">
           <img style="height:15rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
           </div>
@@ -26,7 +26,7 @@
             <div class="container ">
                 <div class="row md-12 align-items-center">
                     <div class="col-md-12 col-lg-12  d-flex flex-column align-items-center">
-                        <h2 class="mb-3 text-center title-text " style="color:#000 !important; font-weight:600; font-size:3.5rem;">Compre mais, gaste menos,<br> viva melhor com PoupeComprando!</h2>
+                        <h2 class="mb-3 text-center title-text " style="color:#000 !important; font-weight:700; font-size:3.5rem;">Compre mais, gaste menos,<br> viva melhor com PoupeComprando!</h2>
                         <div class=" d-flex justify-content-center align-items-center">
                             <input class="d-none    form-control border-2 border-secondary w-75 py-3 px-4 rounded-pill abrir-endereco" type="number" placeholder="Pesquisar">
                            {%if not user.is_authenticated%}<a class="d-flex w-100" > <button type="submit" class="fw-bold btn abrir-endereco btn-primary ver-lojas-desk  py-3 px-4 text-white" style="top: 0; right: 25%; max-width:30rem; width:100%; border:none; font-size:1.5rem; border-radius:4px; ">Ver lojas próximas</button>
@@ -74,10 +74,10 @@
 
         <div class="ver-lojas-mobile justify-content-center align-items-center  container" style="margin-top:-1rem; display:none;">
           <input class="d-none    form-control border-2 border-secondary w-75 py-3 px-4 rounded-pill abrir-endereco" type="number" placeholder="Pesquisar">
-         {%if not user.is_authenticated%}<a class="d-flex justify-content-center w-100" > <button type="submit" class="fw-bold btn abrir-endereco btn-primary ver-lojas-mobile  p-2 text-white" style="border-radius:4px; top: 0; right: 25%; max-width:30rem; width:100%; border:none; font-size:.9rem; max-width:17rem; ">Ver lojas próximas</button>
+         {%if not user.is_authenticated%}<a class="d-flex justify-content-center w-100" > <button type="submit" class="fw-bold btn abrir-endereco btn-primary ver-lojas-mobile  p-2 text-white" style="border-radius:4px; top: 0; right: 25%; max-width:30rem; width:100%; border:none; font-size:1.2rem; max-width:17rem; ">Ver lojas próximas</button>
          </a>
          {%else%}
-         <a class="d-flex justify-content-center w-100" href="{%url 'loja'%}" > <button type="submit" class="fw-bold btn btn-primary ver-lojas-mobile  p-2 text-white" style="border-radius:4px; top: 0; right: 25%; max-width:30rem; width:100%; border:none; font-size:.9rem; max-width:17rem; ">Ver lojas próximas</button>
+         <a class="d-flex justify-content-center w-100" href="{%url 'loja'%}" > <button type="submit" class="fw-bold btn btn-primary ver-lojas-mobile  p-2 text-white" style="border-radius:4px; top: 0; right: 25%; max-width:30rem; width:100%; border:none; font-size:1.2rem; max-width:17rem; ">Ver lojas próximas</button>
          </a>
          {%endif%}
       </div>
@@ -85,29 +85,29 @@
         <div class="mt-4 mb-3 container categorias-mobile " style="justify-content:center; display:none;">
           <h3 class="text-center categorias-mobile" style="display:none;"> Categorias: </h3>
           </div>
-        <div class="grid-container categorias-mobile" style="display:none;">
+        <div class="grid-container container categorias-mobile" style="display:none;">
           <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
-          <div class="grid-item" style="font-size:.65rem;">Lanches</div>
-          <div class="grid-item" style="font-size:.65rem;">Restaurantes</div>
-          <div class="grid-item" style="font-size:.65rem;">Sushi</div>
+          <div class="grid-item" style="font-size:.8rem;">Lanches</div>
+          <div class="grid-item" style="font-size:.8rem;">Restaurantes</div>
+          <div class="grid-item" style="font-size:.8rem;">Sushi</div>
         </div>
         <div style="display: flex; justify-content: center; gap:.3rem; margin-bottom: .3rem;">
-          <div class="grid-item" style="font-size:.65rem;">Bebidas</div>
-          <div class="grid-item" style="font-size:.65rem;">Doces</div>
+          <div class="grid-item" style="font-size:.8rem;">Bebidas</div>
+          <div class="grid-item" style="font-size:.8rem;">Doces</div>
         </div>
         <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
-          <div class="grid-item" style="font-size:.65rem;">Massas frescas</div>
-          <div class="grid-item" style="font-size:.65rem;">Limpeza</div>
-          <div class="grid-item" style="font-size:.65rem;">Padaria</div>
+          <div class="grid-item" style="font-size:.8rem;">Massas frescas</div>
+          <div class="grid-item" style="font-size:.8rem;">Limpeza</div>
+          <div class="grid-item" style="font-size:.8rem;">Padaria</div>
         </div>
         <div style="display: flex; justify-content: center; gap:.3rem; margin-bottom: .3rem;">
-          <div class="grid-item" style="font-size:.65rem;">Higiene</div>
-          <div class="grid-item" style="font-size:.65rem;">Congelados</div>
+          <div class="grid-item" style="font-size:.8rem;">Higiene</div>
+          <div class="grid-item" style="font-size:.8rem;">Congelados</div>
         </div>
         <div class="d-flex" style="display: flex; justify-content: center; gap:.3rem;">
-          <div class="grid-item" style="font-size:.65rem;">Farmácias</div>
-          <div class="grid-item" style="font-size:.65rem;">Supermercados</div>
-          <div class="grid-item" style="font-size:.65rem;">Mercearias</div>
+          <div class="grid-item" style="font-size:.8rem;">Farmácias</div>
+          <div class="grid-item" style="font-size:.8rem;">Supermercados</div>
+          <div class="grid-item" style="font-size:.8rem;">Mercearias</div>
         </div>
         
         </div>

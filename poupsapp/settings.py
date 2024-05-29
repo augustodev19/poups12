@@ -106,6 +106,7 @@ STRIPE_WEBHOOK_SECRET = 'whsec_IMHkfsYp2o9UZ0lvZ73uBGVWC9gNAwrp'
 INSTALLED_APPS = [
 
     'jazzmin',
+    'storages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -158,6 +159,19 @@ TEMPLATES = [
     },
 ]
 WSGI_APPLICATION = 'poupsapp.wsgi.application'
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(BASE_DIR, 'credentials', 'phonic-realm-411312-5ceef67c1a57.json')
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'poupecomprando'
+
+# Opcional: Configurar cache control
+GS_DEFAULT_ACL = 'publicRead'
+GS_FILE_OVERWRITE = False
+GS_CACHE_CONTROL = 'max-age=86400'
+
+# URL base para acessar os arquivos
+MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
 
 
 # Database
