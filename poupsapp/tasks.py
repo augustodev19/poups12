@@ -79,7 +79,10 @@ def check_charge_status(self, correlation_id, start_time=None):
             print(f"Cobrança com correlation_id {correlation_id} completada.")
             charge.status = 'completed'
             charge.save()
-            handle_pix_payment(correlation_id)
+            try:
+                handle_pix_payment.delay(correlation_id)
+            except:
+                print('Erro ao chamar a função de pagamento')
         else:
             elapsed_time = timezone.now() - timezone.datetime.fromisoformat(start_time)
             if elapsed_time < timezone.timedelta(minutes=10):
@@ -100,11 +103,9 @@ def check_charge_status(self, correlation_id, start_time=None):
         charge.last_error = str(e)
         charge.save()
 
-
-API_URL = "https://api.openpix.com.br/api/v1/charge"
-HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
-
-def handle_pix_payment(correlation_id):
+        
+@shared_task(bind=True)
+def handle_pix_payment(self, correlation_id):
     try:
         charge = Charge.objects.get(correlation_id=correlation_id)
         if charge.status == 'COMPLETED':
@@ -140,10 +141,11 @@ def handle_pix_payment(correlation_id):
                     preco_unitario=Decimal(item['preco'])
                 )
 
-            enviar_email_pedido(None, pedido, pedido.itempedido_set.all())
-            cache.set(f"pedido_id_{charge_id}", pedido.id, timeout=300)
-            print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{charge_id}')}")
-
+            enviar_email_pedido_pix.delay(None, pedido, pedido.itempedido_set.all())
+            cache.set(f"pedido_id_{correlation_id}", pedido.id, timeout=300)
+            print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{correlation_id}')}")
+            pedido_id = cache.get(f'pedido_id_{session_id}')
+            return redirect('sucesso')
     except Cliente.DoesNotExist:
         print(f"Cliente ID {cliente_id} não encontrado.")
     except Loja.DoesNotExist:
@@ -152,3 +154,37 @@ def handle_pix_payment(correlation_id):
         print(f"Produto não encontrado.")
     except Exception as e:
         print(f"Erro ao processar o pagamento Pix: {str(e)}")
+
+
+@shared_task(bind=True)    
+def enviar_email_pedido_pix(self, request, pedido, itens_pedido, subperfil_nome=None):
+    try:
+        subject = 'Detalhes do Seu Pedido'
+        context = {
+            'pedido': pedido,
+            'loja': pedido.loja,
+            'itens_pedido': itens_pedido,
+            'pedido_url': f'https://poupecomprando.com.br/pedido/{pedido.id}',  # Atualize com seu domínio real
+            'subperfil_nome': subperfil_nome
+        }
+
+        html_content = render_to_string('core/email_pedido_detalhe.html', context)
+        text_content = strip_tags(html_content)
+
+        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
+        email.attach_alternative(html_content, "text/html")
+
+        # Carregar a imagem diretamente
+        image_path = os.path.join(settings.BASE_DIR, 'static/img/dev122062_faz_uma_logo_parecida_com_ifood_para_uma_plataforma_c_a6720ce1-23ea-425a-9b63-d7921326b252 (1).png')
+        image_cid = 'image_cid'
+        with open(image_path, 'rb') as img:
+            mime_image = MIMEImage(img.read())
+            mime_image.add_header('Content-ID', f'<{image_cid}>')
+            email.attach(mime_image)
+
+        email.send()
+        recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)  # 600 segundos = 10 minutos
+        print("Email com detalhes do pedido enviado com sucesso.")
+        logger.info(f"Tarefa de recusa automática agendada para o pedido {pedido.id}.")
+    except Exception as e:
+        print(f"Erro ao enviar email: {str(e)}")

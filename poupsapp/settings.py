@@ -160,35 +160,31 @@ TEMPLATES = [
     },
 ]
 WSGI_APPLICATION = 'poupsapp.wsgi.application'
-
-# Definir o caminho para o arquivo de credenciais JSON
-credentials_path = os.path.join(BASE_DIR, 'credentials', 'phonic-realm-411312-5ceef67c1a57.json')
-
-# Verificar se a variável de ambiente GOOGLE_APPLICATION_CREDENTIALS_JSON existe
-if 'GOOGLE_APPLICATION_CREDENTIALS_JSON' in os.environ:
-    # Criar o diretório de credenciais, se não existir
-    os.makedirs(os.path.dirname(credentials_path), exist_ok=True)
-    
-    # Escrever o conteúdo da variável de ambiente no arquivo JSON
-    with open(credentials_path, 'w') as f:
-        f.write(os.environ['GOOGLE_APPLICATION_CREDENTIALS_JSON'])
-
-# Definir a variável de ambiente para apontar para o arquivo JSON
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_BUCKET_NAME = 'poupecomprando'
+# Função para carregar as credenciais do Google Cloud
+#def load_gcs_credentials():
+#    credentials_path = os.path.join(BASE_DIR, 'credentials', 'phonic-realm-411312-5ceef67c1a57.json')
+#    if 'GOOGLE_APPLICATION_CREDENTIALS_JSON' in os.environ:
+#        os.makedirs(os.path.dirname(credentials_path), exist_ok=True)
+#        with open(credentials_path, 'w') as f:
+#            f.write(os.environ['GOOGLE_APPLICATION_CREDENTIALS_JSON'])
+#    return credentials_path
+#
+## Definir a variável de ambiente para apontar para o arquivo JSON
+#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = load_gcs_credentials()
+#
+#
+#DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+#GS_BUCKET_NAME = 'poupecomprando'
 
 # Remover ou comentar a linha de ACL legado
 # GS_DEFAULT_ACL = 'publicRead'
 
 # Opcional: Configurar cache control
-GS_FILE_OVERWRITE = False
-GS_CACHE_CONTROL = 'max-age=86400'
+#GS_FILE_OVERWRITE = False
+#GS_CACHE_CONTROL = 'max-age=86400'
 
 # URL base para acessar os arquivos
-MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
-
+#MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
