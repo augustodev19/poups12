@@ -104,9 +104,9 @@ def check_charge_status(self, correlation_id, start_time=None):
 API_URL = "https://api.openpix.com.br/api/v1/charge"
 HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 
-def handle_pix_payment(charge_id):
+def handle_pix_payment(correlation_id):
     try:
-        charge = Charge.objects.get(charge_id=charge_id)
+        charge = Charge.objects.get(correlation_id=correlation_id)
         if charge.status == 'COMPLETED':
             total_geral_carrinho = Decimal(charge.total)
             endereco = charge.endereco
@@ -124,7 +124,7 @@ def handle_pix_payment(charge_id):
                 status='pendente',
                 pagamento='pix',
                 localizacao=endereco,
-                payment_id=charge_id
+                payment_id=correlation_id
             )
 
             carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
