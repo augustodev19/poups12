@@ -4,7 +4,6 @@ from usuarios.models import *
 import stripe
 from django.utils import timezone
 import time
-from main.views import *
 
 
 
@@ -100,3 +99,56 @@ def check_charge_status(self, correlation_id, start_time=None):
         print(f"Erro ao verificar o status da cobrança com correlation_id {correlation_id}: {str(e)}")
         charge.last_error = str(e)
         charge.save()
+
+
+API_URL = "https://api.openpix.com.br/api/v1/charge"
+HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
+
+def handle_pix_payment(charge_id):
+    try:
+        charge = Charge.objects.get(charge_id=charge_id)
+        if charge.status == 'COMPLETED':
+            total_geral_carrinho = Decimal(charge.total)
+            endereco = charge.endereco
+            loja_id = charge.loja_id
+            cliente_id = charge.cliente_id
+
+            cliente = Cliente.objects.get(id=cliente_id)
+            loja = Loja.objects.get(id=loja_id)
+
+            pedido = Pedido.objects.create(
+                cliente=cliente,
+                loja=loja,
+                total=total_geral_carrinho,
+                pontos=total_geral_carrinho * 0.4,
+                status='pendente',
+                pagamento='pix',
+                localizacao=endereco,
+                payment_id=charge_id
+            )
+
+            carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
+            for item_key, item in carrinho['itens'].items():
+                if item_key.startswith('promocao_'):
+                    continue  # Ignore promotional items in this loop
+
+                produto = Produto.objects.get(id=item['produto_id'])
+                ItemPedido.objects.create(
+                    pedido=pedido,
+                    produto=produto,
+                    quantidade=item['quantidade'],
+                    preco_unitario=Decimal(item['preco'])
+                )
+
+            enviar_email_pedido(None, pedido, pedido.itempedido_set.all())
+            cache.set(f"pedido_id_{charge_id}", pedido.id, timeout=300)
+            print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{charge_id}')}")
+
+    except Cliente.DoesNotExist:
+        print(f"Cliente ID {cliente_id} não encontrado.")
+    except Loja.DoesNotExist:
+        print(f"Loja ID {loja_id} não encontrada.")
+    except Produto.DoesNotExist:
+        print(f"Produto não encontrado.")
+    except Exception as e:
+        print(f"Erro ao processar o pagamento Pix: {str(e)}")
