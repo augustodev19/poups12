@@ -19,11 +19,11 @@
     {%elif subperfil_nome %}
     <p>Nome do cliente: {{ subperfil_nome }}</p>
     {% endif %}
-    <p>CPF do cliente: {{cliente.username}}</p>
+    <p>CPF do cliente: {{pedido.cliente.username}}</p>
     <p>Celular do cliente: {{pedido.cliente.telefone}}</p>
     <p>Tempo estimado para entrega: {{pedido.loja.tempo_entrega_min|default:60}} - {{pedido.loja.tempo_entrega_max|default:75}}min </p>
     <!-- <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}" style="color: #ffffff; text-decoration: none; background-color: #4A90E2; padding: 10px 20px; border-radius: 5px;">Clique aqui</a></p> -->
-    <p style="font-family: 'Raleway' !important">Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
+    <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
     <a href="https://poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
     <a href="https://poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
     <p>É uma honra ter você por aqui!</p>

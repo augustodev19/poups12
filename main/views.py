@@ -1218,7 +1218,7 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
             'pedido': pedido,
             'loja': pedido.loja,
             'itens_pedido': itens_pedido,
-            'pedido_url': f'https://seu_dominio/pedido/{pedido.id}',  # Atualize com seu domínio real
+            'pedido_url': f'https://poupecomprando.com.br/pedido/{pedido.id}',  # Atualize com seu domínio real
             'subperfil_nome': subperfil_nome
         }
 
@@ -1228,13 +1228,6 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
         email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
 
-        # Carregar a imagem diretamente
-        image_path = os.path.join(settings.BASE_DIR, 'static/img/dev122062_faz_uma_logo_parecida_com_ifood_para_uma_plataforma_c_a6720ce1-23ea-425a-9b63-d7921326b252 (1).png')
-        image_cid = 'image_cid'
-        with open(image_path, 'rb') as img:
-            mime_image = MIMEImage(img.read())
-            mime_image.add_header('Content-ID', f'<{image_cid}>')
-            email.attach(mime_image)
 
         email.send()
         recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)  # 600 segundos = 10 minutos
@@ -1398,8 +1391,11 @@ def pagar_com_pontos(request):
     cliente = request.user.cliente
     total_geral_carrinho = Decimal('0.00')  # Inicializando como Decimal
 
-    for item_id, item in carrinho['itens'].items():
-        produto = Produto.objects.get(id=item_id)
+    for item_key, item in carrinho['itens'].items():
+        if item_key.startswith('promocao_'):
+            continue  # Ignorar itens promocionais
+
+        produto = Produto.objects.get(id=item['produto_id'])
         quantidade = int(item['quantidade'])
         preco = Decimal(item['preco'])
         total_geral_carrinho += preco * quantidade
@@ -1420,8 +1416,14 @@ def pagar_com_pontos(request):
 
         # Criando os itens do pedido
         itens_pedido = []
-        for item_id, item in carrinho['itens'].items():
-            produto = Produto.objects.get(id=item_id)
+        for item_key, item in carrinho['itens'].items():
+            if item_key.startswith('promocao_'):
+                continue  # Ignorar itens promocionais
+
+            produto = Produto.objects.get(id=item['produto_id'])
+            quantidade = int(item['quantidade'])
+            preco = Decimal(item['preco'])
+
             item_pedido = ItemPedido.objects.create(
                 pedido=pedido,
                 produto=produto,
@@ -1436,14 +1438,7 @@ def pagar_com_pontos(request):
 
         # Enviar email com os detalhes do pedido
         enviar_email_pedido(request, pedido, itens_pedido)
-        #channel_layer = get_channel_layer()
-        #async_to_sync(channel_layer.group_send)(
-        #    f'pedido_{loja.id}',  # Nome do grupo é o ID da loja
-        #    {
-        #        'type': 'pedido_message',
-        #        'message': f'Novo pedido {pedido.id} confirmado para sua loja.'
-        #    }
-        #)
+
         # Limpar o carrinho na sessão após a compra
         del request.session['carrinho']
 
@@ -1451,7 +1446,7 @@ def pagar_com_pontos(request):
         return redirect('pedido_pagamento', pedido_id=pedido.id)  # Redirecione para a página que você considera apropriada
     else:
         messages.error(request, "Você não tem pontos suficientes para completar esta compra.")
-        return redirect('carrinho')
+        return redirect('checkout')
 def aceitar_pedido(request, pedido_id, token):
     logger.debug("Recebendo token...")
     logger.debug(f"Token recebido: {token}")

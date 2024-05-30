@@ -11,9 +11,8 @@ from django.utils.html import strip_tags
 from django.core.cache import cache
 import json
 from decimal import Decimal
-import logging
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 API_URL = "https://api.openpix.com.br/api/v1/charge"
 HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 @shared_task(bind=True)
@@ -54,7 +53,7 @@ def recusar_pedido_automaticamente(self, pedido_id):
 
 @shared_task(bind=True)
 def check_charge_status(self, correlation_id, start_time=None):
-    logger.warning(f"Tarefa agendada para verificar o status da cobrança com correlation_id {correlation_id}")
+    #logger.warning(f"Tarefa agendada para verificar o status da cobrança com correlation_id {correlation_id}")
     try:
         charge = Charge.objects.get(correlation_id=correlation_id)
 
@@ -65,7 +64,7 @@ def check_charge_status(self, correlation_id, start_time=None):
         logger.warning(f"Verificando status da cobrança na URL: {api_url}")
 
         response = requests.get(api_url, headers=HEADERS)
-        logger.warning(f"Resposta da API: {response.status_code}, {response.text}")
+        #logger.warning(f"Resposta da API: {response.status_code}, {response.text}")
 
         if response.status_code == 404:
             logger.warning(f"Recurso não encontrado para o correlation_id {correlation_id}")
@@ -76,39 +75,40 @@ def check_charge_status(self, correlation_id, start_time=None):
         try:
             charge_data = response.json()
         except json.JSONDecodeError as e:
-            logger.warning(f"Erro ao decodificar JSON: {e}")
+            #logger.warning(f"Erro ao decodificar JSON: {e}")
             charge.last_error = f"Erro ao decodificar JSON: {e}"
             charge.save()
             return
 
         if 'charge' in charge_data and charge_data['charge']['status'] == 'COMPLETED':
-            logger.warning(f"Cobrança com correlation_id {correlation_id} completada.")
+            #logger.warning(f"Cobrança com correlation_id {correlation_id} completada.")
             charge.status = 'completed'
             charge.save()
             handle_pix_payment.delay(correlation_id)
         else:
             elapsed_time = timezone.now() - timezone.datetime.fromisoformat(start_time)
             if elapsed_time < timezone.timedelta(minutes=10):
-                logger.warning(f"Tentativa {charge.attempts + 1} para cobrança com correlation_id {correlation_id}. Status atual: {charge_data.get('charge', {}).get('status')}")
+                #logger.warning(f"Tentativa {charge.attempts + 1} para cobrança com correlation_id {correlation_id}. Status atual: {charge_data.get('charge', {}).get('status')}")
                 charge.attempts += 1
                 charge.save()
-                logger.warning(f"Re-agendando tarefa para verificar o status da cobrança com correlation_id {correlation_id} em 3 segundos")
+                #logger.warning(f"Re-agendando tarefa para verificar o status da cobrança com correlation_id {correlation_id} em 3 segundos")
                 self.apply_async((correlation_id, start_time), countdown=3)
             else:
-                logger.warning(f"Tentativas para cobrança com correlation_id {correlation_id} esgotadas após 10 minutos.")
+                #logger.warning(f"Tentativas para cobrança com correlation_id {correlation_id} esgotadas após 10 minutos.")
                 charge.status = 'failed'
                 charge.save()
 
     except Charge.DoesNotExist:
-        logger.warning(f"Charge com correlation_id {correlation_id} não encontrada.")
+        pass
+        #logger.warning(f"Charge com correlation_id {correlation_id} não encontrada.")
     except Exception as e:
-        logger.warning(f"Erro ao verificar o status da cobrança com correlation_id {correlation_id}: {str(e)}")
         charge.last_error = str(e)
+        #logger.warning(f"Erro ao verificar o status da cobrança com correlation_id {correlation_id}: {str(e)}")
         charge.save()
 
 @shared_task(bind=True)
 def handle_pix_payment(self, correlation_id):
-    logger.warning(f"Iniciando processamento do pagamento Pix para correlation_id {correlation_id}")
+    #logger.warning(f"Iniciando processamento do pagamento Pix para correlation_id {correlation_id}")
     try:
         charge = Charge.objects.get(correlation_id=correlation_id)
         if charge.status == 'completed':
@@ -117,12 +117,12 @@ def handle_pix_payment(self, correlation_id):
             cliente_id = charge.cliente_id
             charge_endereco = charge.endereco if charge.endereco else None
             
-            logger.warning(f"Cliente ID: {cliente_id}, Loja ID: {loja_id}, Total: {total_geral_carrinho}")
+            #logger.warning(f"Cliente ID: {cliente_id}, Loja ID: {loja_id}, Total: {total_geral_carrinho}")
 
             cliente = Cliente.objects.get(id=cliente_id)
             loja = Loja.objects.get(id=loja_id)
 
-            logger.warning(f"Criando pedido para o cliente {cliente_id} na loja {loja_id} com total de {total_geral_carrinho}")
+            #logger.warning(f"Criando pedido para o cliente {cliente_id} na loja {loja_id} com total de {total_geral_carrinho}")
 
             pedido = Pedido.objects.create(
                 cliente=cliente,
@@ -136,7 +136,7 @@ def handle_pix_payment(self, correlation_id):
             )
 
             carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
-            logger.warning(f"Carrinho recuperado do cache: {carrinho}")
+            #logger.warning(f"Carrinho recuperado do cache: {carrinho}")
 
             for item_key, item in carrinho['itens'].items():
                 if item_key.startswith('promocao_'):
@@ -149,11 +149,11 @@ def handle_pix_payment(self, correlation_id):
                     quantidade=item['quantidade'],
                     preco_unitario=Decimal(item['preco'])
                 )
-            logger.warning(f"Pedido criado com sucesso para o cliente {cliente_id}")
+            #logger.warning(f"Pedido criado com sucesso para o cliente {cliente_id}")
 
             enviar_email_pedido_pix.delay(pedido.id)
             cache.set(f"pedido_id_{correlation_id}", pedido.id, timeout=300)
-            logger.warning(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{correlation_id}')}")
+            #logger.warning(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{correlation_id}')}")
             pedido_id = pedido.id
             if pedido_id:
                 keys_to_delete = [
@@ -173,17 +173,21 @@ def handle_pix_payment(self, correlation_id):
                 return redirect('home')
         
     except Cliente.DoesNotExist:
-        logger.warning(f"Cliente ID {cliente_id} não encontrado.")
+        pass
+        #logger.warning(f"Cliente ID {cliente_id} não encontrado.")
     except Loja.DoesNotExist:
-        logger.warning(f"Loja ID {loja_id} não encontrada.")
+        pass
+        #logger.warning(f"Loja ID {loja_id} não encontrada.")
     except Produto.DoesNotExist:
-        logger.warning(f"Produto não encontrado.")
+        pass
+        #logger.warning(f"Produto não encontrado.")
     except Exception as e:
-        logger.warning(f"Erro ao processar o pagamento Pix: {str(e)}")
+        pass
+        #logger.warning(f"Erro ao processar o pagamento Pix: {str(e)}")
 
 @shared_task(bind=True)
 def enviar_email_pedido_pix(self, pedido_id, subperfil_nome=None):
-    logger.warning(f"Iniciando envio de email para o pedido {pedido_id}")
+    #logger.warning(f"Iniciando envio de email para o pedido {pedido_id}")
     try:
         pedido = Pedido.objects.get(id=pedido_id)
         itens_pedido = pedido.itempedido_set.all()
@@ -207,4 +211,5 @@ def enviar_email_pedido_pix(self, pedido_id, subperfil_nome=None):
         recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)
         logger.warning("Email com detalhes do pedido enviado com sucesso.")
     except Exception as e:
-        logger.warning(f"Erro ao enviar email: {str(e)}")
+        pass
+        #logger.warning(f"Erro ao enviar email: {str(e)}")
