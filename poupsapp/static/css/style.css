@@ -580,8 +580,7 @@
 
 .modal-content input,
 .modal-content button {
-    width: 100%;
-    padding: 10px;
+    padding: 6px 12px;
     margin-top: 10px;
 }
 
@@ -805,6 +804,17 @@
 
 @media(max-width:768px)
 {   
+    .detalhes-produto img
+    {
+        height: 4rem !important;
+        width: 4rem !important;
+    }
+
+    .detalhes-produto .d-block p
+    {
+        font-size: .9rem !important;
+    }
+
     .mobile-lojas
     {
         display: flex !important;

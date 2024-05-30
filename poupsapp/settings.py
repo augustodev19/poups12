@@ -242,16 +242,24 @@ USE_I18N = True
 USE_TZ = True
 
 
-#? Static files (CSS, JavaScript, Images)
-
-STATIC_URL = "/static/"
+# Configuração de arquivos estáticos
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'poupsapp/static'),
 ]
-STATIC_ROOT = os.path.join("static")
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = "/media/"
+if os.getenv('DJANGO_PRODUCTION') == 'True':
+    # Configurações para o ambiente de produção no Render
+    STATIC_ROOT = '/opt/render/project/src/staticfiles'
+    MEDIA_ROOT = '/opt/render/project/src/media'
+else:
+    # Configurações para o ambiente de desenvolvimento
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'
+
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
