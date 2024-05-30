@@ -810,7 +810,8 @@ def criar_pagamento_pix(request):
         return render(request, 'core/charge_detail.html', {
             'charge_data': charge_data['charge'],
             'attempts': charge.attempts,
-            'last_error': charge.last_error
+            'last_error': charge.last_error,
+            'loja':loja
         })
 
     except Exception as e:

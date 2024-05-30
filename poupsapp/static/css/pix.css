@@ -1,0 +1,49 @@
+@media (max-width: 768px) {
+    .header, .steps {
+        flex-direction: column !important;
+    }
+    .spanPedido {
+        font-size: .6rem;
+    }
+
+    .main-container
+    {   
+        flex-direction: column;
+    }
+
+    .container2
+    {
+        width: 100% !important;
+    }
+
+    .w-50
+    {
+        width: 100% !important;
+    }
+
+    .inner-bar
+    {
+        max-width: 100% !important;
+    }
+}
+
+@keyframes expandWidth {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: 20%;
+    }
+}
+.entrega {
+    border-bottom: solid 3px rgb(212, 33, 33);
+    color: rgb(212, 33, 33);
+}
+.retirada:hover {
+    border-bottom: solid 3px rgb(191, 187, 187);
+    color: rgb(191, 187, 187);
+}
+.retirada {
+    color: rgb(191, 187, 187);
+}
+

@@ -1,32 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento via Pix</title>
 
-</head>
-<body>
-    <div class="qr-code-container" style="display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 50px;">
-        <h1>Pagamento via Pix</h1>
-        <img style=" width: 300px;
-        height: 300px;" src="{{ charge_data.qrCodeImage }}" alt="QR Code">
-        <div class="payment-details" style="margin-top: 20px;
-        text-align: center;">
-            <p>Valor: R$ {{ charge_data.value|floatformat:2 }}</p>
-            <p>Status: {{ charge_data.status }}</p>
-            <p>Expira em: {{ charge_data.expiresDate }}</p>
-            <p>Tentativas de verificação: {{ attempts }}</p>
-            {% if last_error %}
-                <div class="error-message">
-                    <p>Erro na última tentativa: {{ last_error }}</p>
-                </div>
-            {% endif %}
+{%extends 'core/base.html'%}
+{%block 'conteudo'%}
+    <div style="border-bottom: solid #88888895 1px;">
+        <div class="container my-3 d-flex justify-content-center align-items-center">
+            <img style="border-radius: 50%; width: 4rem;" src="assets\img\078c8f73-f81a-4dba-8eae-0371c8fe1fd3.jpeg">
         </div>
     </div>
-</body>
-</html>
+    <div class="container flex-column align-items-center justify-content-center d-flex w-100 main-container mb-4 mt-5">
+        <img style=" max-width: 300px;" src="{{ charge_data.qrCodeImage }}" alt="QR Code">       <span class="text-center" style="font-size:1.2rem">Pedido aguardando pagamento via Pix</span>
+       <span style="max-width: 30rem; font-size:.9rem" class="text-center mt-2">Abra um aplicativo em que você tenha o Pix habilitado e escolha a opção Pagar, em seguida Ler QR Code</span>
+    
+
+       <div class="mt-4 container2" style="background: #f7f7f7;
+padding: 20px;
+border-radius: 8px;
+overflow: hidden;
+white-space: nowrap;
+display: grid;
+grid-template-columns: 1fr auto;
+align-items: center;
+width: 420px;
+gap: 5px;">
+    <span id="pix" class="pixNovo" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Texto muito longo que precisa ser cortado para mostrar no espaço disponível</span>
+    <button style="background: rgb(212, 33, 33); border-radius: 4px; border: none; color: #fff;" onclick="copiarTexto()">        <i class="bi bi-clipboard"></i>
+        Copiar</button>
+</div>
+<div class="mt-3" id="timer" style="font-size: 24px; font-weight: bold; ">
+    05:00
+  </div>
+  <div class=" mt-2 inner-bar" style="background: #ea1d2c; max-width: 420px; width: 100%; height: .5rem;" >
+
+ 
+
+</div>
+  </body>
+  <script>
+    function startProgressBar(duration, barElement) {
+        let remainingTime = duration;
+        const originalWidth = barElement.offsetWidth; // Largura inicial da barra
+        const interval = setInterval(function() {
+            const percentage = remainingTime / duration;
+            barElement.style.width = (percentage * originalWidth) + 'px';
+    
+            if (--remainingTime < 0) {
+                clearInterval(interval);
+            }
+        }, 1000); // Atualiza a cada segundo
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const barElement = document.querySelector('.inner-bar');
+        startProgressBar(300, barElement); // Inicia a barra de progresso para 300 segundos (5 minutos)
+    });
+    </script>
+
+  <script>
+    function startTimer(duration, display) {
+        let timer = duration, minutes, seconds;
+        const interval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+    
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+    
+            display.textContent = minutes + ":" + seconds;
+    
+            if (--timer < 0) {
+                clearInterval(interval);
+                display.textContent = "Tempo esgotado!";
+                alert("Tempo esgotado!");
+            }
+        }, 1000);
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const display = document.getElementById('timer');
+        startTimer(300, display);  // 300 segundos = 5 minutos
+    });
+    </script>
+       <div class=" mt-4  py-4 px-5 d-flex flex-column align-items-start container2 flex-column" style="display: flex; width: 60%;
+       flex-flow: column nowrap;
+       position: relative;
+       width: 420px;
+       background-color: #fff;
+       color: #3f3e3e;
+       box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+       border: 1px solid #f7f7f7;
+       margin: 0 0 10px;
+   ">
+           <h6 class="text-start d-flex flex-column mb-2" style=" font-weight: 400; width: 100%;">
+               <span class="mb-2" style="font-size: .8rem;">Seu pedido em</span>
+               <span style="font-size:1.2rem; font-weight: 600;">{{loja.nomeLoja}}</span>
+               <div style="border-bottom:solid 1px rgb(195, 195, 195); width: 100%;" class="pb-2 mt-3">
+                <div class="d-flex flex-column"><span style="font-size:.9rem; font-weight:600" class="mb-2" id="pizza"></span>
+                    <span style="font-size:.9rem; font-weight:600" id="refri"></span>
+                </div>
+            <br>
+            </span>
+               </div></h6>
+               
+             
+               <div class="d-flex justify-content-between w-100 mb-2">
+                   <span style="font-size:.9rem">Status</span>
+                   <span style="font-size: .9rem;"><p>Status: {{ charge_data.status }}</p>
+                   </span>
+               </div>
+
+               <div class="d-flex justify-content-between w-100 mb-2">
+                   <span style="font-size:.9rem; font-weight: 600;">Total</span>
+                   <span style="font-size: .9rem; font-weight: 600;">R$<span id="totalSpan">{{ charge_data.value|floatformat:2 }}</span></span>
+
+                   <script>
+                       // Obtém o valor do span e converte para número
+                       var totalSpan = document.getElementById("totalSpan");
+                       var value = parseFloat(totalSpan.innerText);
+                   
+                       // Divide o valor por 100
+                       var newValue = value / 100;
+                   
+                       // Formata o valor com vírgula como separador decimal
+                       var formattedValue = newValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                   
+                       // Atualiza o span com o novo valor
+                       totalSpan.innerText = formattedValue;
+                   </script>
+           <!-- Conteúdo da segunda coluna -->
+       </div>
+    </div>
+
+    
+
+    </span>
+
+
+   
+{%endblock%}

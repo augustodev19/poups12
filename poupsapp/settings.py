@@ -247,22 +247,23 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'poupsapp/static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Configuração de arquivos de mídia
 MEDIA_URL = '/media/'
 
-if os.getenv('RENDER') == 'True':
-    # Configurações para o ambiente de produção no Render
-    MEDIA_ROOT = '/opt/render/project/src/media'
-else:
-    # Configurações para o ambiente de desenvolvimento
+# Configuração do Google Cloud Storage
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'poupecomprando12'
+GS_DEFAULT_ACL = 'publicRead'
+MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+
+# Definir caminho para credenciais do Google Cloud Storage
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+
+# Definir MEDIA_ROOT para o ambiente de desenvolvimento
+if not os.getenv('DJANGO_PRODUCTION'):
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
