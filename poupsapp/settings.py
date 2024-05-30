@@ -196,7 +196,7 @@ WSGI_APPLICATION = 'poupsapp.wsgi.application'
 #}
 
 # Define BASE_DIR
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Configuração do banco de dados PostgreSQL usando variáveis de ambiente
 DATABASES = {
@@ -247,20 +247,19 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'poupsapp/static'),
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-if os.getenv('DJANGO_PRODUCTION') == 'True':
+# Configuração de arquivos de mídia
+MEDIA_URL = '/media/'
+
+if os.getenv('RENDER') == 'True':
     # Configurações para o ambiente de produção no Render
-    STATIC_ROOT = '/opt/render/project/src/staticfiles'
     MEDIA_ROOT = '/opt/render/project/src/media'
 else:
     # Configurações para o ambiente de desenvolvimento
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-MEDIA_URL = '/media/'
-
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
