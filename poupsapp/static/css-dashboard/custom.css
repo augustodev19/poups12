@@ -62,12 +62,26 @@ font-size: 1.4rem;
 
   .btn-primary
   {
-    background: #b11000 !important;
+    background: #1094F5 !important;
     border: none !important;
   }
 
   .btn-secondary
   {
-    background: #b11000 !important;
+    background: #1094F5 !important;
     border: none !important;
+  }
+
+  @media(max-width:768px)
+  {
+    .produto-form-content
+    {
+      width:100% !important;
+    }
+
+    #div1
+    {
+      flex-direction: column;
+      gap:0 !important;
+    }
   }

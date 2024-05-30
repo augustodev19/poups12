@@ -40,7 +40,7 @@
                         {%csrf_token%}
                 <!-- Passo 1: Informações Básicas -->
                 <div id="step1" class="step">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
+                    <div class="wrap-input100 validate-input" data-validate = "Nome da loja não pode ser vazio">
 						<input class="input100" type="text" name="nomeLoja" placeholder="Nome da Loja">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
@@ -48,13 +48,23 @@
 						</span>
 					</div>
 
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="text" name="username" placeholder="CNPJ">
+					<div class="wrap-input100 validate-input" data-validate = "CNPJ precisa ser válido.">
+						<input class="input100" type="text" id="cnpj" name="username" placeholder="CNPJ">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
+                            <i class="fa fa-id-card" aria-hidden="true"></i>
 						</span>
 					</div>
+                    <script>
+                        document.getElementById('cnpj').addEventListener('input', function (e) {
+                            let value = e.target.value.replace(/\D/g, '');
+                            value = value.replace(/^(\d{2})(\d)/, "$1.$2");
+                            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+                            value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
+                            value = value.replace(/(\d{4})(\d)/, "$1-$2");
+                            e.target.value = value;
+                        });
+                        </script>
                     <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
                     <!-- Botão para ir para o Passo 2 -->
                     <button type="button" onclick="showStep(2)">Próximo</button>
@@ -64,7 +74,7 @@
                 
               <!-- Passo 2: Detalhes Adicionais -->
 <div id="step2" class="step" style="display:none;">
-    <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+    <div class="wrap-input100 validate-input" data-validate="Nome não pode ser vazio.">
         <input class="input100" type="text" name="nome" placeholder="Nome do Proprietário">
         <span class="focus-input100"></span>
         <span class="symbol-input100">
@@ -72,7 +82,7 @@
         </span>
     </div>
 
-    <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+    <div class="wrap-input100 validate-input" data-validate="Email precisa ser válido: ex@abc.xyz">
         <input class="input100" type="email" name="email" placeholder="Email da Loja">
         <span class="focus-input100"></span>
         <span class="symbol-input100">
@@ -105,8 +115,33 @@
 
  <!-- Passo 3: Informações Básicas -->
  <div id="step3" class="step" style="display:none;">
-    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-        <input class="input100" type="text" name="telefone" placeholder="Telefone">
+    <div class="wrap-input100 validate-input" data-validate = "Celular precisa ser válido.">
+        <input class="input100" id="celular" type="text" name="celular" placeholder="Celular">
+        <script>
+            document.getElementById('celular').addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+            
+                if (value.length <= 2) {
+                    value = '+55';
+                } else if (value.length <= 4) {
+                    value = `+55 (${value.slice(2)}`;
+                } else if (value.length <= 8) {
+                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4)}`;
+                } else if (value.length <= 13) {
+                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
+                } else {
+                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
+                }
+            
+                e.target.value = value;
+            });
+            
+            document.getElementById('celular').addEventListener('focus', function (e) {
+                if (e.target.value === '') {
+                    e.target.value = '+55 ';
+                }
+            });
+            </script>
         <span class="focus-input100"></span>
         <span class="symbol-input100">
             <i class="fa fa-phone" aria-hidden="true"></i>
@@ -268,7 +303,7 @@
                 
     
             </div>
-            <a style="color:#fff !important; font-size:1.2rem !important" href="{%url 'home' %}">Voltar</a>
+            <a style="color:#fff !important; font-size:1.2rem !important" href="{%url 'tipoPerfil' %}">Voltar</a>
         </div>
     </div>
     <script>

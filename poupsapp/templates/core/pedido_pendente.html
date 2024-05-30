@@ -50,7 +50,42 @@
                <span class="mb-2" style="font-size: .8rem;">Seu pedido em:</span>
                <span style="font-size:1.2rem; font-weight: 600;">{{pedido.loja.nomeLoja}}</span>
                <div class="justify-content-between w-100 mt-3">
-                <a href="https://wa.me/{{ pedido.loja.telefone }}" style="text-decoration:none; color:#212529 !important" class="d-flex align-items-end">
+                <a id="whatsappLink" href="#" style="text-decoration:none; color:#212529 !important" class="d-flex align-items-end">
+                    Contatar via WhatsApp
+                </a>
+                
+                <script>
+                document.getElementById('celular').addEventListener('input', function (e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                
+                    if (value.length <= 2) {
+                        value = '+55';
+                    } else if (value.length <= 4) {
+                        value = `+55 (${value.slice(2)}`;
+                    } else if (value.length <= 8) {
+                        value = `+55 (${value.slice(2, 4)}) ${value.slice(4)}`;
+                    } else if (value.length <= 13) {
+                        value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
+                    } else {
+                        value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
+                    }
+                
+                    e.target.value = value;
+                    updateWhatsAppLink(value);
+                });
+                
+                document.getElementById('celular').addEventListener('focus', function (e) {
+                    if (e.target.value === '') {
+                        e.target.value = '+55 ';
+                    }
+                });
+                
+                function updateWhatsAppLink(formattedNumber) {
+                    let cleanNumber = formattedNumber.replace(/[^\d]/g, ''); // Remove todos os caracteres não numéricos
+                    let whatsappLink = `https://wa.me/${cleanNumber}`;
+                    document.getElementById('whatsappLink').href = whatsappLink;
+                }
+                </script>
                     <span style="font-size:.9rem; font-weight: 600; text-decoration:underline">Conversar com a loja</span>&nbsp;
                     <img style="height:1rem" src="{% static 'img/whatsapp (5).png' %}">
                 </a>

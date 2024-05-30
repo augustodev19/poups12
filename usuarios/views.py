@@ -66,7 +66,7 @@ def registerCliente(request):
                     bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
                     cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
                     endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
-                    latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
+                    latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY")
 
                     endereco, _ = Endereco.objects.get_or_create(
                         rua=data['logradouro'],
@@ -172,7 +172,7 @@ def registerFamilia(request):
                         bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
                         cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
                         endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
-                        latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
+                        latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY")
 
                         endereco, _ = Endereco.objects.get_or_create(
                             rua=data['logradouro'],
@@ -251,7 +251,7 @@ def registerLoja(request):
                     bairro, _ = Bairro.objects.get_or_create(nome=data['bairro'], cidade=cidade)
                     cep_obj, _ = CEP.objects.get_or_create(codigo=cep)
                     endereco_completo = f"{data['logradouro']}, {data['bairro']}, {data['localidade']}, {data['uf']}, {data['cep']}"
-                    latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyAvXSw3zlzpwUGgH8LOfa4URXceC9LGMI4")
+                    latitude, longitude = obter_coordenadas(endereco_completo, "AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY")
 
                     endereco, _ = Endereco.objects.get_or_create(
                         rua=data['logradouro'],
@@ -279,6 +279,7 @@ def registerLoja(request):
         else:
             logger.error(f"Formulário inválido: {form.errors}")
             messages.error(request, form.errors)
+            return redirect('registerLoja')
 
     context = {'categorias': categorias}
     return render(request, 'core/registroEmpresas.html', context)
@@ -302,10 +303,17 @@ def user_login(request):
                 cliente = request.user.cliente
             except:
                 pass
+            try: 
+                loja = request.user.loja
+            except:
+                pass
             if cliente:
                 if cliente.plano_familia:
                     messages.success(request, "Usuário logado com sucesso!")
                     return redirect('subperfil_list')
+            elif loja:
+                messages.success(request, "Lojista logado com sucesso!")
+                return redirect('editar_loja')
             messages.success(request, "Usuário logado com sucesso!")
             return redirect('loja')
         else:

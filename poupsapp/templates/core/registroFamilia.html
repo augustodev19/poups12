@@ -38,103 +38,114 @@
                 
                     <form  method="post" enctype="multipart/form-data" action="{% url 'registerFamilia'  %}">
                         {%csrf_token%}
-                <!-- Passo 1: Informações Básicas -->
-                <div id="step1" class="step">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="nome" placeholder="Nome do Titular">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
-
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="text" name="username" placeholder="CPF do Titular">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
-                    <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
-                    <!-- Botão para ir para o Passo 2 -->
-
-                </div>
-    
-            <!-- Passo 2: Detalhes Adicionais -->
-<div id="step2" class="step" style="display:block;">
-    <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
-        <input class="input100" type="email" name="email" placeholder="Email do Titular">
-        <span class="focus-input100"></span>
-        <span class="symbol-input100">
-            <i class="fa fa-envelope" aria-hidden="true"></i>
-        </span>
-    </div>
-
-    <!-- Campo de upload de imagem com ícone antes do texto 
-    <div class="wrap-input100 validate-input" data-validate="Image is required">
-        <input class="input100" type="file" id="imageUpload" name="foto" accept="image/*" style="display: none;" onchange="uploadFileName()">
-        <span class="symbol-input100" onclick="document.getElementById('imageUpload').click()">
-            <i class="fa fa-image" aria-hidden="true"></i>
-        </span>
-        <label for="imageUpload" class="input100">
-            <span id="file-upload-filename" class="file-upload-filename">Foto de Perfil</span>
-        </label>
-    </div>
-    -->
-   
-    <!-- Conteúdo do Passo 2 (Ex: Endereço, Telefone) -->
-    <!-- Botões para voltar para o Passo 1 ou ir para o Passo 3 -->
-</div>
-
-                 <!-- Passo 3: Informações Básicas -->
-                 <div id="step3" class="step" style="display:block;">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="text" name="telefone" placeholder="Telefone do Titular">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
-
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="text" name="cep" placeholder="CEP">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user" aria-hidden="true"></i>
-						</span>
-					</div>
-                    <!-- Conteúdo do Passo 1 (Ex: Nome, Email) -->
-                    <!-- Botão para ir para o Passo 2 -->
-               
-                </div>
-    
-                <!-- Passo 4: Confirmação -->
-                <div id="step4" class="step" style="display:block;">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="password" name="password1" placeholder="Senha">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-lock" aria-hidden="true"></i>
-						</span>
-					</div>
-
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-lock" aria-hidden="true"></i>
-						</span>
-					</div>
-                    <div class="d-flex align-items-center mt-3 mb-4">
-                    <button type="submit" style="background:#1094F5; padding:.7rem 1.5rem; border-radius:30px; color:#fff; font-weight:600;">Enviar</button>
+                        <div id="step1" class="step" style="display: block;">
+                          <div class="wrap-input100 validate-input" data-validate="Nome completo é necessário">
+                              <input class="input100" type="text" name="nome" placeholder="Nome Completo">
+                              <span class="focus-input100"></span>
+                              <span class="symbol-input100">
+                                  <i class="fa fa-user" aria-hidden="true"></i>
+                              </span>
+                          </div>
+                          <div class="wrap-input100 validate-input" data-validate="CPF é necessário">
+                              <input class="input100" type="text" name="username" placeholder="CPF do Titular">
+                              <span class="focus-input100"></span>
+                              <span class="symbol-input100">
+                                  <i class="fa fa-id-card" aria-hidden="true"></i>
+                              </span>
+                          </div>
+                          <div class="d-flex align-items-center" style="gap:1rem;">
+                            <button type="button" onclick="showStep(2)">Próximo</button>
+                        </div>
+                      </div>
+  
+                      <div id="step2" class="step" style="display: none;">
+                          <!-- Content for Step 2 -->
+                          <div class="wrap-input100 validate-input" data-validate="Email válido é necessário: ex@abc.xyz">
+                              <input class="input100" type="email" name="email" placeholder="Email">
+                              <span class="focus-input100"></span>
+                              <span class="symbol-input100">
+                                  <i class="fa fa-envelope" aria-hidden="true"></i>
+                              </span>
+                          </div>
+                          <div class="wrap-input100 validate-input" data-validate="Telefone válido é necessário: (99) 99999-9999">
+                            <input class="input100" type="text" name="telefone" placeholder="Telefone">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-phone" aria-hidden="true"></i>
+                            </span>
+                        </div>
+                          <!-- More inputs here as needed -->
+                          <div class="d-flex align-items-center" style="gap:1rem;">
+                            <button type="button" onclick="showStep(1)">Anterior</button>
+                            <button type="button" onclick="showStep(3)">Próximo</button>
+                        </div>
+                      </div>
+  
+                      <div id="step3" class="step" style="display: none;">
+                        <div class="wrap-input100 validate-input" data-validate = "CEP is required">
+                          <input class="input100" type="text" name="cep" id="cep" placeholder="CEP">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-home" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                      <div class="wrap-input100 validate-input" data-validate = "Endereço is required">
+                          <input class="input100" type="text" name="endereco" id="endereco" placeholder="Endereço">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-road" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                      <div class="wrap-input100 validate-input" data-validate = "Logradouro is required">
+                          <input class="input100" type="text" name="bairro" id="bairro" placeholder="Bairro">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-map-marker" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                      <div class="wrap-input100 validate-input" data-validate = "Número is required">
+                          <input class="input100" type="text" name="numero" id="numero" placeholder="Número">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-building" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                      <div class="d-flex align-items-center" style="gap:1rem;">
+                        <button type="button" onclick="showStep(2)">Anterior</button>
+                        <button type="button" onclick="showStep(4)">Próximo</button>
                     </div>
-                
-                </div>
+                      </div>
+  
+                      <div id="step4" class="step" style="display: none;">
+                        <!-- Content for Step 2 -->
+                        <div class="wrap-input100 validate-input" data-validate="Senha é necessária">
+                          <input class="input100" type="password" name="password1" placeholder="Senha">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-lock" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                      
+                      <div class="wrap-input100 validate-input" data-validate="Confirmação de senha é necessária">
+                          <input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
+                          <span class="focus-input100"></span>
+                          <span class="symbol-input100">
+                              <i class="fa fa-lock" aria-hidden="true"></i>
+                          </span>
+                      </div>
+                        <!-- More inputs here as needed -->
+                        <div class="d-flex align-items-center" style="gap:1rem;">
+                          <button type="button" onclick="showStep(3)">Anterior</button>
+                          <button type="submit">Enviar</button>
+      
+                          </div>
+                    </div>
+  
             </form>
 
          
 
-                <div class="text-center ">
+                <div class="text-center pt-4 ">
                     <a style="font-size:.9rem !important;" class="txt2" href="{%url 'login' %}">
                         Já tenho uma Conta!
                         <i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
@@ -160,12 +171,48 @@
 	<script src="{%static 'vendor/select2/select2.min.js' %}"></script>
 <!--===============================================================================================-->
 	<script src="{%static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
-	<script >
-		$('.js-tilt').tilt({
-			scale: 1.1
-		})
+	<script>
+    document.getElementById('cep').addEventListener('blur', function(e) {
+        var cep = this.value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    document.getElementById('endereco').value = data.logradouro;
+                    document.getElementById('bairro').value = data.bairro;
+                    // O número geralmente não é fornecido pela API
+                } else {
+                    alert("CEP não encontrado.");
+                }
+            })
+            .catch(() => alert("Erro ao buscar o CEP."));
+        } else {
+            alert("Formato de CEP inválido.");
+        }
+    });
+</script>
+<script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/popper.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
+<script src="{% static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+function showStep(stepNumber) {
+    // Hide all steps
+    var steps = document.querySelectorAll('.step');
+    steps.forEach(function(step) {
+        step.style.display = 'none';
+    });
 
-	</script>
+    // Show the current step
+    var currentStep = document.getElementById('step' + stepNumber);
+    if (currentStep) {
+        currentStep.style.display = 'block';
+    }
+}
+</script>
 
     <!-- Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">

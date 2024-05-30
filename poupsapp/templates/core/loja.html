@@ -3,20 +3,9 @@
 {%load static%}
 
 {%block 'conteudo'%}
-{%if user_location.address %}
 
-<div class="container" style="margin-top:7rem;">
-   {%if not cliente%}<span style="color:#000">{{user_location.address}}</span>
-   {%else%}
-   <span style="color:#000">
-    {{cliente.endereco.bairro}}, {{cliente.endereco.rua}}, {{cliente.endereco.numero}}
-   </span>{%endif%}
-</div>
-{%endif%}
 
-<div class="container mt-5 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;{%if not user_location.address %}margin-top:7rem !important;
-{%endif%}
-">
+<div class="container mt-5 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;margin-top:7rem !important;">
 
 {% for categoria in categorias %}
 

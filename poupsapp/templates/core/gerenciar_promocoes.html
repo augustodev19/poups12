@@ -28,7 +28,7 @@
                                 <img style="max-width:5rem" src="{{promocao.imagem.url}}">
                                 <span>Quantidade Necessária: {{ promocao.quantidade_necessaria }}</span> -
                                 <span>Ativo: {{ promocao.ativo }}</span>
-                                <button class="mb-3 btn btn-secondary" onclick="abrirFormularioEdicaoPromocao({{ promocao.id }}, '{{ promocao.produto.nome }}', {{ promocao.quantidade_necessaria }}, {{ promocao.ativo }})">
+                                <button class="d-none mb-3 btn btn-secondary" onclick="abrirFormularioEdicaoPromocao({{ promocao.id }}, '{{ promocao.produto.nome }}', {{ promocao.quantidade_necessaria }}, {{ promocao.ativo }})">
                                     Editar Promoção
                                 </button>
                                   <form method="post" action="{% url 'remover_promocao' promocao.id %}" style="display:inline;">
