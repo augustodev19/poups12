@@ -783,6 +783,11 @@ def criar_pagamento_pix(request):
 
         response = requests.post(API_URL, headers=HEADERS, json=data)
         print(f"Resposta da API ao criar cobrança: {response.status_code}, {response.text}")
+
+        # Verificar se a resposta da API é bem-sucedida
+        if response.status_code != 200:
+            raise ValueError("Erro ao criar a cobrança: resposta inesperada da API")
+
         charge_data = response.json()
 
         if 'charge' not in charge_data or 'identifier' not in charge_data['charge']:
@@ -806,12 +811,16 @@ def criar_pagamento_pix(request):
         check_charge_status.apply_async((correlation_id, timezone.now().isoformat()), countdown=3)
         print(f"Tarefa agendada para verificar o status da cobrança com correlation_id {correlation_id} em 3 segundos")
 
-        # Renderizar a página HTML com o QR Code e status de verificação
+        # Gerar PIX Copia e Cola
+        br_code = charge_data['charge']['brCode']
+
+        # Renderizar a página HTML com o QR Code, PIX Copia e Cola e status de verificação
         return render(request, 'core/charge_detail.html', {
             'charge_data': charge_data['charge'],
             'attempts': charge.attempts,
             'last_error': charge.last_error,
-            'loja':loja
+            'loja': loja,
+            'br_code': br_code  # Passa o código BR para o template
         })
 
     except Exception as e:

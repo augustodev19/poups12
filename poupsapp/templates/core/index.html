@@ -81,36 +81,49 @@
          </a>
          {%endif%}
       </div>
-
+        {%if user.is_authenticated%}
         <div class="mt-4 mb-3 container categorias-mobile " style="justify-content:center; display:none;">
           <h3 class="text-center categorias-mobile" style="display:none;"> Categorias: </h3>
           </div>
         <div class="grid-container container categorias-mobile" style="display:none;">
           <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
-          <div class="grid-item" style="font-size:.8rem;">Lanches</div>
-          <div class="grid-item" style="font-size:.8rem;">Restaurantes</div>
-          <div class="grid-item" style="font-size:.8rem;">Sushi</div>
+          <a href="/lojas_proximas/?categoria=2&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Lanches</div></a>
+          <a href="/lojas_proximas/?categoria=3&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Restaurantes</div></a>
+          <a href="/lojas_proximas/?categoria=2&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Sushi</div></a>
         </div>
         <div style="display: flex; justify-content: center; gap:.3rem; margin-bottom: .3rem;">
-          <div class="grid-item" style="font-size:.8rem;">Bebidas</div>
-          <div class="grid-item" style="font-size:.8rem;">Doces</div>
+          <a href="/lojas_proximas/?categoria=5&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Bebidas</div></a>
+          <a href="/lojas_proximas/?categoria=9&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Doces</div></a>
         </div>
         <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
-          <div class="grid-item" style="font-size:.8rem;">Massas frescas</div>
-          <div class="grid-item" style="font-size:.8rem;">Limpeza</div>
-          <div class="grid-item" style="font-size:.8rem;">Padaria</div>
-        </div>
-        <div style="display: flex; justify-content: center; gap:.3rem; margin-bottom: .3rem;">
-          <div class="grid-item" style="font-size:.8rem;">Higiene</div>
-          <div class="grid-item" style="font-size:.8rem;">Congelados</div>
-        </div>
-        <div class="d-flex" style="display: flex; justify-content: center; gap:.3rem;">
-          <div class="grid-item" style="font-size:.8rem;">Farmácias</div>
-          <div class="grid-item" style="font-size:.8rem;">Supermercados</div>
-          <div class="grid-item" style="font-size:.8rem;">Mercearias</div>
+          <a href="/lojas_proximas/?categoria=8&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Padarias</div></a>
+          <a href="/lojas_proximas/?categoria=6&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Mercados</div></a>
+          <a href="/lojas_proximas/?categoria=7&distancia=10&freteGratis=nao"><div class="grid-item" style="font-size:.8rem;">Farmácias</div></a>
         </div>
         
+        
         </div>
+        {%else%}
+        <div class="mt-4 mb-3 container categorias-mobile " style="justify-content:center; display:none;">
+          <h3 class="text-center categorias-mobile" style="display:none;"> Categorias: </h3>
+          </div>
+        <div class="grid-container container categorias-mobile" style="display:none;">
+          <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Lanches</div></a>
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Restaurantes</div></a>
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Sushi</div></a>
+        </div>
+        <div style="display: flex; justify-content: center; gap:.3rem; margin-bottom: .3rem;">
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Bebidas</div></a>
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Doces</div></a>
+        </div>
+        <div class="d-flex" style="display: flex; justify-content: center; margin-bottom:.3rem; gap:.3rem;">
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Padarias</div></a>
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Mercados</div></a>
+          <a class="abrir-endereco"><div class="grid-item" style="font-size:.8rem;">Farmácias</div></a>
+        </div>
+      </div>
+        {%endif%}
         <!-- Hero End -->
         
         <div class="mt-5 mb-4 d-flex container categorias-desk-title " style="justify-content:center;">

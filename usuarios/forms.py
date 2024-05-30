@@ -93,3 +93,27 @@ class SubperfilForm(forms.ModelForm):
     class Meta:
         model = Subperfil
         fields = ['nome', 'foto_perfil']
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = Cliente
+        fields = ['nome', 'email', 'foto']
+
+class PasswordConfirmationForm(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(PasswordConfirmationForm, self).__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Senha incorreta")
+        return password
+
+class SubperfilForm(forms.ModelForm):
+    class Meta:
+        model = Subperfil
+        fields = ['nome', 'foto_perfil']

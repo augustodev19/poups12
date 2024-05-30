@@ -3,8 +3,7 @@
 </head>
 <body style="font-family: 'Arial', sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; line-height: 1.6;">
     <h1 style="color: #4A90E2;">Detalhes do Pedido</h1>
-    <img style="border-radius: 50%; width: 100px; height: 100px;" src="cid:image_cid" alt="Imagem">
-    <p>Olá {{ pedido.loja.nomeLoja }},</p>
+    <h4 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important">Poupe<span style="color:#fff">Comprando</span></h4>    <p>Olá {{ pedido.loja.nomeLoja }},</p>
     <p>Seu pedido foi criado com sucesso!</p>
     <ul>
         {% for item in itens_pedido %}

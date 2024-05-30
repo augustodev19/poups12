@@ -787,6 +787,16 @@ if ("geolocation" in navigator) {
 
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY&libraries=places&callback=initAutocomplete" async defer></script>
+<script>
+    function copiarTexto() {
+        const texto = document.getElementById('pix').textContent;
+        navigator.clipboard.writeText(texto).then(() => {
+            alert('Texto copiado!');
+        }).catch(err => {
+            console.error('Erro ao copiar texto: ', err);
+        });
+    }
+    </script>
 
 
 

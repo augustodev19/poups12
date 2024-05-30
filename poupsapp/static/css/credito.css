@@ -24,7 +24,7 @@
 }
  #left {
 	 position: relative;
-     background:#c3190b;
+     background:#1094F5;
      background-size: cover;
 	 background-position: center;
 	 height: calc(100% + 50px);
@@ -83,18 +83,13 @@
 	 width: 45%;
 }
  #right form button[type="submit"] {
-	 background: #c3190b;
-	 padding: 5px;
+	 background: #1094F5;
+	 padding: 10px;
 	 border: none;
 	 border-radius: 50px;
 	 color: white;
-	 font-weight: 400;
-	 font-size: 12pt;
+	 font-weight: 600;
+	 font-size: 1.2rem;
 	 margin-top: 10px;
+	 cursor:pointer;
 }
- #right form button[type="submit"]:hover {
-	 background: transparent;
-	 box-shadow: 0 0 0 3px #d74141;
-	 color: #d74141;
-}
- 

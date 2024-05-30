@@ -36,7 +36,10 @@ urlpatterns = [
     path('promocoes/', gerenciar_promocoes, name='gerenciar_promocoes'),
     path('remover_promocao/<int:promocao_id>/', remover_promocao, name='remover_promocao'),
     path('subperfil_list/', subperfil_list, name='subperfil_list'),
-    path('select_subperfil/<int:subperfil_id>/', select_subperfil, name='select_subperfil')
+    path('select_subperfil/<int:subperfil_id>/', select_subperfil, name='select_subperfil'),
+    path('edit_subperfil/<int:subperfil_id>/', edit_subperfil, name='edit_subperfil'),
+    path('remove_subperfil/<int:subperfil_id>/', remove_subperfil, name='remove_subperfil'),
+
 ]
 
 

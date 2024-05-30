@@ -17,8 +17,8 @@
 
         {%if pedido.status == 'confirmado'%}
         <p style="color:#333 !important;">Status:</span> <p style="color:#333 !important;" class="fw-bold"> À caminho</p>
-
-        
+        {%else%}
+        <p style="color:#333 !important;">Status:</span> <p style="color:#333 !important; text-transform:capitalize;" class="fw-bold">{{pedido.status}}</p>
         {%endif%}
 
 

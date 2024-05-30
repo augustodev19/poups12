@@ -119,17 +119,61 @@ def create_subperfil(request):
 
 
 def subperfil_list(request):
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
+        messages.error(request, 'Cliente não encontrado.')
+        return redirect('home')
+
     if hasattr(request.user, 'cliente'):
         subperfis = request.user.cliente.subperfis.all()
-        return render(request, 'core/subperfil_list.html', {'subperfis': subperfis})
+        context = {
+            'subperfis':subperfis,
+            'cliente':cliente
+        }
+        return render(request, 'core/subperfil_list.html', context)
     else:
-        return redirect('some_error_page')
+        messages.error(request, 'Perfil família não acessível.')
+        return redirect('home')
 
 def select_subperfil(request, subperfil_id):
     subperfil = get_object_or_404(Subperfil, id=subperfil_id, titular=request.user.cliente)
     # Simulando login de subperfil
     request.session['subperfil_id'] = subperfil.id
     return redirect('home')
+
+
+@login_required
+def remove_subperfil(request, subperfil_id):
+    subperfil = get_object_or_404(Subperfil, id=subperfil_id, titular=request.user.cliente)
+    if subperfil.is_titular:
+        messages.error(request, 'O subperfil do titular não pode ser excluído.')
+        return redirect('subperfil_list')
+    
+    subperfil.delete()
+    messages.success(request, 'Subperfil removido com sucesso.')
+    return redirect('subperfil_list')
+
+@login_required
+def edit_subperfil(request, subperfil_id):
+    subperfil = get_object_or_404(Subperfil, id=subperfil_id, titular=request.user.cliente)
+    if request.method == 'POST':
+        form = SubperfilForm(request.POST, request.FILES, instance=subperfil)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Subperfil atualizado com sucesso.')
+            return redirect('subperfil_list')
+        else:
+            messages.error(request, 'Por favor, corrija os erros abaixo.')
+    else:
+        form = SubperfilForm(instance=subperfil)
+    
+    context = {
+        'form': form,
+        'subperfil': subperfil
+    }
+    return render(request, 'core/edit_subperfil.html', context)
 
 def selecionar_perfil(request):
     return render(request, 'core/perfisFamilia.html')
@@ -755,14 +799,28 @@ def criar_subperfil(request):
         form = SubperfilForm()
     return render(request, 'core/criarSubperfil.html', {'form': form})
 
+@login_required
 def perfil_usuario(request):
-    try:
-        cliente = request.user.cliente
-    except:
-        cliente = None
-    
+    cliente = request.user.cliente
+
+    if request.method == 'POST':
+        user_form = UserProfileForm(request.POST, request.FILES, instance=cliente)
+        password_form = PasswordConfirmationForm(request.POST, user=request.user)
+
+        if user_form.is_valid() and password_form.is_valid():
+            user_form.save()
+            messages.success(request, 'Seu perfil foi atualizado com sucesso!')
+            return redirect('perfil_usuario')
+        else:
+            messages.error(request, 'Por favor, corrija os erros abaixo.')
+    else:
+        user_form = UserProfileForm(instance=cliente)
+        password_form = PasswordConfirmationForm(user=request.user)
+
     context = {
-        'cliente':cliente
+        'cliente': cliente,
+        'user_form': user_form,
+        'password_form': password_form,
     }
     
     return render(request, 'core/perfil_usuario.html', context)

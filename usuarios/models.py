@@ -152,7 +152,7 @@ class ValeRefeicao(models.Model):
 
 class Categoria(models.Model):
     nome = models.CharField(max_length=100)
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
 
 
     def __str__(self):
@@ -161,8 +161,8 @@ class Categoria(models.Model):
 
 class Loja(CustomUser):
     nomeLoja = models.CharField(max_length=100, blank=True)
-    capa = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    capa = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     categorias = models.ManyToManyField(Categoria, related_name='lojas', blank=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
     valor_frete = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default="0")
@@ -170,8 +170,8 @@ class Loja(CustomUser):
     vale_refeicao = models.ManyToManyField(ValeRefeicao, related_name='vale_refeicao', blank=True)
     tempo_entrega = models.IntegerField(blank=True, null=True)
     stripe_payout_id = models.CharField(max_length=255, null=True, blank=True)
-    tempo_entrega_min = models.IntegerField(blank=True, null=True)
-    tempo_entrega_max = models.IntegerField(blank=True, null=True)
+    tempo_entrega_min = models.IntegerField(blank=True, null=True, default=65)
+    tempo_entrega_max = models.IntegerField(blank=True, null=True, default=75)
     token_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     email_pagseguro = models.CharField(max_length=100, blank=True, null=True)
     saldo = models.DecimalField(max_digits = 20, decimal_places=2, blank=True, null=True, default="0")
@@ -190,7 +190,7 @@ class Loja(CustomUser):
         return self.nome
 
 class CategoriaProduto(models.Model):
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE, blank=True, null=True)
     nome = models.CharField(max_length=100, blank=True, null=True)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
@@ -206,7 +206,7 @@ class CategoriaProduto(models.Model):
 class Produto(models.Model):
     pontos = models.IntegerField(blank=True, null=True)
     categoria = models.ForeignKey(CategoriaProduto, on_delete=models.CASCADE, blank=True, null=True)
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     nome = models.CharField(max_length=100)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
@@ -226,7 +226,7 @@ class Produto(models.Model):
             # outros campos da loja
 
 class Opcao(models.Model):
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     produto = models.ForeignKey(Produto, related_name='opcoes', on_delete=models.CASCADE)
     nome = models.CharField(max_length=100)
     descricao = models.CharField(max_length=1000, blank=True, null=True)
@@ -237,7 +237,7 @@ class Opcao(models.Model):
         return f"{self.nome} - {self.produto.nome}"
 
 class ItemOpcao(models.Model):
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     opcao = models.ForeignKey(Opcao, related_name='itens', on_delete=models.CASCADE)
     nome = models.CharField(max_length=100)
     preco_adicional = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
@@ -252,7 +252,7 @@ class ItemOpcao(models.Model):
 
 
 class Cliente(CustomUser):
-    foto = models.ImageField(upload_to='images/', blank=True, null=True)
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default='images/user_2.png')
     endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
     saldo_poups = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -301,14 +301,14 @@ class Carrinho(models.Model):
 class Subperfil(models.Model):
     titular = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='subperfis')
     nome = models.CharField(max_length=100)
-    foto_perfil = models.ImageField(upload_to='subclientes_fotos/', blank=True, null=True)
+    foto_perfil = models.ImageField(upload_to='subclientes_fotos/', blank=True, null=True, default='images/user_2.png')
     is_titular = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nome
 
     def save(self, *args, **kwargs):
-        if self.titular.subperfis.count() >= 4:
+        if not self.pk and self.titular.subperfis.count() >= 4:
             raise ValidationError('Não é possível adicionar mais de 4 subperfis para um titular.')
         super(Subperfil, self).save(*args, **kwargs)
 
@@ -317,18 +317,18 @@ class Subperfil(models.Model):
             raise ValidationError('O subperfil do titular não pode ser excluído.')
         super(Subperfil, self).delete(*args, **kwargs)
 
-
+        
 @receiver(post_save, sender=Cliente)
 def create_subperfil_titular(sender, instance, created, **kwargs):
     if created and instance.plano_familia:
-        Subperfil.objects.create(titular=instance, nome=instance.username, is_titular=True)
+        Subperfil.objects.create(titular=instance, nome=instance.nome, is_titular=True)
 
 
 class Promocao(models.Model):
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE)
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name='promocoes')
     quantidade_necessaria = models.PositiveIntegerField()
-    imagem = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/unknown.png")
+    imagem = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     ativo = models.BooleanField(default=True)
 
     def __str__(self):

@@ -887,6 +887,8 @@
     {
         height:12rem !important;
         margin-top:6.2rem !important;
+  
+        /* background:linear-gradient(to right, rgb(3 124 237 / 67%), rgb(255 255 255 / 80%)), url(../img/ella-olsson-oPBjWBCcAEo-unsplash.jpg) !important; */
     }
 
     .hero-header .container
