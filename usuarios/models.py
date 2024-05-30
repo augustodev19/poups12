@@ -133,7 +133,7 @@ class TokenPedido(models.Model):
 
 class Endereco(models.Model):
     rua = models.CharField(max_length=255)
-    numero = models.IntegerField(null=True, blank=True)
+    numero = models.CharField(max_length=50, null=True, blank=True)
     complemento = models.CharField(max_length=50, null=True, blank=True)
     bairro = models.ForeignKey(Bairro, on_delete=models.CASCADE)
     cidade = models.ForeignKey(Cidade, on_delete=models.CASCADE)
