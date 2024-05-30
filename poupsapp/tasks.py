@@ -11,8 +11,11 @@ from django.utils.html import strip_tags
 from django.core.cache import cache
 import json
 from decimal import Decimal
+import logging
 
-
+logger = logging.getLogger(__name__)
+API_URL = "https://api.openpix.com.br/api/v1/charge"
+HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 @shared_task(bind=True)
 def test_func(self):
     for i in range(10):
@@ -48,9 +51,6 @@ def recusar_pedido_automaticamente(self, pedido_id):
         print(f"Pedido {pedido_id} não encontrado.")
     except Exception as e:
         print(f"Erro ao processar a recusa automática para o pedido {pedido_id}: {str(e)}")
-
-API_URL = "https://api.openpix.com.br/api/v1/charge"
-HEADERS = {'Authorization': "Q2xpZW50X0lkX2NjNjFiMmI0LWE1N2QtNGE1My05NmVkLWZmOWYyZTFjYjQ0NzpDbGllbnRfU2VjcmV0X1h5b2NuR3hPN0VrRk41aHpzdjg0bTE3ajNHbUpqeWNrbXdoejhBbFUzTTA9"}
 
 @shared_task(bind=True)
 def check_charge_status(self, correlation_id, start_time=None):
@@ -111,11 +111,12 @@ def handle_pix_payment(self, correlation_id):
     logger.warning(f"Iniciando processamento do pagamento Pix para correlation_id {correlation_id}")
     try:
         charge = Charge.objects.get(correlation_id=correlation_id)
-        if charge.status == 'COMPLETED':
+        if charge.status == 'completed':
             total_geral_carrinho = Decimal(charge.total)
             loja_id = charge.loja_id
             cliente_id = charge.cliente_id
-
+            charge_endereco = charge.endereco if charge.endereco else None
+            
             logger.warning(f"Cliente ID: {cliente_id}, Loja ID: {loja_id}, Total: {total_geral_carrinho}")
 
             cliente = Cliente.objects.get(id=cliente_id)
@@ -127,10 +128,11 @@ def handle_pix_payment(self, correlation_id):
                 cliente=cliente,
                 loja=loja,
                 total=total_geral_carrinho,
-                pontos=total_geral_carrinho * 0.4,
+                pontos=int(total_geral_carrinho * Decimal('0.4')),  # Corrigido para usar Decimal e converter para int
                 status='pendente',
                 pagamento='pix',
-                payment_id=correlation_id
+                payment_id=correlation_id,
+                localizacao=charge_endereco
             )
 
             carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
@@ -147,13 +149,29 @@ def handle_pix_payment(self, correlation_id):
                     quantidade=item['quantidade'],
                     preco_unitario=Decimal(item['preco'])
                 )
-
             logger.warning(f"Pedido criado com sucesso para o cliente {cliente_id}")
 
-            enviar_email_pedido_pix.delay(None, pedido, pedido.itempedido_set.all())
+            enviar_email_pedido_pix.delay(pedido.id)
             cache.set(f"pedido_id_{correlation_id}", pedido.id, timeout=300)
             logger.warning(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{correlation_id}')}")
-
+            pedido_id = pedido.id
+            if pedido_id:
+                keys_to_delete = [
+                    'preference_id', 'total_geral_carrinho', 'total_pontos_carrinho',
+                    'carrinho', 'endereco', 'loja_id', 'cliente_id'
+                ]
+                # Limpeza da sessão
+                for key in keys_to_delete:
+                    if key in request.session:
+                        del request.session[key]
+                
+                # Mensagem de sucesso
+                messages.success(request, 'Pedido criado com sucesso!')
+                return redirect('pedido_pagamento', pedido_id=pedido_id)
+            else:
+                messages.error(request, "Não foi possível encontrar o pedido.")
+                return redirect('home')
+        
     except Cliente.DoesNotExist:
         logger.warning(f"Cliente ID {cliente_id} não encontrado.")
     except Loja.DoesNotExist:
@@ -164,9 +182,11 @@ def handle_pix_payment(self, correlation_id):
         logger.warning(f"Erro ao processar o pagamento Pix: {str(e)}")
 
 @shared_task(bind=True)
-def enviar_email_pedido_pix(self, request, pedido, itens_pedido, subperfil_nome=None):
-    logger.warning(f"Iniciando envio de email para o pedido {pedido.id}")
+def enviar_email_pedido_pix(self, pedido_id, subperfil_nome=None):
+    logger.warning(f"Iniciando envio de email para o pedido {pedido_id}")
     try:
+        pedido = Pedido.objects.get(id=pedido_id)
+        itens_pedido = pedido.itempedido_set.all()
         subject = 'Detalhes do Seu Pedido'
         context = {
             'pedido': pedido,
@@ -182,12 +202,6 @@ def enviar_email_pedido_pix(self, request, pedido, itens_pedido, subperfil_nome=
         email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
 
-        image_path = os.path.join(settings.BASE_DIR, 'static/img/dev122062_faz_uma_logo_parecida_com_ifood_para_uma_plataforma_c_a6720ce1-23ea-425a-9b63-d7921326b252 (1).png')
-        image_cid = 'image_cid'
-        with open(image_path, 'rb') as img:
-            mime_image = MIMEImage(img.read())
-            mime_image.add_header('Content-ID', f'<{image_cid}>')
-            email.attach(mime_image)
 
         email.send()
         recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)

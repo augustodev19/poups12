@@ -317,7 +317,7 @@ class Subperfil(models.Model):
             raise ValidationError('O subperfil do titular não pode ser excluído.')
         super(Subperfil, self).delete(*args, **kwargs)
 
-        
+
 @receiver(post_save, sender=Cliente)
 def create_subperfil_titular(sender, instance, created, **kwargs):
     if created and instance.plano_familia:
@@ -358,7 +358,7 @@ class Charge(models.Model):
     endereco = models.CharField(max_length=255, null=True, blank=True)
     loja_id = models.IntegerField()
     cliente_id = models.IntegerField()
-    correlation_id = models.CharField(_(""), max_length=200, null=True, blank=True)
+    correlation_id = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     attempts = models.IntegerField(default=0)  # Número de tentativas de verificação

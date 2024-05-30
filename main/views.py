@@ -768,6 +768,7 @@ def criar_pagamento_pix(request):
         total_geral_carrinho += valor_frete
 
         endereco = request.POST.get('endereco')
+        print(endereco)
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['endereco'] = endereco
         request.session['loja_id'] = loja.id
@@ -997,7 +998,7 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
             total=total_geral_carrinho,
             pontos=total_geral_carrinho * 0.4,
             status='pendente',
-            pagamento='reais',
+            pagamento='stripe',
             localizacao=endereco,
             payment_id=session['payment_intent']
         )
@@ -1528,21 +1529,41 @@ def recusar_pedido(request, pedido_id, token):
         pedido.status = 'recusado'
         pedido.save()
         token_obj.delete()
-        return JsonResponse({'status': 'recusado', 'mensagem': 'Pedido recusado com sucesso'}, status=200)
+        messages.success(request, 'Pedido recusado com sucesso')
+        return redirect('home')
 
     # Realiza o reembolso para pagamentos que não são com pontos
     try:
-        refund = stripe.Refund.create(payment_intent=pedido.payment_id)
-        pedido.status = 'recusado'
+        if pedido.pagamento == 'stripe':
+            refund = stripe.Refund.create(payment_intent=pedido.payment_id)
+        elif pedido.pagamento == 'pix':
+            refund_url = f"https://api.openpix.com.br/api/v1/charge/{pedido.payment_id}/refund"
+            response = requests.get(refund_url, headers={
+                'Authorization': 'REPLACE_KEY_VALUE'  # Substitua pelo valor correto da chave de autorização
+            })
+
+            if response.status_code == 200:
+                refund_data = response.json()
+                if refund_data and refund_data.get('refunds'):
+                    pedido.status = 'recusado'
+                else:
+                    raise ValueError('Nenhum reembolso encontrado para a cobrança.')
+            else:
+                raise ValueError(f'Erro na solicitação de reembolso: {response.text}')
+
         pedido.save()
         token_obj.delete()
         messages.success(request, 'Pedido recusado e pagamento reembolsado com sucesso')
         return redirect('home')
     except stripe.error.StripeError as e:
-        messages.error(request, 'Erro ao reembolsar o pagamento')
+        messages.error(request, 'Erro ao reembolsar o pagamento via Stripe')
         return redirect('home')
-
-
+    except ValueError as e:
+        messages.error(request, f'Erro ao reembolsar o pagamento via Pix: {e}')
+        return redirect('home')
+    except Exception as e:
+        messages.error(request, f'Erro ao processar a recusa do pedido: {e}')
+        return redirect('home')
 
 def pedidos_cliente(request):
     try:

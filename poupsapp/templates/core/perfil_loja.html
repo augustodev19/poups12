@@ -37,13 +37,13 @@
         {% for promocao in perfil_loja.promocao_set.all %}
         <div class="col-md-4 mb-4">
             <div class="card">
-                {% if promocao.imagem %}
+                <!--{% if promocao.imagem %}
                 <img style="height:auto; object-fit:cover; width:5rem; border-radius:0 0 12px 0;" src="{{ promocao.imagem.url }}" class="card-img-top" alt="{{ promocao.produto.nome }}">
-                {% endif %}
+                {% endif %} -->
                 <div class="card-body">
                     <h5 class="card-title">{{ promocao.produto.nome }}</h5>
                     <p class="card-text">Compre {{ promocao.quantidade_necessaria }} e ganhe um grátis!</p>
-                    <a href="{%url 'detalhes_promocao' promocao.id %}" class="btn btn-primary">Ver Detalhes</a>
+                    <a href="{%url 'detalhes_promocao' promocao.id %}" class="btn btn-primary" style="color:#fff !important;">Ver Detalhes</a>
                 </div>
             </div>
         </div>

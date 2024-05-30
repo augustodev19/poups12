@@ -23,11 +23,11 @@
     </div> 
   </div>
   <div class="d-flex container justify-content-center" style="gap:1rem; max-width:100%;">
-  <div class=" mt-2 inner-bar" style="background: green; width: 7rem; height: .5rem;" >
+  <div class=" mt-2 inner-bar1" style="background: green; width: 7rem; height: .5rem;" >
 </div>
 <div class=" mt-2 inner-bar2" style="background: gray; width:7rem; height: .5rem;" >
 </div>
-<div class=" mt-2 inner-bar" style="background: gray; width:7rem; height: .5rem;" >
+<div class=" mt-2 inner-bar3" style="background: gray; width:7rem; height: .5rem;" >
 </div>
 </div>
     
@@ -50,7 +50,7 @@
                <span class="mb-2" style="font-size: .8rem;">Seu pedido em:</span>
                <span style="font-size:1.2rem; font-weight: 600;">{{pedido.loja.nomeLoja}}</span>
                <div class="justify-content-between w-100 mt-3">
-                <a id="whatsappLink" href="#" style="text-decoration:none; color:#212529 !important" class="d-flex align-items-end">
+                <a class="d-none" id="whatsappLink" href="#" style="text-decoration:none; color:#212529 !important" class="d-flex align-items-end">
                     Contatar via WhatsApp
                 </a>
                 
@@ -86,7 +86,7 @@
                     document.getElementById('whatsappLink').href = whatsappLink;
                 }
                 </script>
-                    <span style="font-size:.9rem; font-weight: 600; text-decoration:underline">Conversar com a loja</span>&nbsp;
+                    <a href="https://wa.me/{{pedido.loja.telefone}}/" style="font-size:.9rem; font-weight: 600; text-decoration:underline; color:#000;">Conversar com a loja</span>&nbsp;
                     <img style="height:1rem" src="{% static 'img/whatsapp (5).png' %}">
                 </a>
             </div>
@@ -140,7 +140,28 @@
                         document.querySelector('.inner-bar2').style.background = 'green'
                         document.querySelector('.status_verificacao').textContent = 'Pedido aprovado pela loja, aguardando entrega...'
                         document.querySelector('.status_verificacao').style.textAlign = 'center'
-                    } else if (data.error) {
+                    } else if (data.status === 'recusado') {
+
+                        document.querySelector('.inner-bar1').style.background = 'gray'
+                        document.querySelector('.inner-bar2').style.background = 'gray'
+                        document.querySelector('.status_verificacao').textContent = 'Pedido cancelado pela loja, seu reembolso será enviado em até 24h'
+                        document.querySelector('.status_verificacao').style.textAlign = 'center'
+                        
+                    }
+
+                    else if (data.status === 'entregue') {
+
+                        document.querySelector('.inner-bar1').style.background = 'green'
+                        document.querySelector('.inner-bar2').style.background = 'green'
+                        document.querySelector('.inner-bar3').style.background = 'green'
+
+                        document.querySelector('.status_verificacao').textContent = 'Pedido entregue com sucesso.'
+                        document.querySelector('.status_verificacao').style.textAlign = 'center'
+                        
+                    }
+
+                    else
+                    {
                         console.error('Erro:', data.error); // Loga o erro se o pedido não foi encontrado
                     }
                 })

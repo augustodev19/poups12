@@ -4,10 +4,10 @@
 {% block 'conteudo' %}
 <div class="fluid-container p-4" style="background:#fff!important; margin-top:5rem;">
     <div class="container d-flex align-items-center" style="gap:2rem;">
-        <a class="voltar-btn" style="color:#b11000;">
-            <i style="color:#b11000; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
+        <a class="voltar-btn" style="color:#1094F5;">
+            <i style="color:#1094F5; font-size:1.6rem; cursor:pointer;" onclick="goBack()" class="bi bi-arrow-return-left"></i>
         </a>
-        <span style="color:#b11000; font-size:1.6rem;">{{ loja.nomeLoja }}</span>
+        <span style="color:#1094F5; font-size:1.6rem;">{{ loja.nomeLoja }}</span>
     </div>
 </div>
 <script>
@@ -24,10 +24,10 @@
             <div class="d-flex justify-content-center flex-column" style="height:100%">
                 <span class="fw-bold" style="color:#333; font-size:1.6rem;">Promoção: {{ promocao.produto.nome }}</span>
                 <p class="price fw-bold" style="color:#333; font-size:1.2rem">Grátis ao comprar {{ promocao.quantidade_necessaria }} unidades</p>
-                <p class="price fw-bold" style="color:#333; font-size:1.2rem">Pontos acumulados: {{ itens_comprados }} unidades</p>
+                <!-- <p class="price fw-bold" style="color:#333; font-size:1.2rem">Pontos acumulados: {{ itens_comprados }} unidades</p> -->
 
                 <p>{{ promocao.produto.descricao }}</p>
-                <button class="btn btn-primary" id="add-to-cart" data-promocao-id="{{ promocao.id }}" style="color:#fff;">Adicionar Promoção ao Carrinho</button>
+                <a href="/produto/{{promocao.produto.id}}/" class="btn btn-primary" style="color:#fff;">Ir para produto</a>
             </div>
         </div>
     </div>

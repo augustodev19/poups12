@@ -1,9 +1,11 @@
 <html>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+
 </head>
 <body style="font-family: 'Arial', sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; line-height: 1.6;">
-    <h1 style="color: #4A90E2;">Detalhes do Pedido</h1>
-    <h4 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important">Poupe<span style="color:#fff">Comprando</span></h4>    <p>Olá {{ pedido.loja.nomeLoja }},</p>
+    <h1 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important; font-size:2.2rem;">Poupe<span style="color:#1094F5">Comprando</span></h1> 
+     <p>Olá {{ pedido.loja.nomeLoja }},</p>
     <p>Seu pedido foi criado com sucesso!</p>
     <ul>
         {% for item in itens_pedido %}
@@ -17,12 +19,13 @@
     {%elif subperfil_nome %}
     <p>Nome do cliente: {{ subperfil_nome }}</p>
     {% endif %}
+    <p>CPF do cliente: {{cliente.username}}</p>
     <p>Celular do cliente: {{pedido.cliente.telefone}}</p>
-    <p>Tempo estimado para entrega: {{pedido.loja.tempo_entrega_min}} - {{pedido.loja.tempo_entrega_max}}min </p>
+    <p>Tempo estimado para entrega: {{pedido.loja.tempo_entrega_min|default:60}} - {{pedido.loja.tempo_entrega_max|default:75}}min </p>
     <!-- <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}" style="color: #ffffff; text-decoration: none; background-color: #4A90E2; padding: 10px 20px; border-radius: 5px;">Clique aqui</a></p> -->
-    <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-    <a href="https:/poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
-    <a href="https:/poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
+    <p style="font-family: 'Raleway' !important">Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
+    <a href="https://poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
+    <a href="https://poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
     <p>É uma honra ter você por aqui!</p>
 </body>
 </html>

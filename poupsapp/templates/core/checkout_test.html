@@ -227,7 +227,7 @@
                     <input class="w-100 mt-3 p-2" id="autocomplete" placeholder="Digite seu endereço" type="text" style="display: none; width:100%; max-width:32rem; border-radius:4px; border:solid 1px #007bff; color:#007bff; font-weight:400; backgroiund:transparent; outline:none;"/>
                     
                     <div class="d-flex flex-column mt-5 justify-content-between" style="max-width: 32rem; width: 100%;">
-                        <span class="mb-2" style="font-size:1.2rem; font-weight: 400;">Hoje, {{loja.tempo_entrega_min}} - {{loja.tempo_entrega_max}}</span>
+                        <span class="mb-2" style="font-size:1.2rem; font-weight: 400;">Hoje, {{loja.tempo_entrega_min|default:60}} - {{loja.tempo_entrega_max|default:75}}min</span>
                         <div class="d-flex px-4 py-3 align-items-start flex-column " style="gap: .5rem; border:solid #007bff 1px; border-radius:4px;">
                             <div class="d-flex justify-content-between w-100">
                                 <span style="font-size: .8rem;">
@@ -255,7 +255,7 @@
                             </span>
                             <span style="font-size: .8rem;">
                               
-                                Hoje, {{loja.tempo_entrega_min}} - {{loja.tempo_entrega_max}}
+                                Hoje, {{loja.tempo_entrega_min|default:60}} - {{loja.tempo_entrega_max|default:75}}min
                             </span>
                         </div>
                     </div>
@@ -311,6 +311,7 @@
                      
                         <form method="POST" action="{% url 'criar_pagamento_pix' %}" class="w-100">
                         {%csrf_token%}
+                        <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
                         <button style="background: transparent; border:none; text-align:start" type="submit" class="w-100">
                             <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
                                 <div class="d-flex align-items-center justify-content-start w-100" style="gap: 1rem;">
@@ -363,7 +364,7 @@
     
                     <div class="d-flex justify-content-between w-100 mb-2">
                         <span style="font-size:.9rem; font-weight: 600;">Total</span>
-                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorSubTotalSpan">{{total_frete}}</span></span>
+                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorSubTotalSpan">{{total_geral_com_frete}}</span></span>
                     </div>
                 <!-- Conteúdo da segunda coluna -->
             </div>
