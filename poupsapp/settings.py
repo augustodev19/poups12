@@ -196,7 +196,6 @@ WSGI_APPLICATION = 'poupsapp.wsgi.application'
 #}
 
 # Define BASE_DIR
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Configuração do banco de dados PostgreSQL usando variáveis de ambiente
 DATABASES = {
@@ -242,29 +241,43 @@ USE_I18N = True
 USE_TZ = True
 
 
+
+WSGI_APPLICATION = 'poupsapp.wsgi.application'
+
+# Função para carregar as credenciais do Google Cloud
+def load_gcs_credentials():
+    credentials_path = os.path.join(BASE_DIR, 'credentials', 'trusty-legend-424903-n8-6703dacb6a5f.json')
+    if 'GOOGLE_APPLICATION_CREDENTIALS_JSON' in os.environ:
+        os.makedirs(os.path.dirname(credentials_path), exist_ok=True)
+        with open(credentials_path, 'w') as f:
+            f.write(os.environ['GOOGLE_APPLICATION_CREDENTIALS_JSON'])
+    return credentials_path
+
+# Definir a variável de ambiente para apontar para o arquivo JSON
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = load_gcs_credentials()
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'poupecomprando12'
+
+# Remover ou comentar a linha de ACL legado
+GS_DEFAULT_ACL = 'publicRead'
+
+# Opcional: Configurar cache control
+GS_FILE_OVERWRITE = False
+GS_CACHE_CONTROL = 'max-age=86400'
+
+# URL base para acessar os arquivos
+MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+
 # Configuração de arquivos estáticos
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'poupsapp/static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Configuração de arquivos de mídia
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Configuração do Google Cloud Storage
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_BUCKET_NAME = 'poupecomprando12'
-GS_DEFAULT_ACL = 'publicRead'
-MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
-
-# Definir caminho para credenciais do Google Cloud Storage
-GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-
-# Definir MEDIA_ROOT para o ambiente de desenvolvimento
-if not os.getenv('DJANGO_PRODUCTION'):
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 JAZZMIN_SETTINGS = {
