@@ -604,6 +604,7 @@ function confirmAddress() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      localStorage.setItem('locationPermission', 'granted');
       window.location.href = '/lojas_proximas/';
     } else {
       alert('Não foi possível definir a localização: ' + (data.error || 'Erro desconhecido'));
