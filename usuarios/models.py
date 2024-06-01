@@ -273,6 +273,7 @@ class Pedido(models.Model):
     payment_id = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, default='none')  # Alterado de confirmado para estado
     pagamento = models.CharField(max_length=50, default='none')
+    retirada_na_loja = models.BooleanField(default=False, blank=True, null=True)
 
     
 
@@ -362,7 +363,8 @@ class Charge(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     attempts = models.IntegerField(default=0)  # Número de tentativas de verificação
-    last_error = models.TextField(null=True, blank=True)  # Última mensagem de erro
+    last_error = models.TextField(null=True, blank=True)
+    retirada_na_loja = models.BooleanField(default=False, blank=True, null=True)  # Última mensagem de erro
     def __str__(self):
         return self.charge_id
 

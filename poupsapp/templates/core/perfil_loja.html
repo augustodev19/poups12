@@ -55,7 +55,7 @@
 
 
 
-<div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem;">
+<div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem; flex-grow:1">
     {% for categoria in perfil_loja.categoriaproduto_set.all %}
     <div class="accordion-item">
         <h2 class="accordion-header" id="heading{{ categoria.id }}">

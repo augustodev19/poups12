@@ -39,6 +39,8 @@ urlpatterns = [
     path('select_subperfil/<int:subperfil_id>/', select_subperfil, name='select_subperfil'),
     path('edit_subperfil/<int:subperfil_id>/', edit_subperfil, name='edit_subperfil'),
     path('remove_subperfil/<int:subperfil_id>/', remove_subperfil, name='remove_subperfil'),
+    path('update_foto/', update_foto, name='update_foto'),
+
 
 ]
 

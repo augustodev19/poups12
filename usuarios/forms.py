@@ -117,3 +117,14 @@ class SubperfilForm(forms.ModelForm):
     class Meta:
         model = Subperfil
         fields = ['nome', 'foto_perfil']
+
+class LojaInfoForm(forms.ModelForm):
+    categorias = forms.ModelMultipleChoiceField(
+        queryset=Categoria.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    
+    class Meta:
+        model = Loja
+        fields = ['nomeLoja', 'nome', 'email', 'categorias']

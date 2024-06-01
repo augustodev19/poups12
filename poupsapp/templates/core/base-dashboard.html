@@ -168,8 +168,9 @@
                
                     <form class="d-flex align-items-center " action="{% url 'logout' %}" method="post">
                       {% csrf_token %}
-                      <button type="submit" class="mb-0 nav-item nav-link" style="border:none; background:none; font-size:.9rem !important;">Sair</button>
+                      <button type="submit" class="mb-0 nav-item nav-link py-0" style="border:none; background:none; font-size:.9rem !important;">Sair</button>
                   </form>
+                    <a href="{%url 'perfil_loja' loja.id %}" class="nav-item nav-link mt-0 mb-3 py-0" style="font-size:.9rem !important;">Ver perfil</a>
                     <a href="{%url 'home'%}" class="btn btn-outline-primary mx-3 d-block">Voltar para o site</a>
                   </div>
                 </div>

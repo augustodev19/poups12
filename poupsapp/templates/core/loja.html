@@ -9,7 +9,7 @@
 
 {% for categoria in categorias %}
 
-    <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'10' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
+    <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'50' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
     <img style="width:5rem; height:5rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
         <span>{{ categoria.nome }}</span>
     </a>
@@ -20,24 +20,31 @@
 </div>
 
 
-<div class="container mt-5 d-flex justify-content-start" style="gap:1rem; overflow-x:auto; white-space: nowrap;">
+<div class="container mt-5 d-flex flex-column align-items-start" >
+<h3>Ofertas:</h3>
+<div class="container d-flex justify-content-start promocoes_container" style="gap:1rem; overflow-x:auto; white-space: nowrap;">
 
+    {% for loja in lojas %}
 
-<a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner1 (2) (1).png' %}">
+        
+                {% for promocao in loja.promocoes %}
+                    <a class="card-1 my-1" href="/promocao/{{promocao.id}}/">
+                        <h2 style="font-size:1.2rem">{{loja.nomeLoja}}</h2>
 
-</a>
-<a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner2 (2) (1).png' %}">
+                        <img class="mb-3" style="height:5rem;" src="{{ promocao.imagem.url }}" alt="{{ promocao.produto.nome }}">
+                        <p style="color:#333">Compre {{ promocao.quantidade_necessaria }}, Ganhe 1</p>
 
-</a>
-<a>
-    <img style="width: 20rem; height:12rem; object-fit:cover; border-radius:12px;" src="{%static 'img\banner4 (2) (1).png' %}">
-
-</a>
-
+                        <p  style="color: #1094F5; font-weight:600;">
+                            Ver detalhes
+                        </p>
+                    </a>
+                {% endfor %}
+            {%empty%}
+        {% endfor %}
 
 </div>
+</div>
+
 
 <div class="container mt-5 d-none">
     <h4>Mais PoupeComprando pra você</h4>
@@ -106,8 +113,8 @@
             <h2 class="text-center">Onde você quer receber seu pedido?</h2>
           </div>
           <div class="modal-body1">
-            <label for="distanciaSlider">Distância: <span id="distanciaValor">10</span> km</label>
-            <input type="range" id="distanciaSlider" name="distancia" min="5" max="100" value="10">
+            <label for="distanciaSlider">Distância: <span id="distanciaValor">50</span> km</label>
+            <input type="range" id="distanciaSlider" name="distancia" min="5" max="100" value="50">
             <button style="background:#1094F5;" id="enviarDistancia">Enviar</button>
           </div>
         </div>
@@ -134,7 +141,7 @@
         var params = new URLSearchParams(url.search);
     
         // Mantém o valor atual da distância
-        var distancia = params.get('distancia') || '10';
+        var distancia = params.get('distancia') || '50';
     
         // Adiciona o filtro de frete grátis à URL
         params.set('freteGratis', 'sim');
@@ -209,7 +216,7 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 </script>   
 
 
-    <div class="mt-5 container-1 mobile-lojas" style="display:none;">
+    <div class="mt-5 container-1 mobile-lojas" style="display:none; flex-grow:1">
         <h3 class="mb-2"> Lojas </h3>
 
 {%for loja in lojas%}
@@ -235,10 +242,10 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 </div>
 
 
-<div class="mt-5 container container-1 desk-lojas">
+<div class="mt-5 container container-1 desk-lojas" style="flex-grow:1;">
 
     {%for loja in lojas%}
-    <a  class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'login' %}?next=loja_{{loja.id}}{% endif %}">
+    <a  class="card-1" href="{% url 'perfil_loja' loja.id %}">
     
     <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
         <h2 style="font-size:1.3rem">{{loja.nomeLoja}}</h2>
@@ -256,4 +263,136 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
     {%endfor%}
         </div>
     </div>
+
+    <div id="locationModal" class="modal1 {%if user.is_authenticated%}d-none{%endif%}">
+        <div class="modal-content1">
+          <div class="modal-header1">
+            
+            <h2 class=" text-center modal-title" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
+            <div class="mb-3 d-flex justify-content-center">
+              <img style="height:15rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
+              </div>
+          </div>
+          <div class="modal-body1">
+            <input class="w-100" id="autocomplete" placeholder="Digite seu endereço" type="text" />
+    
+            <button class="w-100" style="background:#1094F5; font-size:1.2rem; border-radius:4px;" id="useLocation">Usar minha localização</button>
+            <p>Já tem um endereço salvo? <a href="{%url 'login' %}">Entre</a> ou <a href="{%url 'registerCliente' %}">cadastre-se</a></p>
+          </div>
+        </div>
+      </div>
+    
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const modal = document.getElementById("locationModal");
+            const btn = document.getElementById("useLocation");
+            const abrirEndereco = document.querySelectorAll('.abrir-endereco');
+        
+            abrirEndereco.forEach((btn) => {
+                btn.addEventListener('click', function() {
+                    modal.style.display = 'flex';
+                });
+            });
+        
+            if (localStorage.getItem('locationPermission') !== 'granted') {
+                modal.style.display = "flex";
+            } else {
+                // Recupera e usa a localização salva no localStorage
+                const latitude = localStorage.getItem('latitude');
+                const longitude = localStorage.getItem('longitude');
+                const address = localStorage.getItem('address');
+                
+                if (latitude && longitude && address) {
+                    setLocation(latitude, longitude, address);
+                }
+            }
+        
+            function getAddressFromCoordinates(latitude, longitude, callback) {
+                var geocoder = new google.maps.Geocoder();
+                var latLng = new google.maps.LatLng(latitude, longitude);
+        
+                geocoder.geocode({ 'location': latLng }, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                        callback(results[0].formatted_address);
+                    } else {
+                        console.error('Geocoding failed: ' + status);
+                        callback('');
+                    }
+                });
+            }
+        
+            btn.onclick = function() {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    localStorage.setItem('locationPermission', 'granted');
+        
+                    var latitude = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+        
+                    // Armazena latitude e longitude no localStorage
+                    localStorage.setItem('latitude', latitude);
+                    localStorage.setItem('longitude', longitude);
+        
+                    getAddressFromCoordinates(latitude, longitude, function(address) {
+                        if (address) {
+                            console.log('Endereço obtido:', address);
+                            
+                            // Armazena o endereço no localStorage
+                            localStorage.setItem('address', address);
+        
+                            setLocation(latitude, longitude, address);
+        
+                        } else {
+                            // Trate o caso onde o endereço não pôde ser obtido
+                            console.error('Endereço não encontrado para as coordenadas.');
+                        }
+                    });
+        
+                }, function(error) {
+                    console.error('Erro ao obter localização:', error);
+                    localStorage.setItem('locationPermission', 'denied');
+                });
+            };
+        
+            function setLocation(latitude, longitude, address) {
+                fetch('/set_location/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        latitude: latitude,
+                        longitude: longitude,
+                        address: address
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (window.location.pathname !== '/loja/') {
+                        window.location.href = '/loja/'; // Redireciona para a URL padrão se não estiver já na página
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar localização:', error);
+                });
+            }
+        });
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+      </script>
 {%endblock%}

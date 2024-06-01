@@ -59,9 +59,23 @@ from math import radians, cos, sin, asin, sqrt
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# Create your views here.
 def home_view(request):
-    
+
+    try:
+        user_location = request.session.get('user_location')
+    except:
+        pass
+    if user_location:
+        latitude = float(user_location.get('latitude'))
+        longitude = float(user_location.get('longitude'))
+        try:
+            address = user_location.get('address')
+        except:
+            pass
+    else:
+        latitude = None
+        longitude = None
+
     categorias = Categoria.objects.all()
     lojas = Loja.objects.all()
     if request.user.is_authenticated:
@@ -74,19 +88,21 @@ def home_view(request):
 
     if request.user.is_authenticated:
         try:
-            loja = request.user.loja  # Substitua 'cliente' pelo nome correto do campo no seu modelo
+            loja = request.user.loja  # Substitua 'loja' pelo nome correto do campo no seu modelo
         except AttributeError:
             loja = None
     else:
         loja = None
 
     context = {
-        'lojas':lojas,
-        'categorias':categorias,
+        'lojas': lojas,
+        'categorias': categorias,
         'cliente': cliente,
-        'loja':loja,
+        'loja': loja,
+        'latitude': latitude,
+        'longitude': longitude,
     }
-    return render(request, 'core/index.html', context)
+    return render(request, 'core/loja.html', context)
 
 
 import math
@@ -123,23 +139,20 @@ def set_location(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Agora você está recebendo também o endereço formatado
             address = data['address']
-            latitude = data['latitude']
-            longitude = data['longitude']
-            print(data)
-            # Salve essas informações na sessão do usuário
+            latitude = float(data['latitude'])  # Converte para float
+            longitude = float(data['longitude'])  # Converte para float
             request.session['user_location'] = {
                 'address': address,
                 'latitude': latitude,
                 'longitude': longitude
             }
-        
             return JsonResponse({'success': True, 'message': 'Localização definida com sucesso'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     else:
         return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
+
 def loja(request):
     # Buscar todas as categorias
     categorias = Categoria.objects.all()
@@ -155,7 +168,6 @@ def loja(request):
         latitude = user_location.get('latitude') if user_location else None
         longitude = user_location.get('longitude') if user_location else None
         adress = user_location.get('adress') if user_location else None
-
     # Inicializar todas_lojas
     todas_lojas = Loja.objects.filter(is_active=True)
 
@@ -165,7 +177,7 @@ def loja(request):
         todas_lojas = todas_lojas.filter(categorias__id=categoria_id)
 
     # Aplicar filtro de distância e frete grátis
-    raio = int(request.GET.get('distancia', 10))
+    raio = int(request.GET.get('distancia', 50))
     frete_gratis = request.GET.get('freteGratis') == 'sim'
     lojas_proximas = []
 
@@ -178,6 +190,7 @@ def loja(request):
                 if distancia <= raio:
                     if not frete_gratis or loja.valor_frete == 0:
                         loja.distancia_calculada = distancia
+                        loja.promocoes = Promocao.objects.filter(loja=loja)
                         lojas_proximas.append(loja)
     if not lojas_proximas:
         mensagem_nenhuma_loja = "Nenhuma loja encontrada dentro do raio especificado."
@@ -424,16 +437,11 @@ def credito_sucesso(request):
 
 def perfil_loja(request, loja_id):
     loja = get_object_or_404(Loja, id=loja_id)
-    if request.user.cliente:
-        cliente = request.user.cliente
-    else:
-        cliente = None
-        return redirect('login')
+
 
     
     context = {
         'perfil_loja':loja,
-        'cliente':cliente
     }
 
     return render(request, 'core/perfil_loja.html', context)
@@ -450,12 +458,11 @@ def detalhes_produto(request, id):
 def detalhes_promocao(request, promocao_id):
     promocao = get_object_or_404(Promocao, id=promocao_id)
     print("Promoção:", promocao)
-
+    cliente = None
     try:
         cliente = request.user.cliente
-    except Cliente.DoesNotExist:
-        messages.error(request, 'Cliente não encontrado.')
-        return redirect('home')
+    except:
+        pass
 
     # Corrigindo a obtenção de itens comprados
     compra_acumulada = CompraAcumulada.objects.filter(cliente=cliente, promocao=promocao).first()
@@ -486,6 +493,7 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 import json
 
+@csrf_exempt
 @require_http_methods(["POST"])
 def adicionar_ao_carrinho(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
@@ -559,6 +567,45 @@ def adicionar_ao_carrinho(request, produto_id):
         'sucesso': True,
         'mensagem': 'Adicionado ao Carrinho'
     })
+@csrf_exempt
+@require_http_methods(["POST"])
+def adicionar_item_promocional_ao_carrinho(request, promocao_id):
+    promocao = get_object_or_404(Promocao, id=promocao_id)
+    produto = promocao.produto
+    loja_id = promocao.loja.id
+
+    if 'carrinho' not in request.session:
+        request.session['carrinho'] = {'loja_id': loja_id, 'itens': {}, 'pontos_para_proxima_promocao': {}}
+
+    carrinho = request.session['carrinho']
+
+    if carrinho['loja_id'] != loja_id:
+        carrinho['itens'] = {}
+        carrinho['pontos_para_proxima_promocao'] = {}
+        carrinho['loja_id'] = loja_id
+
+    item_key = str(produto.id)
+    if item_key in carrinho['itens']:
+        carrinho['itens'][item_key]['quantidade'] += promocao.quantidade_necessaria
+    else:
+        carrinho['itens'][item_key] = {
+            'produto_id': produto.id,
+            'quantidade': promocao.quantidade_necessaria,
+            'preco': str(produto.preco),
+            'pontos': str(produto.pontos),
+            'nome': produto.nome,
+            'imagem_url': produto.foto.url if produto.foto else None,
+            'promocao': False
+        }
+
+    request.session.modified = True
+    return JsonResponse({
+        'carrinho': carrinho,
+        'sucesso': True,
+        'mensagem': 'Produto promocional adicionado ao Carrinho'
+    })
+
+@csrf_exempt
 @require_http_methods(["POST"])
 def remover_do_carrinho(request, produto_id):
     carrinho = request.session.get('carrinho', {'itens': {}, 'pontos_para_proxima_promocao': {}})
@@ -636,6 +683,39 @@ def ver_carrinho(request):
         'total_geral_carrinho': total_geral_carrinho,
         'total_pontos_carrinho': total_pontos_carrinho,
         'pontos_para_proxima_promocao': carrinho.get('pontos_para_proxima_promocao', {})
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def atualizar_quantidade_carrinho(request, produto_id):
+    print('teste')
+    produto = get_object_or_404(Produto, id=produto_id)
+    quantidade = json.loads(request.body).get('quantidade')
+    
+    if quantidade < 1:
+        return JsonResponse({'erro': 'Quantidade inválida'}, status=400)
+    
+    carrinho = request.session.get('carrinho', {'itens': {}})
+
+    if str(produto_id) in carrinho['itens']:
+        carrinho['itens'][str(produto_id)]['quantidade'] = quantidade
+
+    total_geral_carrinho = sum(
+        Decimal(item['preco']) * item['quantidade']
+        for item in carrinho['itens'].values()
+        if not item['promocao']
+    )
+
+    total_pontos_carrinho = sum(
+        Decimal(item['pontos']) * item['quantidade']
+        for item in carrinho['itens'].values()
+        if not item['promocao']
+    )
+
+    request.session.modified = True
+    return JsonResponse({
+        'total_geral_carrinho': float(total_geral_carrinho),
+        'total_pontos_carrinho': float(total_pontos_carrinho)
     })
 
 def checkout1(request):
@@ -763,14 +843,19 @@ def criar_pagamento_pix(request):
 
         if loja is None:
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
-
-        valor_frete = Decimal(loja.valor_frete)
+        entrega_loja = request.POST.get('retiradaPixHidden')
+        print(entrega_loja)
+        if entrega_loja:
+            valor_frete = 0
+        else:
+            valor_frete = Decimal(loja.valor_frete)
         total_geral_carrinho += valor_frete
 
         endereco = request.POST.get('endereco')
         print(endereco)
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['endereco'] = endereco
+        request.session['entrega_loja'] = entrega_loja
         request.session['loja_id'] = loja.id
         request.session['cliente_id'] = request.user.cliente.id
 
@@ -803,7 +888,8 @@ def criar_pagamento_pix(request):
             loja_id=loja.id,
             cliente_id=request.user.cliente.id,
             attempts=0,  # Iniciar o número de tentativas em 0
-            last_error=None  # Iniciar sem erros
+            last_error=None,
+            retirada_na_loja = entrega_loja,  # Iniciar sem erros
         )
 
         request.session['pix_charge_id'] = charge.charge_id
@@ -870,7 +956,12 @@ def criar_pagamento_checkout(request):
         if loja is None:
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
 
-        valor_frete = Decimal(loja.valor_frete)
+        entrega_loja = request.POST.get('retiradaCartaoHidden')
+        if entrega_loja == "true":
+            valor_frete = 0
+        else:
+            valor_frete = Decimal(loja.valor_frete)
+
         total_geral_carrinho += valor_frete
 
         items.append({
@@ -888,6 +979,7 @@ def criar_pagamento_checkout(request):
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['total_pontos_carrinho'] = total_pontos_carrinho
         request.session['endereco'] = endereco
+        request.session['retirada_loja'] = retirada_loja
         request.session['loja_id'] = loja.id
         request.session['cliente_id'] = request.user.cliente.id
 
@@ -909,6 +1001,7 @@ def criar_pagamento_checkout(request):
                 'total_geral_carrinho': str(total_geral_carrinho),
                 'total_pontos_carrinho': total_pontos_carrinho,
                 'endereco': endereco,
+                'retirada_loja': retirada_loja,
                 'frete': str(valor_frete),
                 'subperfil_nome': subperfil_nome
             }
@@ -985,6 +1078,8 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
     total_geral_carrinho = float(metadata.get('total_geral_carrinho', 0))
     total_pontos_carrinho = int(metadata.get('total_pontos_carrinho', 0))
     endereco = metadata.get('endereco', '')
+    retirada_loja = metadata.get('retirada_loja', '')
+
 
     print(f"Processing order for user: {user_id}")
 
@@ -1000,6 +1095,7 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
             status='pendente',
             pagamento='stripe',
             localizacao=endereco,
+            retirada_na_loja = retirada_loja,
             payment_id=session['payment_intent']
         )
 
@@ -1383,6 +1479,7 @@ def pedido_pagamento(request, pedido_id):
 def pagar_com_pontos(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     endereco = request.POST.get('endereco')
+    retirada_na_loja = request.POST.get('retiradaPixHidden') == "true"
 
     if not carrinho['itens']:
         messages.error(request, "Seu carrinho está vazio.")
@@ -1390,15 +1487,31 @@ def pagar_com_pontos(request):
 
     cliente = request.user.cliente
     total_geral_carrinho = Decimal('0.00')  # Inicializando como Decimal
+    loja = None
 
     for item_key, item in carrinho['itens'].items():
         if item_key.startswith('promocao_'):
             continue  # Ignorar itens promocionais
 
         produto = Produto.objects.get(id=item['produto_id'])
+        if not loja:
+            loja = produto.categoria.loja
+
         quantidade = int(item['quantidade'])
         preco = Decimal(item['preco'])
         total_geral_carrinho += preco * quantidade
+
+    if loja is None:
+        messages.error(request, "Informações da loja não disponíveis.")
+        return redirect('checkout')
+
+    # Definindo o valor do frete
+    if retirada_na_loja:
+        valor_frete = Decimal('0.00')
+    else:
+        valor_frete = Decimal(loja.valor_frete)
+
+    total_geral_carrinho += valor_frete
 
     # Convertendo o total do carrinho em reais para pontos
     # Cada ponto vale R$0.4, então o total de pontos necessário é total em reais dividido por 0.4
@@ -1407,11 +1520,14 @@ def pagar_com_pontos(request):
     if cliente.pontos >= total_pontos_necessarios:
         pedido = Pedido.objects.create(
             cliente=cliente,
-            loja=produto.categoria.loja,  # A loja pode ser acessada diretamente do primeiro produto
+            loja=loja,
+            nome=cliente.nome,
             pagamento='pontos',
             localizacao=endereco,
             total=total_geral_carrinho,
+            pontos=total_pontos_necessarios,
             status='pendente',
+            retirada_na_loja=retirada_na_loja
         )
 
         # Criando os itens do pedido
@@ -1580,6 +1696,7 @@ def pedidos_cliente(request):
 
 
     
+@login_required
 def checkout(request):
     carrinho = request.session.get('carrinho', {'itens': {}})
     cliente = request.user.cliente if request.user.is_authenticated and hasattr(request.user, 'cliente') else None
@@ -1626,45 +1743,58 @@ def checkout(request):
         'loja': loja,
         'subperfil': subperfil
     })
-
 def search(request):
-    query = request.GET.get('query', '')
+    query = request.GET.get('query', '').strip()
+    if not query:
+        return JsonResponse({'success': False, 'error': 'Consulta vazia'}, status=400)
+
+    current_time = time.time()
+    last_search_time = request.session.get('last_search_time', 0)
+    min_time_interval = 1  # Intervalo mínimo de 1 segundo entre consultas
+
+    if current_time - last_search_time < min_time_interval:
+        return JsonResponse({'success': False, 'error': 'Consultas muito frequentes. Por favor, aguarde um momento e tente novamente.'}, status=429)
+
     try:
         cliente = request.user.cliente
+        latitude = cliente.endereco.latitude
+        longitude = cliente.endereco.longitude
     except AttributeError:
-        cliente = None
+        user_location = request.session.get('user_location', {})
+        latitude = user_location.get('latitude')
+        longitude = user_location.get('longitude')
+
+    if latitude is None or longitude is None:
+        return JsonResponse({'success': False, 'error': 'Localização não definida'}, status=400)
 
     produtos_list = []
     lojas_list = []
 
-    if query and cliente and cliente.endereco:
-        latitude = cliente.endereco.latitude
-        longitude = cliente.endereco.longitude
+    produtos = Produto.objects.filter(nome__icontains=query)
+    lojas = Loja.objects.filter(nomeLoja__icontains=query)
 
-        if latitude is not None and longitude is not None:
-            produtos = Produto.objects.filter(nome__icontains=query)
-            lojas = Loja.objects.filter(nomeLoja__icontains=query)
+    for produto in produtos:
+        loja = produto.categoria.loja
+        if loja and loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
+            distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
+            if distancia <= 100:
+                produtos_list.append({
+                    'id': produto.id,
+                    'nome': produto.nome,
+                    'foto': produto.foto.url if produto.foto else None
+                })
 
-            for produto in produtos:
-                loja = produto.categoria.loja
-                if loja and loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
-                    distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
-                    if distancia <= 100:
-                        produtos_list.append({
-                            'id': produto.id,
-                            'nome': produto.nome,
-                            'foto': produto.foto.url if produto.foto else None
-                        })
+    for loja in lojas:
+        if loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
+            distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
+            if distancia <= 100:
+                lojas_list.append({
+                    'id': loja.id,
+                    'nomeLoja': loja.nomeLoja,
+                    'foto': loja.foto.url if loja.foto else None
+                })
 
-            for loja in lojas:
-                if loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
-                    distancia = haversine(float(longitude), float(latitude), float(loja.endereco.longitude), float(loja.endereco.latitude))
-                    if distancia <= 100:
-                        lojas_list.append({
-                            'id': loja.id,
-                            'nomeLoja': loja.nomeLoja,
-                            'foto': loja.foto.url if loja.foto else None
-                        })
+    request.session['last_search_time'] = current_time
 
     return JsonResponse({
         'produtos': produtos_list,

@@ -4,7 +4,7 @@ from django.conf.urls.static import static
 from .views import *
 
 urlpatterns = [
-    path('', home_view, name='home'),
+    path('', loja, name='home'),
     path('lojas/', listar_lojas, name='listar_lojas'),
     path('editar_perfil/', editar_perfil, name='editar_perfil'),
     path('payment/', comprar_credito, name='payment'),
@@ -39,7 +39,8 @@ urlpatterns = [
     path('search_results/', search_results, name='search_results'),
     path('create-pix/', criar_pagamento_pix, name='criar_pagamento_pix'),
     path('teste-tarefa/', teste_tarefa, name='teste_tarefa'),
-
+    path('adicionar_item_promocional_ao_carrinho/<int:promocao_id>/', adicionar_item_promocional_ao_carrinho, name='adicionar_item_promocional_ao_carrinho'),
+    path('atualizar_quantidade_carrinho/<int:produto_id>/', atualizar_quantidade_carrinho, name='atualizar_quantidade_carrinho'),
     # URL para o webhook (notificações do Mercado Pago)
 
 

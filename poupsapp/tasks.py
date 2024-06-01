@@ -116,7 +116,7 @@ def handle_pix_payment(self, correlation_id):
             loja_id = charge.loja_id
             cliente_id = charge.cliente_id
             charge_endereco = charge.endereco if charge.endereco else None
-            
+            retirada_loja = charge.retirada_na_loja
             #logger.warning(f"Cliente ID: {cliente_id}, Loja ID: {loja_id}, Total: {total_geral_carrinho}")
 
             cliente = Cliente.objects.get(id=cliente_id)
@@ -132,7 +132,8 @@ def handle_pix_payment(self, correlation_id):
                 status='pendente',
                 pagamento='pix',
                 payment_id=correlation_id,
-                localizacao=charge_endereco
+                localizacao=charge_endereco,
+                retirada_na_loja = retirada_loja,
             )
 
             carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})

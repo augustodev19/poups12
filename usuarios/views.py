@@ -340,7 +340,7 @@ def user_login(request):
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
         cliente = None
-       
+
         if user is not None:
             auth_login(request, user)
             try:
@@ -358,15 +358,21 @@ def user_login(request):
             elif loja:
                 messages.success(request, "Lojista logado com sucesso!")
                 return redirect('editar_loja')
+            
+            # Verifica se há itens no carrinho
+            carrinho = request.session.get('carrinho', {'itens': {}})
+            if carrinho['itens']:
+                messages.success(request, "Usuário logado com sucesso!")
+                return redirect('checkout')  # Redireciona para o checkout se houver itens no carrinho
+
             messages.success(request, "Usuário logado com sucesso!")
-            return redirect('loja')
+            return redirect(request.GET.get('next', 'lojas_proximas'))  # Redireciona para lojas próximas se o carrinho estiver vazio
         else:
             messages.error(request, "Email ou senha inválidos.")
     else:
         form = LoginForm()
         
-        
-    return render(request, 'core/login.html')
+    return render(request, 'core/login.html', {'form': form})
 
 
 def tipo_cliente(request):
@@ -681,12 +687,34 @@ def update_capa(request):
     else:
         return JsonResponse({'status': 'error'})
 
+def update_foto(request):
+    if request.method == 'POST' and 'foto' in request.FILES:
+        loja = request.user.loja
+        loja.foto = request.FILES['foto']
+        loja.save()
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'error'})
 
 def editar_geral(request):
     loja = request.user.loja
+    
+    if request.method == 'POST':
+        form = LojaInfoForm(request.POST, instance=loja)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Informações da loja atualizadas com sucesso!')
+            return redirect('editar_geral')
+        else:
+            messages.error(request, 'Corrija os erros abaixo.')
+    else:
+        form = LojaForm(instance=loja)
+    
     context = {
-        'loja':loja
+        'loja': loja,
+        'form': form
     }
+    
     return render(request, 'core/editar_geral.html', context)
 
 

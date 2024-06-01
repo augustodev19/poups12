@@ -204,9 +204,9 @@
                         <span id="telefoneSpan"></span>
     
     
-                        <div class="d-flex mt-4 mb-3 justify-content-between" style="max-width: 32rem; width: 100%;">
+                        <div class="mt-4 mb-3 justify-content-between endereco-div" style="max-width: 32rem; width: 100%; display:flex;">
             
-                            <div class="d-flex align-items-center " style="gap: .5rem;">
+                            <div class=" align-items-center  " style="gap: .5rem; ">
                             <img style="height: 3rem; border-radius:4px;" src="{%static 'img\yEshb.gif' %}">
                             <span>
                                 
@@ -221,7 +221,15 @@
                             </div>
                     <button id="alterar-endereco" class="btn btn-primary" style="color:#007bff !important; background:transparent; border: solid: 2px #007bff; font-weight:400; border-radius:4px;">Pedir em outro endereço</button>
     
-                     
+                    <div class="custom-container mt-3">
+                        <label class="custom-switch">
+                            <input type="checkbox" id="retiradaCheckbox">
+                            <span class="custom-slider custom-round"></span>
+                        </label>
+                        <label for="retiradaCheckbox">Retirada no Local</label>
+                    </div>
+
+                    
                         
                     <!-- Campo de Autocomplete, inicialmente escondido -->  
                     <input class="w-100 mt-3 p-2" id="autocomplete" placeholder="Digite seu endereço" type="text" style="display: none; width:100%; max-width:32rem; border-radius:4px; border:solid 1px #007bff; color:#007bff; font-weight:400; backgroiund:transparent; outline:none;"/>
@@ -273,6 +281,8 @@
                         <form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %} " class="w-100">
                             {% csrf_token %}
                             <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
+                            <input type="hidden" id="retiradaCartaoHidden" name="retiradaCartaoHidden" value="false">
+
                             <button style="background: transparent; border:none; text-align:start" class="w-100" type="submit">
                                 <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
                                     <div class="d-flex align-items-center justify-content-start w-100" style="gap: 1rem;">
@@ -280,7 +290,7 @@
                                        <img style="height: 1.7rem;" src="{%static 'img\atm-card.png' %}">
                                     <span style="color:#007bff"> Pague com Cartão<br>
                                     <span style="color:#8c8c8cfe;">Pague agora com cartão de crédito.</span></span>
-                                        
+                                    
                                     </div>
                             
                                     
@@ -292,6 +302,8 @@
                         <form id="paymentForm" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
                             {% csrf_token %}
                             <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
+                            <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="false">
+
                             <button style="background: transparent; border:none; text-align:start" class="w-100" type="submit">
                                 <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
                                     <div class="d-flex align-items-center justify-content-start w-100" style="gap: 1rem;">
@@ -299,7 +311,8 @@
                                        <img style="height: 1.7rem;" src="{%static 'img\coin (2).png' %}">
                                     <span style="color:#007bff"> Pague com Poups<br>
                                     <span style="color:#8c8c8cfe;">Pague agora com créditos poups.</span></span>
-                                        
+                                    <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="false">
+
                                     </div>
                             
                                     
@@ -312,6 +325,8 @@
                         <form method="POST" action="{% url 'criar_pagamento_pix' %}" class="w-100">
                         {%csrf_token%}
                         <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
+                        <input type="hidden" id="retiradaPixHidden" name="retiradaPixHidden" value="false">
+
                         <button style="background: transparent; border:none; text-align:start" type="submit" class="w-100">
                             <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
                                 <div class="d-flex align-items-center justify-content-start w-100" style="gap: 1rem;">
@@ -353,22 +368,63 @@
                     </div></h6>
                     
                     <div class="d-flex justify-content-between w-100 mb-2">
-                        <span style="font-size:.9rem">Subtotal</span>
-                        <span style="font-size: .9rem;">R$<span id="valorTotalSpan">{{ total_geral }}</span></span>
+                        <span id="valorSubTotalSpan" style="font-size:.9rem">Subtotal</span>
+                        <span style="font-size: .9rem;">R$<span>{{ total_geral }}</span></span>
                     </div>
     
-                    <div class="d-flex justify-content-between w-100 mb-2">
+                    <div class=" taxa_entrega_div justify-content-between w-100 mb-2" style="display:flex;">
                         <span style="font-size:.9rem">Taxa de Entrega</span>
                         <span style="font-size: .9rem;">R$ {{loja.valor_frete}}</span>
                     </div>
     
-                    <div class="d-flex justify-content-between w-100 mb-2">
+                    <div class=" total_div justify-content-between w-100 mb-2" style="display:flex;">
                         <span style="font-size:.9rem; font-weight: 600;">Total</span>
-                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorSubTotalSpan">{{total_geral_com_frete}}</span></span>
+                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorTotalSpan">{{total_geral_com_frete}}</span></span>
                     </div>
                 <!-- Conteúdo da segunda coluna -->
             </div>
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const taxa_div = document.querySelector('.taxa_entrega_div');
+                const total_div = document.querySelector('.total_div');
+                const valor_sub = document.querySelector('#valorSubTotalSpan');
+                const retiradaCheckbox = document.getElementById('retiradaCheckbox');
+                const retiradaPixHidden = document.getElementById('retiradaPixHidden');
+                const retiradaCartaoHidden = document.getElementById('retiradaCartaoHidden');
+                const retiradaPoupsHidden = document.getElementById('retiradaPoupsHidden');
+                const alterarEndereco = document.querySelector('#alterar-endereco');
+                const enderecoDiv = document.querySelector('.endereco-div');
+            
+                retiradaCheckbox.addEventListener('change', function () {
+                    if (retiradaCheckbox.checked) {
+                        retiradaPixHidden.value = "true";
+                        retiradaCartaoHidden.value = "true";
+                        retiradaPoupsHidden.value = "true";
+                        alterarEndereco.style.display = 'none'
+                        enderecoDiv.style.display = 'none'
+                        total_div.style.display = 'none'
+                        taxa_div.style.display = 'none'
+                        valorSubTotalSpan.textContent = 'Total'
+                        valorSubTotalSpan.style.fontWeight = '600'
+                    } else {
+                        retiradaPixHidden.value = "false";
+                        retiradaCartaoHidden.value = "false";
+                        retiradaPoupsHidden.value = "false";
+                        alterarEndereco.style.display = 'flex'
+                        enderecoDiv.style.display = 'flex'
+                        total_div.style.display = 'flex'
+                        taxa_div.style.display = 'flex'
+                        valorSubTotalSpan.textContent = 'Subtotal'
+                        valorSubTotalSpan.style.fontWeight = '500'
+
+
+
+
+                    }
+                });
+            });
+            </script>
     <span id="cepSpan"></span>
     <span id="nomeSpan"></span>
 {%else%}

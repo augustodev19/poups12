@@ -24,10 +24,8 @@
             <div class="d-flex justify-content-center flex-column" style="height:100%">
                 <span class="fw-bold" style="color:#333; font-size:1.6rem;">Promoção: {{ promocao.produto.nome }}</span>
                 <p class="price fw-bold" style="color:#333; font-size:1.2rem">Grátis ao comprar {{ promocao.quantidade_necessaria }} unidades</p>
-                <!-- <p class="price fw-bold" style="color:#333; font-size:1.2rem">Pontos acumulados: {{ itens_comprados }} unidades</p> -->
-
                 <p>{{ promocao.produto.descricao }}</p>
-                <a href="/produto/{{promocao.produto.id}}/" class="btn btn-primary" style="color:#fff;">Ir para produto</a>
+                <button id="add-to-cart" data-promocao-id="{{ promocao.id }}" class="btn btn-primary" style="color:#fff;">Adicionar ao Carrinho</button>
             </div>
         </div>
     </div>

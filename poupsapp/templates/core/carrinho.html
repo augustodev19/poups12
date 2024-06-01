@@ -5,42 +5,146 @@
                 <li class="item-carrinho mb-5">
                     <!-- Detalhes do produto -->
                     <div class="detalhes-produto d-flex" style="gap:.5rem;">
-                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       
+                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">
                         <div class="d-block">
                             <h5>{{ produto_info.nome }}</h5>
-                            <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
-                            <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
-                            <p>Pontos: {{ produto_info.pontos }}</p>
+                            <p style="margin-bottom:.5rem;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                            <p style="margin-bottom:.5rem;">Pontos: {{ produto_info.pontos }}</p>
+                            <div class="acoes">
+                                <div class="d-flex align-items-center" style="gap:.5rem"><span>Quantidade:</span>
+                                    <input type="number" class="quantidade-input mt-0" data-produto-id="{{ produto_info.produto_id }}" value="{{ produto_info.quantidade }}" min="1" style="height:2rem; max-width:4.5rem; border-radius:12px text-align: center;">
+                                </div>
+                                <button class="btn btn-danger remover-item" data-produto-id="{{ produto_info.produto_id }}">Remover</button>
+                            </div>
                         </div>
                     </div>
-                    <!-- Botões de ação -->
-                    <div class="acoes">
-                        <button class="btn btn-danger remover-item" data-produto-id="{{ produto_info.produto_id }}">Remover</button>
-                    </div>
-                </li>
-            {% endfor %}
-            {% for produto_info in itens_promocionais %}
-                <li class="item-carrinho mb-5">
-                    <!-- Detalhes do produto promocional -->
-                    <div class="detalhes-produto d-flex" style="gap:.5rem;">
-                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">                       
-                        <div class="d-block">
-                            <h5>{{ produto_info.nome }} (Promoção)</h5>
-                            <p style="margin-bottom:.5rem !important;">Quantidade: {{ produto_info.quantidade }}</p>
-                            <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
-                        </div>
-                    </div>
-                    <!-- Botões de ação -->
+                    <!-- Input de quantidade e botões de ação -->
                    
                 </li>
             {% endfor %}
+            
+            <!-- {% for produto_info in itens_promocionais %}
+                <li class="item-carrinho mb-5">
+                    <div class="detalhes-produto d-flex" style="gap:.5rem;">
+                        <img style="height:7.3rem; width:7.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">
+                        <div class="d-block">
+                            <h5>{{ produto_info.nome }} (Promoção)</h5>
+                            <p style="margin-bottom:.5rem !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                        </div>
+                    </div>
+                    <div class="acoes">
+                        <input type="number" class="quantidade-input" data-produto-id="{{ produto_info.produto_id }}" value="{{ produto_info.quantidade }}" min="1" style="width: 60px; text-align: center;">
+                    </div>
+                </li>
+            {% endfor %}
+            -->
         </ul>
 
         <div class="total-geral-carrinho">
-            <h3>Total Geral: R$ {{ total_geral_carrinho|floatformat:2 }}</h3>
-            <h3>Total Pontos: {{total_pontos_carrinho}}</h3>
+            <h5>Total: R${{ total_geral_carrinho }}</h5>
         </div>
     {% else %}
         <p>Seu carrinho está vazio.</p>
     {% endif %}
 </div>
+
+<script>
+    // Função para atualizar o conteúdo do carrinho
+    function atualizarConteudoCarrinho() {
+        fetch('/ver_carrinho/')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('conteudoCarrinho').innerHTML = html;
+                adicionarEventListeners();
+            })
+            .catch(error => console.error('Erro ao atualizar o carrinho:', error));
+    }
+
+    // Função para adicionar os event listeners aos botões após atualizar o conteúdo do carrinho
+    function adicionarEventListeners() {
+        document.body.addEventListener('click', function(event) {
+            if (event.target.classList.contains('remover-item')) {
+                let produtoId = event.target.getAttribute('data-produto-id');
+                fetch(`/remover_do_carrinho/${produtoId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Atualizar o carrinho
+                        atualizarConteudoCarrinho();
+                        new bootstrap.Modal(document.querySelector('#successRemove')).show();
+                    } else {
+                        console.error('Erro ao remover o item:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+            }
+        });
+
+        document.querySelectorAll('.quantidade-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const produtoId = this.getAttribute('data-produto-id');
+                let quantidade = parseInt(this.value);
+                if (quantidade < 1) {
+                    quantidade = 1;
+                    this.value = quantidade;
+                }
+                atualizarQuantidade(produtoId, quantidade);
+            });
+        });
+    }
+
+    // Função para atualizar a quantidade no servidor
+    function atualizarQuantidade(produtoId, quantidade) {
+        fetch(`/atualizar_quantidade_carrinho/${produtoId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({ quantidade: quantidade })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao atualizar quantidade');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Atualizar os totais do carrinho
+            document.querySelector('.total-geral-carrinho').innerHTML = `
+                <h3>Total Geral: R$ ${data.total_geral_carrinho.toFixed(2)}</h3>
+                <h3>Total Pontos: ${data.total_pontos_carrinho}</h3>
+            `;
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+        });
+    }
+
+    // Função para obter o token CSRF
+    function getCsrfToken() {
+        let csrfToken = null;
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            let [name, value] = cookie.trim().split('=');
+            if (name === 'csrftoken') {
+                csrfToken = value;
+                break;
+            }
+        }
+        return csrfToken;
+    }
+
+    // Adicionar os event listeners iniciais
+    document.addEventListener('DOMContentLoaded', function() {
+        adicionarEventListeners();
+    });
+</script>
