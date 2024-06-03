@@ -13,6 +13,41 @@
      opacity: 1;
  }
 
+ .notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    width: 300px;
+    z-index: 1000;
+}
+.notification h1 {
+    color: #000;
+    font-size: 1.5rem;
+}
+.notification h1 span {
+    color: #1094F5;
+}
+.notification a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-right: 10px;
+    display: inline-block;
+}
+.notification a.accept {
+    background-color: #28a745;
+}
+.notification a.reject {
+    background-color: #dc3545;
+}
 
  .back-to-top {
     position: fixed;

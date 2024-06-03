@@ -366,7 +366,7 @@ def user_login(request):
                 return redirect('checkout')  # Redireciona para o checkout se houver itens no carrinho
 
             messages.success(request, "Usuário logado com sucesso!")
-            return redirect(request.GET.get('next', 'lojas_proximas'))  # Redireciona para lojas próximas se o carrinho estiver vazio
+            return redirect(request.GET.get('next', 'home'))  # Redireciona para lojas próximas se o carrinho estiver vazio
         else:
             messages.error(request, "Email ou senha inválidos.")
     else:

@@ -10,6 +10,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 import secrets  # Importe esta biblioteca no início do arquivo
 import os
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import hashlib
 from django.core.cache import cache
 from poupsapp.tasks import *
@@ -1221,9 +1223,12 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
                 print(f"Produto não encontrado: {item.description}")
 
         enviar_email_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
-
         print("Email de pedido enviado")
-
+        try:
+            enviar_notificacao_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
+            print("Notificação Enviada")
+        except:
+            print("Erro ao enviar a notificação")
         cache.set(f"pedido_id_{session.id}", pedido.id, timeout=300)
         print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{session.id}')}")
 
@@ -1420,6 +1425,27 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
     except Exception as e:
         print(f"Erro ao enviar email: {str(e)}")
 
+
+def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
+    try:
+        channel_layer = get_channel_layer()
+        message = {
+            'pedido_id': pedido.id,
+            'loja': pedido.loja.nome,
+            'itens_pedido': [item.nome for item in itens_pedido],
+            'subperfil_nome': subperfil_nome
+        }
+        async_to_sync(channel_layer.group_send)(
+            'pedidos',
+            {
+                'type': 'pedido_message',
+                'message': message
+            }
+        )
+        print("Notificação de pedido enviada com sucesso.")
+        logger.info(f"Tarefa de recusa automática agendada para o pedido {pedido.id}.")
+    except Exception as e:
+        print(f"Erro ao enviar notificação: {str(e)}")
 
 def emitir_nota_fiscal_focus(cnpj_prestador, inscricao_municipal, codigo_municipio_prestador):
     token_homologacao_empresa = "xkRivLik9Wn4xbk4EaHq17d15L4vCtDO"

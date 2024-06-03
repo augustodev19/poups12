@@ -122,7 +122,7 @@ INSTALLED_APPS = [
     #'chat'
 ]
 
-#ASGI_APPLICATION = 'chat.asgi.application'
+ASGI_APPLICATION = 'poupsapp.asgi.application'
 
 
 MIDDLEWARE = [
