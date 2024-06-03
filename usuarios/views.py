@@ -708,7 +708,7 @@ def editar_geral(request):
         else:
             messages.error(request, 'Corrija os erros abaixo.')
     else:
-        form = LojaForm(instance=loja)
+        form = LojaInfoForm(instance=loja)
     
     context = {
         'loja': loja,
