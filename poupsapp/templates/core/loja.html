@@ -9,7 +9,7 @@
 
 {% for categoria in categorias %}
 
-    <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'50' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
+    <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'100' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
     <img style="width:5rem; height:5rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
         <span>{{ categoria.nome }}</span>
     </a>
@@ -113,8 +113,8 @@
             <h2 class="text-center">Onde você quer receber seu pedido?</h2>
           </div>
           <div class="modal-body1">
-            <label for="distanciaSlider">Distância: <span id="distanciaValor">50</span> km</label>
-            <input type="range" id="distanciaSlider" name="distancia" min="5" max="100" value="50">
+            <label for="distanciaSlider">Distância: <span id="distanciaValor">100</span> km</label>
+            <input type="range" id="distanciaSlider" name="distancia" min="5" max="100" value="100">
             <button style="background:#1094F5;" id="enviarDistancia">Enviar</button>
           </div>
         </div>
@@ -141,7 +141,7 @@
         var params = new URLSearchParams(url.search);
     
         // Mantém o valor atual da distância
-        var distancia = params.get('distancia') || '50';
+        var distancia = params.get('distancia') || '100';
     
         // Adiciona o filtro de frete grátis à URL
         params.set('freteGratis', 'sim');

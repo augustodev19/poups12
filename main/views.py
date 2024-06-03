@@ -177,7 +177,7 @@ def loja(request):
         todas_lojas = todas_lojas.filter(categorias__id=categoria_id)
 
     # Aplicar filtro de distância e frete grátis
-    raio = int(request.GET.get('distancia', 50))
+    raio = int(request.GET.get('distancia', 100))
     frete_gratis = request.GET.get('freteGratis') == 'sim'
     lojas_proximas = []
 
