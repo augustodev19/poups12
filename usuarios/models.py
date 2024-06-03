@@ -274,6 +274,8 @@ class Pedido(models.Model):
     status = models.CharField(max_length=50, default='none')  # Alterado de confirmado para estado
     pagamento = models.CharField(max_length=50, default='none')
     retirada_na_loja = models.BooleanField(default=False, blank=True, null=True)
+    correlation_id = models.CharField(max_length=200, null=True, blank=True)
+
 
     
 
@@ -365,6 +367,7 @@ class Charge(models.Model):
     attempts = models.IntegerField(default=0)  # Número de tentativas de verificação
     last_error = models.TextField(null=True, blank=True)
     retirada_na_loja = models.BooleanField(default=False, blank=True, null=True)  # Última mensagem de erro
+    payment_status = models.CharField(max_length=20, default='pending')  # Novo campo para rastrear o status do pagamento
     def __str__(self):
         return self.charge_id
 

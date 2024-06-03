@@ -104,7 +104,13 @@
                             <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'editar_loja'%}"><span>Editar Loja</a>
 
                             {%endif%}
-
+                                {% if cliente and not cliente.plano_familia %}
+                                <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'perfil_usuario'%}"><span>Editar perfil</a>
+                              
+                                  {% elif cliente and cliente.plano_familia %}
+                                  <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'subperfil_list'%}"><span>Editar perfil</a>
+                              
+                              {%endif%}
                            
                      
                             <a href="{%url 'home'%}" class="nav-item nav-link active">Quem Somos</a>
@@ -229,7 +235,22 @@
                         <label for="retiradaCheckbox">Retirada no Local</label>
                     </div>
 
-                    
+                    <script>
+                        document.addEventListener('DOMContentLoaded', (event) => {
+                            const retiradaCheckbox = document.getElementById('retiradaCheckbox');
+                        
+                            // Carregar o estado do checkbox do localStorage
+                            const savedState = localStorage.getItem('retiradaCheckbox');
+                            if (savedState !== null) {
+                                retiradaCheckbox.checked = JSON.parse(savedState);
+                            }
+                        
+                            // Salvar o estado do checkbox no localStorage quando mudar
+                            retiradaCheckbox.addEventListener('change', () => {
+                                localStorage.setItem('retiradaCheckbox', JSON.stringify(retiradaCheckbox.checked));
+                            });
+                        });
+                    </script>
                         
                     <!-- Campo de Autocomplete, inicialmente escondido -->  
                     <input class="w-100 mt-3 p-2" id="autocomplete" placeholder="Digite seu endereço" type="text" style="display: none; width:100%; max-width:32rem; border-radius:4px; border:solid 1px #007bff; color:#007bff; font-weight:400; backgroiund:transparent; outline:none;"/>
@@ -281,7 +302,7 @@
                         <form id="paymentForm" method="post" action="{% url 'criar_pagamento_checkout' %} " class="w-100">
                             {% csrf_token %}
                             <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
-                            <input type="hidden" id="retiradaCartaoHidden" name="retiradaCartaoHidden" value="false">
+                            <input type="hidden" id="retiradaCartaoHidden" name="retiradaCartaoHidden" value="False">
 
                             <button style="background: transparent; border:none; text-align:start" class="w-100" type="submit">
                                 <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
@@ -302,7 +323,7 @@
                         <form id="paymentForm" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
                             {% csrf_token %}
                             <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
-                            <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="false">
+                            <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="False">
 
                             <button style="background: transparent; border:none; text-align:start" class="w-100" type="submit">
                                 <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
@@ -311,7 +332,7 @@
                                        <img style="height: 1.7rem;" src="{%static 'img\coin (2).png' %}">
                                     <span style="color:#007bff"> Pague com Poups<br>
                                     <span style="color:#8c8c8cfe;">Pague agora com créditos poups.</span></span>
-                                    <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="false">
+                                    <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="False">
 
                                     </div>
                             
@@ -325,7 +346,7 @@
                         <form method="POST" action="{% url 'criar_pagamento_pix' %}" class="w-100">
                         {%csrf_token%}
                         <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
-                        <input type="hidden" id="retiradaPixHidden" name="retiradaPixHidden" value="false">
+                        <input type="hidden" id="retiradaPixHidden" name="retiradaPixHidden" value="False">
 
                         <button style="background: transparent; border:none; text-align:start" type="submit" class="w-100">
                             <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
@@ -361,9 +382,48 @@
                 <h6 class="text-start d-flex flex-column mb-2" style=" font-weight: 400; width: 100%;">
                     <span class="mb-2" style="font-size: .8rem;">Seu pedido em</span>
                     <span style="font-size:1.2rem; font-weight: 600;">{{loja.nomeLoja}}</span>
+                    <div class="checkout-container">
+                        {% if itens or itens_promocionais %}
+                            <ul class="lista-de-itens mb-0">
+                                <!-- Itens normais -->
+                                {% for produto_info in itens %}
+                                    <li class="item-carrinho mb-3">
+                                        <!-- Detalhes do produto -->
+                                        <div class="detalhes-produto d-flex mt-3" style="gap:.5rem;">
+                                            <img style="height:3.3rem; width:3.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">
+                                            <div class="d-block">
+                                                <p>{{ produto_info.nome }}</p>
+                                                <p style="color:#747d88; font-weight:400; font-family: 'Open Sans' !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                                                <p style="color:#747d88; font-weight:400; font-family: 'Open Sans' !important;">Quantidade: {{ produto_info.quantidade }}</p>
+
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                    
+                                <!-- Itens promocionais -->
+                                {% for produto_info in itens_promocionais %}
+                                    <li class="item-carrinho">
+                                        <div class="detalhes-produto d-flex" style="gap:.5rem;">
+                                            <img style="height:3.3rem; width:3.3rem; border-radius:4px; object-fit:cover;" src="{{ produto_info.imagem_url }}" alt="{{ produto_info.nome }}">
+                                            <div class="d-block">
+                                                <p>{{ produto_info.nome }} (Promoção)</p>
+                                                <p style="margin-bottom:.5rem !important; color:#747d88; font-weight:400; font-family: 'Open Sans' !important;">Preço unitário: R$ {{ produto_info.preco }}</p>
+                                                <p style="margin-bottom:.5rem; color:#747d88; font-weight:400; font-family: 'Open Sans' !important;">Quantidade: {{ produto_info.quantidade }}</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                    
+                           
+                        {% else %}
+                            <p>Seu carrinho está vazio.</p>
+                        {% endif %}
+                    </div>
+                    <a class="btn mt-3 btn-primary" style="color:#fff;" href="/checkout/">Atualizar Carrinho</a>
                     <div style="border-bottom:solid 1px rgb(195, 195, 195); width: 100%;" class="pb-2 mt-3"><span class="mt-3" style="font-size:.9rem; font-weight: 600; ">
-                        <div class="d-flex flex-column"><span class="mb-2" id="pizzaEscolhidaSpan"></span>
-                        <span class="mb-2" id="refriEscolhidoSpan"></span></div>
+                 
     
                     </div></h6>
                     
@@ -388,7 +448,7 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const taxa_div = document.querySelector('.taxa_entrega_div');
                 const total_div = document.querySelector('.total_div');
-                const valor_sub = document.querySelector('#valorSubTotalSpan');
+                const valorSubTotalSpan = document.querySelector('#valorSubTotalSpan');
                 const retiradaCheckbox = document.getElementById('retiradaCheckbox');
                 const retiradaPixHidden = document.getElementById('retiradaPixHidden');
                 const retiradaCartaoHidden = document.getElementById('retiradaCartaoHidden');
@@ -396,41 +456,50 @@
                 const alterarEndereco = document.querySelector('#alterar-endereco');
                 const enderecoDiv = document.querySelector('.endereco-div');
             
-                retiradaCheckbox.addEventListener('change', function () {
+                // Carregar o estado do checkbox do localStorage
+                const savedState = localStorage.getItem('retiradaCheckbox');
+                if (savedState !== null) {
+                    retiradaCheckbox.checked = JSON.parse(savedState);
+                }
+            
+                // Função para atualizar a interface com base no estado do checkbox
+                function updateInterface() {
                     if (retiradaCheckbox.checked) {
-                        retiradaPixHidden.value = "true";
-                        retiradaCartaoHidden.value = "true";
-                        retiradaPoupsHidden.value = "true";
-                        alterarEndereco.style.display = 'none'
-                        enderecoDiv.style.display = 'none'
-                        total_div.style.display = 'none'
-                        taxa_div.style.display = 'none'
-                        valorSubTotalSpan.textContent = 'Total'
-                        valorSubTotalSpan.style.fontWeight = '600'
+                        retiradaPixHidden.value = "True";
+                        retiradaCartaoHidden.value = "True";
+                        retiradaPoupsHidden.value = "True";
+                        alterarEndereco.style.display = 'none';
+                        enderecoDiv.style.display = 'none';
+                        total_div.style.display = 'none';
+                        taxa_div.style.display = 'none';
+                        valorSubTotalSpan.textContent = 'Total';
+                        valorSubTotalSpan.style.fontWeight = '600';
                     } else {
-                        retiradaPixHidden.value = "false";
-                        retiradaCartaoHidden.value = "false";
-                        retiradaPoupsHidden.value = "false";
-                        alterarEndereco.style.display = 'flex'
-                        enderecoDiv.style.display = 'flex'
-                        total_div.style.display = 'flex'
-                        taxa_div.style.display = 'flex'
-                        valorSubTotalSpan.textContent = 'Subtotal'
-                        valorSubTotalSpan.style.fontWeight = '500'
-
-
-
-
+                        retiradaPixHidden.value = "False";
+                        retiradaCartaoHidden.value = "False";
+                        retiradaPoupsHidden.value = "False";
+                        alterarEndereco.style.display = 'flex';
+                        enderecoDiv.style.display = 'flex';
+                        total_div.style.display = 'flex';
+                        taxa_div.style.display = 'flex';
+                        valorSubTotalSpan.textContent = 'Subtotal';
+                        valorSubTotalSpan.style.fontWeight = '500';
                     }
+                }
+            
+                // Atualizar a interface no carregamento da página
+                updateInterface();
+            
+                // Adicionar listener para salvar estado e atualizar interface quando o checkbox mudar
+                retiradaCheckbox.addEventListener('change', function () {
+                    localStorage.setItem('retiradaCheckbox', JSON.stringify(retiradaCheckbox.checked));
+                    updateInterface();
                 });
             });
             </script>
     <span id="cepSpan"></span>
     <span id="nomeSpan"></span>
-{%else%}
-<div class="d-flex container justify-content-center align-items-center" style="flex-grow:1; margin-top:5rem">
-<h2> Seu carrinho está vazio. </h2>
-</div>
+
 {%endif%}
 
 <script>    
@@ -537,18 +606,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 <!-- Footer End -->
 
-<!-- Copyright Start -->
-<div class="container-fluid copyright  py-4" style="background:black;">
+ <!-- Copyright Start -->
+ <div class="container-fluid copyright  py-4" style="background:black;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>PoupeComprando</a>, Todos os direitos reservados.</span>
+                <span class="text-light" style="font-size:.8rem;"><a href="#"><i class="fas fa-copyright text-light me-2"></i><span style="color:#1094F5">PoupeComprando </span></a>, Todos os direitos reservados.</span>
             </div>
            
         </div>
     </div>
 </div>
 <!-- Copyright End -->
+
+
 
 
 
@@ -673,213 +744,356 @@ ACEITO
 
 <!-- Remove Modal -->
 <div class="modal fade" id="successRemove" tabindex="-1" aria-labelledby="successRemove" aria-hidden="true">
-<div class="modal-dialog">
-<div class="modal-content">
-<!-- ... rest of modal content ... -->
-<div class="modal-body">
-
-  <div class="d-flex flex-column align-items-center" style="gap:1rem;">
-    <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
-  <div class="messages">
-
-  <span style="text-align:center; font-size:1.2rem !important;">Produto removido com sucesso!</span>
-
-  </div>
-  </div>
-</div>
-</div>
-</div>
-</div>
+    <div class="modal-dialog">
+      <div class="modal-content">
+      <!-- ... rest of modal content ... -->
+      <div class="modal-body">
+    
+        <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+          <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
+        <div class="messages">
+      
+        <span style="text-align:center; font-size:1.2rem !important;">Produto removido com sucesso!</span>
+     
+        </div>
+        </div>
+      </div>
+      </div>
+    </div>
+    </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-// Verifica se o consentimento já foi dado
-if(localStorage.getItem('aceitouCookies') === 'true') {
-document.querySelector('.cookiesContainer').style.display = 'none';
-} else {
-setTimeout(function() {
-  document.querySelector('.cookiesContainer').style.display = 'flex';
-}, 2000);
-}
-});
-
-document.querySelector('.aceitarCookies').addEventListener('click', function() {
-document.querySelector('.cookiesContainer').style.display = 'none';
-
-// Salva no localStorage que o usuário aceitou os cookies
-localStorage.setItem('aceitouCookies', 'true');
-});
-</script>
-<script>
-function getCsrfToken() {
-let csrfToken = '';
-const cookies = document.cookie.split(';');
-for (let cookie of cookies) {
-  let parts = cookie.split('=');
-  if (parts[0].trim() === 'csrftoken') {
-      csrfToken = parts[1];
-      break;
-  }
-}
-return csrfToken;
-}
-document.querySelectorAll('.abrir-carrinho').forEach(function(button) {
-button.addEventListener('click', function() {
-fetch('/ver_carrinho/')
-  .then(response => response.text())
-  .then(html => {
-    document.getElementById('conteudoCarrinho').innerHTML = html;
-    // Abre o modal do carrinho
-    new bootstrap.Modal(document.getElementById('carrinhoModal')).show();
-  })
-  .catch(error => console.error('Erro ao buscar o carrinho:', error));
-});
-});
-
-function atualizarConteudoCarrinho() {
-fetch('/ver_carrinho/')
-  .then(response => response.text())
-  .then(html => {
-      document.getElementById('conteudoCarrinho').innerHTML = html;
-  })
-  .catch(error => console.error('Erro ao atualizar o carrinho:', error));
-}
-document.body.addEventListener('click', function(event) {
-if (event.target.classList.contains('remover-item')) {
-  let produtoId = event.target.getAttribute('data-produto-id');
-  fetch(`/remover_do_carrinho/${produtoId}/`, {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCsrfToken()
-      },
-  })
-  .then(response => response.json())
-  .then(data => {
-      if (data.status === 'success') {
-          // Remover o item do DOM
-          
-          atualizarConteudoCarrinho();
-          new bootstrap.Modal(document.querySelector('#successRemove')).show();
-      } else {
-          console.error('Erro ao remover o item:', data.message);
-      }
-  })
-  .catch(error => {
-      console.error('Erro:', error);
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verifica se o consentimento já foi dado
+    if(localStorage.getItem('aceitouCookies') === 'true') {
+      document.querySelector('.cookiesContainer').style.display = 'none';
+    } else {
+      setTimeout(function() {
+        document.querySelector('.cookiesContainer').style.display = 'flex';
+      }, 2000);
+    }
   });
+  
+  document.querySelector('.aceitarCookies').addEventListener('click', function() {
+    document.querySelector('.cookiesContainer').style.display = 'none';
+    
+    // Salva no localStorage que o usuário aceitou os cookies
+    localStorage.setItem('aceitouCookies', 'true');
+  });
+  </script>
+<script>
+  function getCsrfToken() {
+    let csrfToken = '';
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        let parts = cookie.split('=');
+        if (parts[0].trim() === 'csrftoken') {
+            csrfToken = parts[1];
+            break;
+        }
+    }
+    return csrfToken;
 }
+
+document.querySelectorAll('.abrir-carrinho').forEach(function(button) {
+    button.addEventListener('click', function() {
+        fetch('/ver_carrinho/')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('conteudoCarrinho').innerHTML = html;
+                // Abre o modal do carrinho
+                new bootstrap.Modal(document.getElementById('carrinhoModal')).show();
+                adicionarEventListeners();
+            })
+            .catch(error => console.error('Erro ao buscar o carrinho:', error));
+    });
+});
+
+// Função para atualizar o conteúdo do carrinho
+function atualizarConteudoCarrinho() {
+    fetch('/ver_carrinho/')
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('conteudoCarrinho').innerHTML = html;
+            adicionarEventListeners();
+        })
+        .catch(error => console.error('Erro ao atualizar o carrinho:', error));
+}
+
+// Função para adicionar os event listeners aos botões após atualizar o conteúdo do carrinho
+function adicionarEventListeners() {
+    document.body.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remover-item')) {
+            let produtoId = event.target.getAttribute('data-produto-id');
+            fetch(`/remover_do_carrinho/${produtoId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Atualizar o carrinho
+                    atualizarConteudoCarrinho();
+                    new bootstrap.Modal(document.querySelector('#successRemove')).show();
+                } else {
+                    console.error('Erro ao remover o item:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+            });
+        }
+    });
+
+    document.querySelectorAll('.quantidade-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const produtoId = this.getAttribute('data-produto-id');
+            let quantidade = parseInt(this.value);
+            if (quantidade < 1) {
+                quantidade = 1;
+                this.value = quantidade;
+            }
+            atualizarQuantidade(produtoId, quantidade);
+        });
+    });
+}
+
+// Função para atualizar a quantidade no servidor
+function atualizarQuantidade(produtoId, quantidade) {
+    fetch(`/atualizar_quantidade_carrinho/${produtoId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({ quantidade: quantidade })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar quantidade');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Atualizar os totais do carrinho
+        document.querySelector('.total-geral-carrinho').innerHTML = `
+            <h5>Total: R$ ${data.total_geral_carrinho.toFixed(2)}</h5>
+        `;
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+    });
+}
+
+// Adicionar os event listeners iniciais
+document.addEventListener('DOMContentLoaded', function() {
+    adicionarEventListeners();
 });
 </script>
+ 
 
-
-<script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/main.js' %}"></script>
 <!--
-<script>
-if ("geolocation" in navigator) {
-    // A geolocalização está disponível
-    navigator.geolocation.getCurrentPosition(function(position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-  
-      // Exibir a latitude e longitude no console
-      console.log('Latitude:', latitude, 'Longitude:', longitude);
-    }, function(error) {
-      // Tratar erros de geolocalização aqui
-      console.log('Erro ao obter localização:', error);
-    });
-  } else {
-    // A geolocalização não está disponível
-    console.log("Geolocalização não está disponível");
-  }
-</script>
--->
+  <script>
+      if ("geolocation" in navigator) {
+          // A geolocalização está disponível
+          navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+        
+            // Exibir a latitude e longitude no console
+            console.log('Latitude:', latitude, 'Longitude:', longitude);
+          }, function(error) {
+            // Tratar erros de geolocalização aqui
+            console.log('Erro ao obter localização:', error);
+          });
+        } else {
+          // A geolocalização não está disponível
+          console.log("Geolocalização não está disponível");
+        }
+  </script>
+   -->
 
 <!-- Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-<div class="modal-dialog">
-<div class="modal-content">
-<!-- ... rest of modal content ... -->
-<div class="modal-body">
-<div class="d-flex flex-column align-items-center" style="gap:1rem;">
-<img style="max-height:5rem;" src="{%static 'img/check (1).png'%}">
-{% if messages %}
-<div class="messages">
-  {% for message in messages %}
-  {% if message.tags == 'success' %}
-    <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
-  {% endif %}
-  {% endfor %}
-</div>
-{% endif %}
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Error Modal -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-<div class="modal-dialog">
-<div class="modal-content">
-<!-- ... rest of modal content ... -->
-<div class="modal-body">
-
-<div class="d-flex flex-column align-items-center" style="gap:1rem;">
-  <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
-{% if messages %}
-<div class="messages">
-  {% for message in messages %}
-  {% if message.tags == 'error' %}
-<span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
-  {% endif %}
-  {% endfor %}
-</div>
-{% endif %}
-</div>
-</div>
-</div>
-</div>
-</div>
-
-
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY&libraries=places&callback=initAutocomplete" async defer></script>
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <!-- ... rest of modal content ... -->
+    <div class="modal-body">
+      <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+      <img style="max-height:5rem;" src="{%static 'img/check (1).png'%}">
+      {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+        {% if message.tags == 'success' %}
+          <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    </div>
+    </div>
+  </div>
+  </div>
+  
 <script>
-    function copiarTexto() {
-        const texto = document.getElementById('pix').textContent;
-        navigator.clipboard.writeText(texto).then(() => {
-            alert('Texto copiado!');
-        }).catch(err => {
-            console.error('Erro ao copiar texto: ', err);
-        });
-    }
-    </script>
+  // Função para atualizar o conteúdo do carrinho
+  function atualizarConteudoCarrinho() {
+      fetch('/ver_carrinho/')
+          .then(response => response.text())
+          .then(html => {
+              document.getElementById('conteudoCarrinho').innerHTML = html;
+              adicionarEventListeners();
+          })
+          .catch(error => console.error('Erro ao atualizar o carrinho:', error));
+  }
 
+  // Função para adicionar os event listeners aos botões após atualizar o conteúdo do carrinho
+  function adicionarEventListeners() {
+      document.body.addEventListener('click', function(event) {
+          if (event.target.classList.contains('remover-item')) {
+              let produtoId = event.target.getAttribute('data-produto-id');
+              fetch(`/remover_do_carrinho/${produtoId}/`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': getCsrfToken()
+                  },
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.status === 'success') {
+                      // Atualizar o carrinho
+                      atualizarConteudoCarrinho();
+                      new bootstrap.Modal(document.querySelector('#successRemove')).show();
+                  } else {
+                      console.error('Erro ao remover o item:', data.message);
+                  }
+              })
+              .catch(error => {
+                  console.error('Erro:', error);
+              });
+          }
+      });
 
+      document.querySelectorAll('.quantidade-input').forEach(input => {
+          input.addEventListener('change', function() {
+              const produtoId = this.getAttribute('data-produto-id');
+              let quantidade = parseInt(this.value);
+              if (quantidade < 1) {
+                  quantidade = 1;
+                  this.value = quantidade;
+              }
+              atualizarQuantidade(produtoId, quantidade);
+          });
+      });
+  }
 
+  // Função para atualizar a quantidade no servidor
+  function atualizarQuantidade(produtoId, quantidade) {
+      fetch(`/atualizar_quantidade_carrinho/${produtoId}/`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ quantidade: quantidade })
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Erro ao atualizar quantidade');
+          }
+          return response.json();
+      })
+      .then(data => {
+          // Atualizar os totais do carrinho
+          document.querySelector('.total-geral-carrinho').innerHTML = `
+              <h5>Total: R$ ${data.total_geral_carrinho.toFixed(2)}</h5>
+          `;
+      })
+      .catch(error => {
+          console.error('Erro:', error);
+      });
+  }
 
+  // Função para obter o token CSRF
+  function getCsrfToken() {
+      let csrfToken = null;
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+          let [name, value] = cookie.trim().split('=');
+          if (name === 'csrftoken') {
+              csrfToken = value;
+              break;
+          }
+      }
+      return csrfToken;
+  }
 
-<script type="text/javascript">
-document.addEventListener('DOMContentLoaded', (event) => {
-{% if messages %}
-{% for message in messages %}
-{% if message.tags == 'success' %}
-var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-successModal.show();
-{% elif message.tags == 'error' %}
-var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-errorModal.show();
-{% endif %}
-{% endfor %}
-{% endif %}
-});
+  // Adicionar os event listeners iniciais
+  document.addEventListener('DOMContentLoaded', function() {
+      adicionarEventListeners();
+  });
 </script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Error Modal -->
+  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <!-- ... rest of modal content ... -->
+    <div class="modal-body">
+  
+      <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+        <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
+      {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+        {% if message.tags == 'error' %}
+      <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      </div>
+    </div>
+    </div>
+  </div>
+  </div>
 
-<!-- Owl Carousel JS -->
+
+  
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-</body>
+    
+
+
+
+  <script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', (event) => {
+    {% if messages %}
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+      var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+      successModal.show();
+      {% elif message.tags == 'error' %}
+      var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+      errorModal.show();
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  });
+  </script>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Owl Carousel JS -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY&libraries=places,geometry,marker&callback=initAutocomplete" async defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+  </body>
 
 </html>

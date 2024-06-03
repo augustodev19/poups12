@@ -128,3 +128,13 @@ class LojaInfoForm(forms.ModelForm):
     class Meta:
         model = Loja
         fields = ['nomeLoja', 'nome', 'email', 'categorias']
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+class EmailPasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """ Retorna um conjunto de usuários correspondentes para redefinição de senha. """
+        # Busca usuários pelo e-mail, independente do estado 'is_active'
+        active_users = User._default_manager.filter(email__iexact=email)
+        return (u for u in active_users if u.has_usable_password())

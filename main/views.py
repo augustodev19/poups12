@@ -378,6 +378,8 @@ def comprar_credito(request):
     return render(request, 'core/comprar_credito.html')
 
 
+
+
 @login_required
 def confirmar_compra_credito(request):
     if 'pontos_a_adicionar' in request.session:
@@ -433,6 +435,74 @@ def credito_sucesso(request):
     messages.success(request, f'Compra realizada com sucesso!')
     return redirect('home')
 
+@login_required
+def comprar_credito_pix(request):
+    if request.method == 'POST':
+        valor_credito = Decimal(request.POST.get('valor_credito'))
+        
+        # Calculando pontos
+        pontos_a_adicionar = valor_credito / Decimal('0.4')
+        
+        try:
+            correlation_id = str(uuid.uuid4())
+            data = {
+                "value": int(valor_credito * 100),  # Valor em centavos
+                "correlationID": correlation_id,
+                "comment": "Compra de créditos via Pix",
+                "customer": {
+                    "id": str(request.user.id),
+                    "name": request.user.get_full_name(),
+                    "email": request.user.email,
+                }
+            }
+
+            response = requests.post(API_URL, headers=HEADERS, json=data)
+            print(f"Resposta da API ao criar cobrança: {response.status_code}, {response.text}")
+
+            # Verificar se a resposta da API é bem-sucedida
+            if response.status_code != 200:
+                raise ValueError("Erro ao criar a cobrança: resposta inesperada da API")
+
+            charge_data = response.json()
+
+            if 'charge' not in charge_data or 'identifier' not in charge_data['charge']:
+                raise ValueError("Erro ao criar a cobrança: resposta inesperada da API")
+
+            charge = Charge.objects.create(
+                charge_id=charge_data['charge']['identifier'],
+                correlation_id=correlation_id,
+                status=charge_data['charge']['status'],
+                total=valor_credito,
+                cliente_id=request.user.cliente.id,
+                attempts=0,  # Iniciar o número de tentativas em 0
+                last_error=None,  # Iniciar sem erros
+                retirada_na_loja=False,  # Não se aplica para compra de crédito
+                is_credit_purchase=True,  # Flag para indicar compra de crédito
+                pontos_a_adicionar=pontos_a_adicionar
+            )
+
+            correlation_id = charge.correlation_id
+            request.session['pix_charge_id'] = charge.charge_id
+
+            # Agendar a tarefa para verificar o status da cobrança
+            check_credito_pix_status.apply_async((correlation_id, timezone.now().isoformat()), countdown=3)
+            print(f"Tarefa agendada para verificar o status da cobrança com correlation_id {correlation_id} em 3 segundos")
+
+            # Gerar PIX Copia e Cola
+            br_code = charge_data['charge']['brCode']
+
+            # Renderizar a página HTML com o QR Code, PIX Copia e Cola e status de verificação
+            return render(request, 'core/charge_detail.html', {
+                'charge_data': charge_data['charge'],
+                'attempts': charge.attempts,
+                'last_error': charge.last_error,
+                'br_code': br_code,
+                'correlation_id': correlation_id  # Passa o código BR para o template
+            })
+
+        except Exception as e:
+            messages.error(request, f"Erro ao criar pagamento Pix: {str(e)}")
+            return redirect('home')
 
 
 def perfil_loja(request, loja_id):
@@ -452,7 +522,7 @@ def detalhes_produto(request, id):
     loja = produto.categoria.loja if produto.categoria else None
 
     context = {'produto': produto,
-    'loja': loja}
+    'lojaPerfil': loja}
     return render(request, 'core/detalhes_produto.html', context )
 
 def detalhes_promocao(request, promocao_id):
@@ -478,7 +548,7 @@ def detalhes_promocao(request, promocao_id):
 
     context = {
         'promocao': promocao,
-        'loja': loja,
+        'lojaPerfil': loja,
         'cliente': cliente,
         'itens_comprados': itens_comprados
     }
@@ -892,6 +962,7 @@ def criar_pagamento_pix(request):
             retirada_na_loja = entrega_loja,  # Iniciar sem erros
         )
 
+        correlation_id = charge.correlation_id
         request.session['pix_charge_id'] = charge.charge_id
 
         # Agendar a tarefa para verificar o status da cobrança
@@ -907,7 +978,8 @@ def criar_pagamento_pix(request):
             'attempts': charge.attempts,
             'last_error': charge.last_error,
             'loja': loja,
-            'br_code': br_code  # Passa o código BR para o template
+            'br_code': br_code,
+            'correlation_id':correlation_id  # Passa o código BR para o template
         })
 
     except Exception as e:
@@ -1043,6 +1115,22 @@ class StripeWebhookView(View):
             handle_payout(payout)
 
         return JsonResponse({'status': 'success'}, status=200)
+
+def verificar_status_pagamento(request, correlation_id):
+    logger.info(f"Verificando status para correlation_id: {correlation_id}")
+    
+    charge = Charge.objects.filter(correlation_id=correlation_id).first()
+    
+    if charge:
+        status = charge.payment_status
+        pedido = Pedido.objects.filter(correlation_id=correlation_id).first()
+        pedido_id = pedido.id if pedido else None
+    else:
+        status = 'not_found'
+        pedido_id = None
+
+    logger.info(f"Status: {status}, Pedido ID: {pedido_id}")
+    return JsonResponse({'status': status, 'pedido_id': pedido_id})
 
 def handle_checkout_session(request, session):
     metadata = session.get('metadata', {})
@@ -1712,36 +1800,93 @@ def checkout(request):
     total_geral_carrinho = Decimal('0.00')
     total_frete = Decimal('0.00')
     loja = None
-    itens_completos = []
+    itens_normais = []
+    itens_promocionais = []
+    pontos_para_proxima_promocao = {}
+    atualizacoes_promocao = []
 
-    for produto_id, item in carrinho.get('itens', {}).items():
-        produto = get_object_or_404(Produto, id=item['produto_id'])  # Corrigido para obter o produto corretamente
+    # Primeiro, lidamos com os itens normais
+    for produto_id, item in list(carrinho.get('itens', {}).items()):
+        if "promocao_" in produto_id:
+            continue
+
+        produto = get_object_or_404(Produto, id=item['produto_id'])
         try:
             loja = produto.categoria.loja
         except:
             loja = None
         item['imagem_url'] = produto.foto.url if produto.foto else None
-        item['nome'] = produto.nome  # Já deve estar definido, mas só para garantir
+        item['nome'] = produto.nome
         preco = Decimal(item['preco'])
         quantidade = item['quantidade']
-        if not item['promocao']:  # Apenas adicionar o preço se não for promoção
+
+        if item['promocao']:
+            item['preco'] = '0.00'
+            itens_promocionais.append(item)
+        else:
             total_geral_carrinho += preco * quantidade
-        itens_completos.append(item)  # Adiciona o item atualizado à lista
+            itens_normais.append(item)
+
+        # Verificar se o produto tem promoção
+        if produto.promocao and produto.promocao.ativo:
+            promocao = produto.promocao
+            compra_acumulada, created = CompraAcumulada.objects.get_or_create(
+                cliente=request.user.cliente,
+                produto=produto,
+                promocao=promocao
+            )
+            
+            if str(produto_id) not in pontos_para_proxima_promocao:
+                pontos_para_proxima_promocao[str(produto_id)] = compra_acumulada.pontos_para_proxima_promocao
+
+            # Atualiza a quantidade comprada acumulada e os pontos para a próxima promoção
+            compra_acumulada.quantidade_comprada += quantidade
+            pontos_para_proxima_promocao[str(produto_id)] += quantidade
+            pontos_acumulados = pontos_para_proxima_promocao[str(produto_id)]
+            num_promocoes = pontos_acumulados // promocao.quantidade_necessaria
+
+            # Adiciona a atualização ao carrinho na lista de atualizações
+            promocao_key = f'promocao_{promocao.id}'
+            atualizacoes_promocao.append((promocao_key, {
+                'produto_id': produto_id,
+                'quantidade': num_promocoes,
+                'nome': f"Promoção: {produto.nome}",
+                'imagem_url': promocao.imagem.url if promocao.imagem else None,
+                'promocao': True,
+                'preco': '0.00'
+            }))
+
+            # Atualiza a compra acumulada no banco de dados
+            compra_acumulada.pontos_para_proxima_promocao = pontos_para_proxima_promocao[str(produto_id)] % promocao.quantidade_necessaria
+            compra_acumulada.save()
+
+    # Aplicar as atualizações ao dicionário após a iteração
+    for promocao_key, promocao_item in atualizacoes_promocao:
+        carrinho['itens'][promocao_key] = promocao_item
+
+    # Iterar sobre os itens de promoção para atualizar a lista de itens promocionais
+    for promocao_key, promocao_item in carrinho.get('itens', {}).items():
+        if "promocao_" in promocao_key:
+            itens_promocionais.append(promocao_item)
 
     if loja:
         total_frete = loja.valor_frete
 
     total_geral_com_frete = total_geral_carrinho + total_frete
 
+    request.session.modified = True
+
     return render(request, 'core/checkout_test.html', {
-        'itens': itens_completos,  # Passa os itens atualizados para o template
+        'itens': itens_normais,
+        'itens_promocionais': itens_promocionais,
         'cliente': cliente,
         'endereco': endereco,
         'total_geral': total_geral_carrinho,
         'total_frete': total_frete,
         'total_geral_com_frete': total_geral_com_frete,
         'loja': loja,
-        'subperfil': subperfil
+        'subperfil': subperfil,
+        'pontos_para_proxima_promocao': pontos_para_proxima_promocao
     })
 def search(request):
     query = request.GET.get('query', '').strip()

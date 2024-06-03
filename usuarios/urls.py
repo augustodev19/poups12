@@ -40,6 +40,12 @@ urlpatterns = [
     path('edit_subperfil/<int:subperfil_id>/', edit_subperfil, name='edit_subperfil'),
     path('remove_subperfil/<int:subperfil_id>/', remove_subperfil, name='remove_subperfil'),
     path('update_foto/', update_foto, name='update_foto'),
+    path('password_reset/',auth_views.PasswordResetView.as_view(form_class=EmailPasswordResetForm, html_email_template_name='registration/password_reset_email.html',), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),  
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/reset_done.html'), name='password_reset_complete'),
+    
+
 
 
 ]

@@ -41,6 +41,7 @@ urlpatterns = [
     path('teste-tarefa/', teste_tarefa, name='teste_tarefa'),
     path('adicionar_item_promocional_ao_carrinho/<int:promocao_id>/', adicionar_item_promocional_ao_carrinho, name='adicionar_item_promocional_ao_carrinho'),
     path('atualizar_quantidade_carrinho/<int:produto_id>/', atualizar_quantidade_carrinho, name='atualizar_quantidade_carrinho'),
+    path('verificar_status_pagamento/<str:correlation_id>/', verificar_status_pagamento, name='verificar_status_pagamento'),
     # URL para o webhook (notificações do Mercado Pago)
 
 
