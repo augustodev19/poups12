@@ -12,7 +12,8 @@
                   <div class="mb-3 mb-sm-0">
                     <h5 class="card-title fw-semibold">Resumo de Vendas</h5>
                   </div>
-                  <div>
+                  
+<div>
                     <select id="month-select" name="month">
                       <option value="1">Janeiro</option>
                       <option value="2">Fevereiro</option>
@@ -34,8 +35,8 @@
                 <div id="chart1"></div>  <!-- Gráfico Mensal -->
                 <div id="sales-chart"></div>
               </div>
+              </div>
             </div>
-          </div>
           <div class="col-lg-4">
             <div class="row">
               <div class="col-lg-12">
@@ -364,79 +365,83 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var chart;
-    var selectMonth = document.getElementById('month-select');
-    var totalSalesSpan = document.getElementById('total-sales'); // Obter o elemento span
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var chart;
+      var selectMonth = document.getElementById('month-select');
+      var totalSalesSpan = document.getElementById('total-sales'); // Obter o elemento span
+      
+      // Definir o valor do select para o mês atual
+      var currentMonth = new Date().getMonth() + 1; // getMonth() retorna 0-11
+      selectMonth.value = currentMonth;
+      
+      const updateChart = (month) => {
+        fetch(`/ajax/sales-by-month/?month=${month}`)
+            .then(response => response.json())
+            .then(data => {
+                const options = {
+                    series: [{
+                        name: 'Total de Vendas',
+                        data: data.totais.map(val => parseFloat(val))
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: 350
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            endingShape: 'rounded'
+                        },
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        show: true,
+                        width: 2,
+                        colors: ['transparent']
+                    },
+                    xaxis: {
+                        categories: data.dias,
+                        title: {
+                            text: 'Dia do Mês'
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Vendas (R$)'
+                        }
+                    },
+                    fill: {
+                        opacity: 1
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function (val) {
+                                return "R$ " + val.toFixed(2);
+                            }
+                        }
+                    }
+                };
+      
+                if (chart) {
+                    chart.destroy();
+                }
+                chart = new ApexCharts(document.querySelector("#sales-chart"), options);
+                chart.render();
+                
+                // Calculando o total do mês com certeza de que é um número
+                let totalMensal = data.totais.reduce((acc, curr) => acc + parseFloat(curr), 0);
+                totalSalesSpan.textContent = `R$ ${totalMensal.toFixed(2)}`; // Formatar como moeda
+            });
+      };
     
-    const updateChart = (month) => {
-      fetch(`/ajax/sales-by-month/?month=${month}`)
-          .then(response => response.json())
-          .then(data => {
-              const options = {
-                  series: [{
-                      name: 'Total de Vendas',
-                      data: data.totais.map(val => parseFloat(val))
-                  }],
-                  chart: {
-                      type: 'bar',
-                      height: 350
-                  },
-                  plotOptions: {
-                      bar: {
-                          horizontal: false,
-                          columnWidth: '55%',
-                          endingShape: 'rounded'
-                      },
-                  },
-                  dataLabels: {
-                      enabled: false
-                  },
-                  stroke: {
-                      show: true,
-                      width: 2,
-                      colors: ['transparent']
-                  },
-                  xaxis: {
-                      categories: data.dias,
-                      title: {
-                          text: 'Dia do Mês'
-                      }
-                  },
-                  yaxis: {
-                      title: {
-                          text: 'Vendas (R$)'
-                      }
-                  },
-                  fill: {
-                      opacity: 1
-                  },
-                  tooltip: {
-                      y: {
-                          formatter: function (val) {
-                              return "R$ " + val.toFixed(2);
-                          }
-                      }
-                  }
-              };
-    
-              if (chart) {
-                  chart.destroy();
-              }
-              chart = new ApexCharts(document.querySelector("#sales-chart"), options);
-              chart.render();
-              
-              // Calculando o total do mês com certeza de que é um número
-              let totalMensal = data.totais.reduce((acc, curr) => acc + parseFloat(curr), 0);
-              totalSalesSpan.textContent = `R$ ${totalMensal.toFixed(2)}`; // Formatar como moeda
-          });
-    };
-  
-    updateChart(selectMonth.value);
-    selectMonth.addEventListener('change', function() {
-        updateChart(this.value);
+      updateChart(selectMonth.value);
+      selectMonth.addEventListener('change', function() {
+          updateChart(this.value);
+      });
     });
-  });
-</script>
+  </script>
   {%endblock%}
