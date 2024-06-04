@@ -70,9 +70,9 @@ LOGOUT_REDIRECT_URL = 'home'
 
 # Assegure-se de que estas configurações estão desabilitadas para o ambiente de desenvolvimento
 # settings.py
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',

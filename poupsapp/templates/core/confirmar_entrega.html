@@ -32,9 +32,9 @@
         <form action="{% url 'pedidos_pendentes' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
-            <div class="form-group">
+            <div class="form-group mb-3" >
                 <label for="codigo_secreto">Código Secreto:</label>
-                <input type="text" id="codigo_secreto" name="codigo_secreto" required class="form-control">
+                <input  type="text" id="codigo_secreto" name="codigo_secreto" required class="form-control">
             </div>
             <button type="submit" class="btn btn-success">Marcar como Entregue</button>
         </form>

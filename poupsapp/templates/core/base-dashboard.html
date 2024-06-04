@@ -46,14 +46,15 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const userId = {{ user.id }};  // Certifique-se de que o ID do usuário está disponível no contexto do template
+      const protocolo = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
       const pedidoSocket = new WebSocket(
-          'ws://' + window.location.host + '/ws/pedidos/' + userId + '/'
+          protocolo + window.location.host + '/ws/pedidos/' + userId + '/'
       );
-  
+    
       pedidoSocket.onmessage = function(e) {
           const data = JSON.parse(e.data);
           const message = data['message'];
-  
+    
           // Criar e exibir a notificação
           const notification = document.createElement('div');
           notification.classList.add('notification');
@@ -77,18 +78,18 @@
               <p>É uma honra ter você por aqui!</p>
           `;
           document.body.appendChild(notification);
-  
+    
           // Remover a notificação após um tempo
           //setTimeout(() => {
           //    notification.remove();
           //}, 10000);  // Exibir a notificação por 10 segundos
       };
-  
+    
       pedidoSocket.onclose = function(e) {
           console.error('Pedido socket closed unexpectedly');
       };
-  });
-  </script>
+    });
+    </script>
   <!--  Body Wrapper -->
   <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
     data-sidebar-position="fixed" data-header-position="fixed">

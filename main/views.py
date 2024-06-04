@@ -1176,7 +1176,7 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
     try:
         cliente = Cliente.objects.get(id=user_id)
         loja = Loja.objects.get(id=loja_id)
-
+        codigo_secreto = str(uuid.uuid4())
         pedido = Pedido.objects.create(
             cliente=cliente,
             loja=loja,
@@ -1186,7 +1186,8 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
             pagamento='stripe',
             localizacao=endereco,
             retirada_na_loja = retirada_loja,
-            payment_id=session['payment_intent']
+            payment_id=session['payment_intent'],
+            codigo_secreto=codigo_secreto
         )
 
         print(f"Pedido criado: {pedido.id}")

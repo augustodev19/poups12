@@ -122,7 +122,7 @@ def handle_pix_payment(self, correlation_id):
 
             cliente = Cliente.objects.get(id=cliente_id)
             loja = Loja.objects.get(id=loja_id)
-
+            codigo_secreto = str(uuid.uuid4())
             pedido = Pedido.objects.create(
                 cliente=cliente,
                 loja=loja,
@@ -133,7 +133,8 @@ def handle_pix_payment(self, correlation_id):
                 payment_id=correlation_id,
                 localizacao=charge_endereco,
                 retirada_na_loja=retirada_loja,
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
+                codigo_secreto=codigo_secreto
             )
 
             carrinho = cache.get(f'carrinho_{charge.cliente_id}', {'itens': {}, 'pontos_para_proxima_promocao': {}})
