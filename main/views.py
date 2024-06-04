@@ -1031,8 +1031,9 @@ def criar_pagamento_checkout(request):
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
 
         entrega_loja = request.POST.get('retiradaCartaoHidden')
-        if entrega_loja == "true":
-            valor_frete = 0
+        print(entrega_loja)
+        if entrega_loja == 'True':
+            valor_frete = Decimal('0.00')
         else:
             valor_frete = Decimal(loja.valor_frete)
 
@@ -1048,12 +1049,11 @@ def criar_pagamento_checkout(request):
             },
             'quantity': 1,
         })
-
         endereco = request.POST.get('endereco')
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['total_pontos_carrinho'] = total_pontos_carrinho
         request.session['endereco'] = endereco
-        request.session['retirada_loja'] = retirada_loja
+        request.session['entrega_loja'] = entrega_loja
         request.session['loja_id'] = loja.id
         request.session['cliente_id'] = request.user.cliente.id
 
@@ -1075,7 +1075,7 @@ def criar_pagamento_checkout(request):
                 'total_geral_carrinho': str(total_geral_carrinho),
                 'total_pontos_carrinho': total_pontos_carrinho,
                 'endereco': endereco,
-                'retirada_loja': retirada_loja,
+                'entrega_loja': entrega_loja,
                 'frete': str(valor_frete),
                 'subperfil_nome': subperfil_nome
             }
@@ -1225,10 +1225,10 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
         enviar_email_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
         print("Email de pedido enviado")
         try:
-            enviar_notificacao_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
+            enviar_notificacao_pedido(pedido, pedido.itempedido_set.all(), subperfil_nome)
             print("Notificação Enviada")
-        except:
-            print("Erro ao enviar a notificação")
+        except Exception as e:
+            print(f"Erro ao enviar a notificação: {str(e)}")
         cache.set(f"pedido_id_{session.id}", pedido.id, timeout=300)
         print(f"Pedido ID salvo no cache: {cache.get(f'pedido_id_{session.id}')}")
 
@@ -1431,12 +1431,21 @@ def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
         channel_layer = get_channel_layer()
         message = {
             'pedido_id': pedido.id,
-            'loja': pedido.loja.nome,
-            'itens_pedido': [item.nome for item in itens_pedido],
-            'subperfil_nome': subperfil_nome
+            'loja': pedido.loja.nomeLoja,
+            'itens_pedido': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: R${item.preco_unitario}' for item in itens_pedido],
+            'total': pedido.total,
+            'subperfil_nome': subperfil_nome or pedido.cliente.nome,
+            'cliente': pedido.cliente.nome,
+            'cpf': pedido.cliente.username,
+            'telefone': pedido.cliente.telefone,
+            'tempo_entrega_min': pedido.loja.tempo_entrega_min or 60,
+            'tempo_entrega_max': pedido.loja.tempo_entrega_max or 75
         }
+
+        logger.debug(f"Enviando mensagem: {message}")
+
         async_to_sync(channel_layer.group_send)(
-            'pedidos',
+            f'pedidos_{pedido.loja.id}',  # Grupo específico do lojista
             {
                 'type': 'pedido_message',
                 'message': message
@@ -1445,7 +1454,8 @@ def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
         print("Notificação de pedido enviada com sucesso.")
         logger.info(f"Tarefa de recusa automática agendada para o pedido {pedido.id}.")
     except Exception as e:
-        print(f"Erro ao enviar notificação: {str(e)}")
+        logger.error(f"Erro ao enviar notificação: {str(e)}")
+        raise
 
 def emitir_nota_fiscal_focus(cnpj_prestador, inscricao_municipal, codigo_municipio_prestador):
     token_homologacao_empresa = "xkRivLik9Wn4xbk4EaHq17d15L4vCtDO"

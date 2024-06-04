@@ -37,52 +37,79 @@
     </head>
 
     <body>
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userId = {{ user.id }};  // Certifique-se de que o ID do usuário está disponível no contexto do template
-            const pedidoSocket = new WebSocket(
-                'ws://' + window.location.host + '/ws/pedidos/' + userId + '/'
-            );
+      <!-- Contêiner de notificação -->
+    <div id="notification-container" class="notification" style="position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #000;  /* Borda preta para visibilidade */
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    width: 300px;
+    z-index: 1000;
+    display: none;  /* Inicialmente oculto */">
+      <div class="container"><h1 class="mb-0 fw-bold text-primary " style="color:#000 !important;">
+          Poupe<span style="color:#1094F5 !important;">Comprando</span>
+      </h1>
+    </div>
+      <p id="notification-message"></p>
+      <ul id="notification-items"></ul>
+      <p id="notification-total"></p>
+      <p id="notification-client-name"></p>
+      <p id="notification-cpf"></p>
+      <p id="notification-phone"></p>
+      <p id="notification-delivery-time"></p>
+      <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
+      <a id="notification-accept" href="#" class="accept">Aceitar Pedido</a>
+      <a id="notification-reject" href="#" class="reject">Recusar Pedido</a>
+      <p>É uma honra ter você por aqui!</p>
+  </div>
 
-            pedidoSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                const message = data['message'];
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const userId = {{ user.id }};  // Certifique-se de que o ID do usuário está disponível no contexto do template
+          const pedidoSocket = new WebSocket(
+              'ws://' + window.location.host + '/ws/pedidos/' + userId + '/'
+          );
 
-                // Criar e exibir a notificação
-                const notification = document.createElement('div');
-                notification.classList.add('notification');
-                notification.innerHTML = `
-                    <h1 class="mb-0 fw-bold text-primary display-6;">
-                        Poupe<span>Comprando</span>
-                    </h1>
-                    <p>Olá ${message.loja},</p>
-                    <p>Seu pedido foi criado com sucesso!</p>
-                    <ul>
-                        ${message.itens_pedido.map(item => `<li>${item}</li>`).join('')}
-                    </ul>
-                    <p>Total do pedido: R$${message.total}</p>
-                    ${message.subperfil_nome ? `<p>Nome do cliente: ${message.subperfil_nome}</p>` : `<p>Nome do cliente: ${message.cliente}</p>`}
-                    <p>CPF do cliente: ${message.cpf}</p>
-                    <p>Celular do cliente: ${message.telefone}</p>
-                    <p>Tempo estimado para entrega: ${message.tempo_entrega_min} - ${message.tempo_entrega_max}min </p>
-                    <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-                    <a href="https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}" class="accept">Aceitar Pedido</a>
-                    <a href="https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}" class="reject">Recusar Pedido</a>
-                    <p>É uma honra ter você por aqui!</p>
-                `;
-                document.body.appendChild(notification);
+          pedidoSocket.onmessage = function(e) {
+              const data = JSON.parse(e.data);
+              const message = data['message'];
 
-                // Remover a notificação após um tempo
-                setTimeout(() => {
-                    notification.remove();
-                }, 10000);  // Exibir a notificação por 10 segundos
-            };
+              console.log('Mensagem recebida:', message);
 
-            pedidoSocket.onclose = function(e) {
-                console.error('Pedido socket closed unexpectedly');
-            };
-        });
-    </script>
+              // Atualizar e exibir a notificação
+              document.getElementById('notification-message').innerText = `Olá ${message.loja}, Seu pedido foi criado com sucesso!`;
+              document.getElementById('notification-items').innerHTML = message.itens_pedido.map(item => `<li>${item}</li>`).join('');
+              document.getElementById('notification-total').innerText = `Total do pedido: R$${message.total}`;
+              document.getElementById('notification-client-name').innerText = `Nome do cliente: ${message.subperfil_nome || message.cliente}`;
+              document.getElementById('notification-cpf').innerText = `CPF do cliente: ${message.cpf}`;
+              document.getElementById('notification-phone').innerText = `Celular do cliente: ${message.telefone}`;
+              document.getElementById('notification-delivery-time').innerText = `Tempo estimado para entrega: ${message.tempo_entrega_min} - ${message.tempo_entrega_max}min`;
+              document.getElementById('notification-accept').href = `https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}`;
+              document.getElementById('notification-reject').href = `https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}`;
+
+              const notification = document.getElementById('notification-container');
+              notification.style.display = 'block';
+              console.log('Notificação atualizada e exibida');
+
+              // Remover a notificação após um tempo
+              //setTimeout(() => {
+              //    notification.style.display = 'none';
+              //    console.log('Notificação ocultada');
+              //}, 30000);  // Exibir a notificação por 10 segundos
+          };
+
+          pedidoSocket.onclose = function(e) {
+              console.error('Pedido socket closed unexpectedly');
+          };
+      });
+  </script>
+</body>
+</html>
       {% if novos_pedidos %}
     <script>alert("Você tem novos pedidos!");</script>
 {% endif %}

@@ -49,8 +49,8 @@ SECRET_KEY = 'django-insecure-1q$$n3hh=h1f*n8i2lwjivc2dz2_ics324t0&5i7k10nmd3x69
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['poupecomprando.onrender.com.br', '8f94-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app', 'a3d0-2804-5854-180-500-4159-968a-12d0-ca20.ngrok-free.app', '8321-2804-5854-180-500-b876-f01f-7ecb-9c67.ngrok-free.app', 'localhost', 'f5fa-2804-5854-180-500-645b-d77b-26b9-38af.ngrok-free.app', 'c02e-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app', '0106-2804-5854-180-500-5524-f3c2-b2f6-4584.ngrok-free.app', '80b7-2804-5854-180-500-bc88-711e-50da-3a63.ngrok-free.app', 'e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app', 'poupecomprando.com.br', 'poups12.onrender.com', '127.0.0.1', 'poupecomprando.com', 'www.poupecomprando.com', 'www.poupecomprando.com.br']
-CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'https://f5fa-2804-5854-180-500-645b-d77b-26b9-38af.ngrok-free.app/*', 'https://a3d0-2804-5854-180-500-4159-968a-12d0-ca20.ngrok-free.app/*', 'https://8321-2804-5854-180-500-b876-f01f-7ecb-9c67.ngrok-free.app/*', 'https://8f94-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app/*', 'https://c02e-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app/*', 'https://0106-2804-5854-180-500-5524-f3c2-b2f6-4584.ngrok-free.app/*', 'http://localhost:8976/*', 'https://80b7-2804-5854-180-500-bc88-711e-50da-3a63.ngrok-free.app/*', 'https://e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app/*', 'http://localhost/*', 'https://poupecomprando.com/*', 'https://poups12.onrender.com/*', 'https://www.poupecomprando.com/*', 'https://www.poupecomprando.com.br/*']
+ALLOWED_HOSTS = ['poupecomprando.onrender.com.br', 'f8d2-2804-5854-180-cf0-418d-f449-328-675b.ngrok-free.app', '8f94-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app', 'a3d0-2804-5854-180-500-4159-968a-12d0-ca20.ngrok-free.app', '8321-2804-5854-180-500-b876-f01f-7ecb-9c67.ngrok-free.app', 'localhost', 'f5fa-2804-5854-180-500-645b-d77b-26b9-38af.ngrok-free.app', 'c02e-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app', '0106-2804-5854-180-500-5524-f3c2-b2f6-4584.ngrok-free.app', '80b7-2804-5854-180-500-bc88-711e-50da-3a63.ngrok-free.app', 'e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app', 'poupecomprando.com.br', 'poups12.onrender.com', '127.0.0.1', 'poupecomprando.com', 'www.poupecomprando.com', 'www.poupecomprando.com.br']
+CSRF_TRUSTED_ORIGINS = ['https://poupecomprando.com.br/*', 'https://f5fa-2804-5854-180-500-645b-d77b-26b9-38af.ngrok-free.app/*', 'https://f8d2-2804-5854-180-cf0-418d-f449-328-675b.ngrok-free.app/*' ,'https://a3d0-2804-5854-180-500-4159-968a-12d0-ca20.ngrok-free.app/*', 'https://8321-2804-5854-180-500-b876-f01f-7ecb-9c67.ngrok-free.app/*', 'https://8f94-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app/*', 'https://c02e-2804-5854-180-500-431-e1d2-a81a-dadb.ngrok-free.app/*', 'https://0106-2804-5854-180-500-5524-f3c2-b2f6-4584.ngrok-free.app/*', 'http://localhost:8976/*', 'https://80b7-2804-5854-180-500-bc88-711e-50da-3a63.ngrok-free.app/*', 'http://127.0.0.1/*', 'https://e131-2804-5854-180-500-23-9b99-2a92-5f03.ngrok-free.app/*', 'http://localhost/*', 'https://poupecomprando.com/*', 'https://poups12.onrender.com/*', 'https://www.poupecomprando.com/*', 'https://www.poupecomprando.com.br/*']
     
 
 LOGOUT_REDIRECT_URL = 'home'
@@ -101,7 +101,7 @@ SESSION_CACHE_ALIAS = "default"
 AUTH_USER_MODEL = 'usuarios.CustomUser'
 MERCADO_PAGO_SECRET_KEY = '6947fa76368c6d59aae0f9934e64322507934292126d14931dd72ed35dc1d843'
 MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-59977399911432-110210-7d39b5cafcec9b58b960954a9d495897-1323304242'
-STRIPE_WEBHOOK_SECRET = 'whsec_IMHkfsYp2o9UZ0lvZ73uBGVWC9gNAwrp'
+STRIPE_WEBHOOK_SECRET = 'whsec_GO3EV9iNQuSYJyqVMPD3psLZpC2ScaLk'
 # Application definition
 
 INSTALLED_APPS = [
@@ -118,12 +118,26 @@ INSTALLED_APPS = [
     'main',
     'django_redis',
     'django_celery_results',
+    'channels',
     #'channels',
     #'chat'
 ]
 
 ASGI_APPLICATION = 'poupsapp.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(os.environ.get('REDIS_URL', 'redis://localhost:6379'))],
+        },
+    },
+}
+
+# Configurações de segurança
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -133,6 +147,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 AUTHENTICATION_BACKENDS = [

@@ -863,31 +863,84 @@ def ver_pedidos_loja(request):
     return render(request, 'core/pedidos_loja.html', context)
 
 
+logger = logging.getLogger(__name__)
+
+
 def marcar_como_entregue(request):
     try:
         loja = request.user.loja
     except: 
         loja = None
         return redirect('home')
+    
     pedidos = Pedido.objects.filter(loja=loja).order_by('-data')
     pedido_id = request.POST.get('pedido_id')
+    acao = request.POST.get('acao')
+
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, id=pedido_id, loja=request.user.loja)
 
-        if pedido.status == 'confirmado':
-            pedido.status = 'entregue'
-            pedido.save()
-            messages.success(request, "Pedido marcado como entregue com sucesso.")
-        else:
-            messages.error(request, "Pedido não pode ser marcado como entregue.")
+        if acao == 'aceitar':
+            if pedido.status == 'pendente':
+                if pedido.pagamento != 'pontos':
+                    percentual_para_loja = Decimal('0.85')
+                    valor_a_transferir = pedido.total * percentual_para_loja
+                    pedido.loja.saldo += valor_a_transferir
+                    pedido.loja.save()
+                pedido.status = 'confirmado'
+                pedido.save()
+                pedido.cliente.pontos += pedido.pontos
+                pedido.cliente.save()
+                messages.success(request, 'Pedido aceito com sucesso!')
+            else:
+                messages.error(request, "Pedido não está pendente.")
+
+        elif acao == 'recusar':
+            if pedido.status == 'pendente':
+                if pedido.pagamento == 'pontos':
+                    pedido.status = 'recusado'
+                    pedido.save()
+                else:
+                    try:
+                        if pedido.pagamento == 'stripe':
+                            stripe.Refund.create(payment_intent=pedido.payment_id)
+                        elif pedido.pagamento == 'pix':
+                            refund_url = f"https://api.openpix.com.br/api/v1/charge/{pedido.payment_id}/refund"
+                            response = requests.get(refund_url, headers={
+                                'Authorization': 'REPLACE_KEY_VALUE'
+                            })
+                            if response.status_code == 200:
+                                refund_data = response.json()
+                                if refund_data and refund_data.get('refunds'):
+                                    pedido.status = 'recusado'
+                                else:
+                                    raise ValueError('Nenhum reembolso encontrado para a cobrança.')
+                            else:
+                                raise ValueError(f'Erro na solicitação de reembolso: {response.text}')
+                        pedido.save()
+                        messages.success(request, 'Pedido recusado e pagamento reembolsado com sucesso')
+                    except stripe.error.StripeError:
+                        messages.error(request, 'Erro ao reembolsar o pagamento via Stripe')
+                    except ValueError as e:
+                        messages.error(request, f'Erro ao reembolsar o pagamento via Pix: {e}')
+                    except Exception as e:
+                        messages.error(request, f'Erro ao processar a recusa do pedido: {e}')
+            else:
+                messages.error(request, "Pedido não está pendente.")
+
+        elif acao == 'entregar':
+            if pedido.status == 'confirmado':
+                pedido.status = 'entregue'
+                pedido.save()
+                messages.success(request, "Pedido marcado como entregue com sucesso.")
+            else:
+                messages.error(request, "Pedido não pode ser marcado como entregue.")
 
     context = {
-        'loja':loja,
-        'pedidos':pedidos
+        'loja': loja,
+        'pedidos': pedidos
     }
     return render(request, 'core/confirmar_entrega.html', context)
-    
-
 
 def criar_pedido_loja(request):
     if request.method == 'POST':

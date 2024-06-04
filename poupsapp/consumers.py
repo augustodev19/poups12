@@ -3,7 +3,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class PedidoConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.group_name = 'pedidos'
+        self.user_id = self.scope['url_route']['kwargs']['user_id']
+        self.group_name = f'pedidos_{self.user_id}'
 
         await self.channel_layer.group_add(
             self.group_name,
