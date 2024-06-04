@@ -70,7 +70,7 @@ LOGOUT_REDIRECT_URL = 'home'
 
 # Assegure-se de que estas configurações estão desabilitadas para o ambiente de desenvolvimento
 # settings.py
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CACHES = {
