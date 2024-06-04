@@ -275,7 +275,7 @@ class Pedido(models.Model):
     pagamento = models.CharField(max_length=50, default='none')
     retirada_na_loja = models.BooleanField(default=False, blank=True, null=True)
     correlation_id = models.CharField(max_length=200, null=True, blank=True)
-
+    codigo_secreto = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
 
     
 

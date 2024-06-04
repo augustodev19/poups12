@@ -11,43 +11,36 @@
     <div class="mt-4">
         <h4 style="color:#000">Pedido #{{ pedido.id }}</h4>
         <div class="d-flex justify-content-between">
-            <p style="color:#333 !important">Cliente:</p> 
+            <p style="color:#333 !important">Cliente:</p>
             <span style="color:#333" class="fw-bold">{{ pedido.cliente.nome }}</span>
         </div>
         <div class="d-flex justify-content-between">
-            <p style="color:#333">Pontos Ganhos:</p> 
+            <p style="color:#333">Pontos Ganhos:</p>
             <span style="color:#333;" class="fw-bold">{{ pedido.pontos }}</span>
         </div>
         <div class="d-flex justify-content-between">
-            <p style="color:#333 !important;">Status:</p> 
+            <p style="color:#333 !important;">Status:</p>
             <p style="color:#333 !important; text-transform:capitalize;" class="fw-bold">{{ pedido.status }}</p>
         </div>
         {% if pedido.status == 'pendente' %}
         <div class="d-flex justify-content-between">
-            <form action="{% url 'pedidos_pendentes' %}" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
-                <input type="hidden" name="acao" value="aceitar">
-                <button type="submit" class="btn btn-success">Aceitar Pedido</button>
-            </form>
-            <form action="{% url 'pedidos_pendentes' %}" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
-                <input type="hidden" name="acao" value="recusar">
-                <button type="submit" class="btn btn-danger">Recusar Pedido</button>
-            </form>
+            <a href="https://poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" class="btn btn-success" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
+            <a href="https://poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" class="btn btn-danger" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
         </div>
         {% endif %}
         {% if pedido.status == 'confirmado' %}
         <form action="{% url 'pedidos_pendentes' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
-            <input type="hidden" name="acao" value="entregar">
+            <div class="form-group">
+                <label for="codigo_secreto">Código Secreto:</label>
+                <input type="text" id="codigo_secreto" name="codigo_secreto" required class="form-control">
+            </div>
             <button type="submit" class="btn btn-success">Marcar como Entregue</button>
         </form>
         {% endif %}
         <div class="d-flex justify-content-between">
-            <p style="color:#333 !important;">Meio de Pagamento:</p> 
+            <p style="color:#333 !important;">Meio de Pagamento:</p>
             {% if pedido.pagamento == 'pontos' %}
             <p style="color:#333 !important;" class="fw-bold">Pontos</p>
             {% else %}
@@ -55,15 +48,15 @@
             {% endif %}
         </div>
         <div class="d-flex my-3 justify-content-between">
-            <p class="mb-0" style="color:#333">Data do Pedido:</p>  
+            <p class="mb-0" style="color:#333">Data do Pedido:</p>
             <span class="fw-bold" style="color:#333 !important;">{{ pedido.data }}</span>
         </div>
         <div class="d-flex my-3 justify-content-between">
-            <p style="color:#333">Localização:</p> 
+            <p style="color:#333">Localização:</p>
             <span class="fw-bold" style="color:#333 !important;">{{ pedido.localizacao }}</span>
         </div>
         <div class="d-flex my-3 justify-content-between">
-            <p style="color:#333">Total do Pedido:</p> 
+            <p style="color:#333">Total do Pedido:</p>
             <span class="fw-bold" style="color:#333 !important;">R$ {{ pedido.total }}</span>
         </div>
 
@@ -79,4 +72,5 @@
     <p>Não há pedidos realizados.</p>
     {% endfor %}
 </div>
+
 {% endblock %}
