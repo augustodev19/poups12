@@ -966,7 +966,6 @@ def distribuir_pontos(request):
                     loja.save()
                     funcionario.pontos += pontos
                     funcionario.save()
-                    enviar_email_distribuicao_pontos(loja, funcionario, pontos)
                     messages.success(request, f'{pontos} pontos foram atribuídos a {funcionario.username}.')
                     return redirect('distribuir_pontos')
         elif 'adicionar_funcionario' in request.POST:
@@ -975,7 +974,7 @@ def distribuir_pontos(request):
                 cpf = add_form.cleaned_data['cpf']
                 funcionario = get_object_or_404(Cliente, username=cpf)
                 lojafunc = LojaFuncionario.objects.create(loja=loja, funcionario=funcionario)
-                enviar_email_convite_funcionario(loja, funcionario, lojafunc.id)
+                enviar_email_convite_funcionario(request, loja, funcionario, lojafunc.id)
                 messages.success(request, f'Convite enviado para {funcionario.username}.')
                 return redirect('distribuir_pontos')
     else:
@@ -989,7 +988,6 @@ def distribuir_pontos(request):
         'pontos_disponiveis': loja.pontos,
         'loja': loja
     })
-
 def enviar_email_distribuicao_pontos(loja, funcionario, pontos):
     subject = 'Distribuição de Pontos'
     context = {
@@ -1004,7 +1002,7 @@ def enviar_email_distribuicao_pontos(loja, funcionario, pontos):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
+def enviar_email_convite_funcionario(request, loja, funcionario, lojafunc_id):
     accept_url = reverse('aceitar_convite', args=[lojafunc_id])
     full_accept_url = f'{request.scheme}://{request.get_host()}{accept_url}'
     subject = 'Convite para ser Funcionário'
@@ -1020,10 +1018,9 @@ def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-    
 def aceitar_convite(request, lojafunc_id):
     lojafunc = get_object_or_404(LojaFuncionario, id=lojafunc_id)
     lojafunc.aceitou_convite = True
     lojafunc.save()
-    messages.success(request, 'Você aceitou o convite para ser funcionário.')
+    messages.success(request, 'Convite aceito com sucesso!')
     return redirect('home')
