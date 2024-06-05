@@ -29,7 +29,8 @@
           <div class="d-flex justify-content-center flex-column" style="height:100%">
             <!-- Detalhes do Produto -->
             <span class="fw-bold" style="color:#333; font-size:1.6rem;">{{ produto.nome }}</span>
-            <p class="price fw-bold" style="color:#333; font-size:1.2rem">R$ {{ produto.preco | floatformat:2 }}</p>
+            <p class="price fw-bold" style="color:#333; font-size:1.2rem">R$ {{ produto.preco | floatformat:2 }}  ou {{ produto.preco_poups | floatformat:2 }} poups</p>
+
             {%if produto.descricao%}
             <p>{{ produto.descricao }}</p>
             {%else%}

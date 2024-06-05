@@ -3,9 +3,11 @@
 {%load static%}
 
 {%block 'conteudo'%}
+<div class="container mt-5 d-flex flex-column align-items-start" style="margin-top:7rem !important;" >
 
+<h3 >Filtrar por Categoria:</h3>
 
-<div class="container mt-5 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;margin-top:7rem !important;">
+<div class="scroll-container container mt-3 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;">
 
 {% for categoria in categorias %}
 
@@ -19,10 +21,11 @@
 
 </div>
 
+</div>
 
 <div class="container mt-5 d-flex flex-column align-items-start" >
 <h3>Ofertas:</h3>
-<div class="container d-flex justify-content-start promocoes_container" style="gap:1rem; overflow-x:auto; white-space: nowrap;">
+<div class="container mt-3 d-flex justify-content-start promocoes_container scroll-container " style="gap:1rem; overflow-x:auto; white-space: nowrap;">
 
     {% for loja in lojas %}
 
@@ -102,7 +105,7 @@
 
 </div>
 
-<div class="container mt-5">
+<div class="container mt-5 d-flex flex-column" style="flex-grow:1;">
 
     <!-- HTML para o Slider -->
 
@@ -236,7 +239,8 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 </div>
 </div>
 </a>
-
+{%empty%}
+<span> Nenhuma loja disponível nessa região. </span>
 {%endfor%}
     </div>
 </div>

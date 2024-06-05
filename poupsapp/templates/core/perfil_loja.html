@@ -55,17 +55,17 @@
 
 
 
-<div class="accordion" id="accordionProduto{{ categoria.id }}" style="margin-top: 2rem; flex-grow:1">
-    {% for categoria in perfil_loja.categoriaproduto_set.all %}
+<div class="accordion" id="accordionProduto{{ loja.id }}" style="margin-top: 2rem; flex-grow:1">
+    {% for item in categorias_com_produtos %}
     <div class="accordion-item">
-        <h2 class="accordion-header" id="heading{{ categoria.id }}">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ categoria.id }}" aria-expanded="false" aria-controls="collapse{{ categoria.id }}">
-                {{ categoria.nome }}
+        <h2 class="accordion-header" id="heading{{ item.categoria.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ item.categoria.id }}" aria-expanded="false" aria-controls="collapse{{ item.categoria.id }}">
+                {{ item.categoria.nome }}
             </button>
         </h2>
-        <div id="collapse{{ categoria.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ categoria.id }}" data-bs-parent="#accordionProduto{{ categoria.id }}">
+        <div id="collapse{{ item.categoria.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ item.categoria.id }}" data-bs-parent="#accordionProduto{{ item.categoria.id }}">
             <div class="accordion-body">
-                {% for produto in categoria.produto_set.all %}
+                {% for produto in item.produtos %}
                 <a href="{% url 'detalhes_produto' produto.id %}">
                     <div class="produto d-flex justify-content-between mb-3" style="border-bottom:solid 1px #b2afaf; padding-bottom:.5rem;">
                         <div class="d-flex" style="gap:.5rem;">
@@ -79,7 +79,9 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <span class="d-flex align-items-center fw-bold produtoPreco">R$ {{ produto.preco }}</span>
+                        <span class="d-flex align-items-center fw-bold produtoPreco">
+                            R$ {{ produto.preco }} ou {{ produto.preco_poups }} poups
+                        </span>                    
                     </div>
                 </a>
                 {% endfor %}

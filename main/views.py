@@ -521,25 +521,38 @@ def comprar_credito_pix(request):
 
 
 def perfil_loja(request, loja_id):
-    loja = get_object_or_404(Loja, id=loja_id)
+    loja = get_object_or_404(Loja, pk=loja_id)
+    categorias = loja.categoriaproduto_set.all()
+    categorias_com_produtos = []
 
+    for categoria in categorias:
+        produtos_com_precos = []
+        for produto in categoria.produto_set.all():
+            produto.preco_poups = produto.preco / Decimal('0.4')
+            produtos_com_precos.append(produto)
+        categorias_com_produtos.append({
+            'categoria': categoria,
+            'produtos': produtos_com_precos
+        })
 
-    
     context = {
-        'perfil_loja':loja,
+        'perfil_loja': loja,
+        'categorias_com_produtos': categorias_com_produtos,
     }
-
     return render(request, 'core/perfil_loja.html', context)
-
 
 def detalhes_produto(request, id):
     produto = get_object_or_404(Produto, id=id)
     loja = produto.categoria.loja if produto.categoria else None
 
-    context = {'produto': produto,
-    'lojaPerfil': loja}
-    return render(request, 'core/detalhes_produto.html', context )
+    # Calcular preco_poups para o produto específico
+    produto.preco_poups = produto.preco / Decimal('0.4')
 
+    context = {
+        'produto': produto,
+        'lojaPerfil': loja
+    }
+    return render(request, 'core/detalhes_produto.html', context)
 def detalhes_promocao(request, promocao_id):
     promocao = get_object_or_404(Promocao, id=promocao_id)
     print("Promoção:", promocao)
