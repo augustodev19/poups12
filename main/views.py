@@ -345,7 +345,6 @@ def comprar_credito(request):
         pontos_a_adicionar = valor_credito / Decimal('0.4')
 
         # Configuração do SDK do Stripe
-        
         try:
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
@@ -360,7 +359,7 @@ def comprar_credito(request):
                     'quantity': 1,
                 }],
                 mode='payment',
-                success_url=request.build_absolute_uri(reverse('home')),
+                success_url=request.build_absolute_uri(reverse('confirmar_compra_credito')),
                 cancel_url=request.build_absolute_uri('/credito_cancelado/'),
                 metadata={
                     'user_id': request.user.id,
@@ -370,6 +369,7 @@ def comprar_credito(request):
             )
 
             request.session['stripe_session_id'] = session.id  # Guardando o ID da sessão para uso futuro
+            request.session['pontos_a_adicionar'] = str(pontos_a_adicionar)  # Guardando pontos na sessão
             return redirect(session.url)
 
         except Exception as e:
@@ -381,36 +381,28 @@ def comprar_credito(request):
 
 
 
-
 @login_required
 def confirmar_compra_credito(request):
     if 'pontos_a_adicionar' in request.session:
         pontos_a_adicionar = Decimal(request.session.pop('pontos_a_adicionar'))
         
-        try:
-            cliente = request.user.cliente
-        except:
-            pass
+        cliente = getattr(request.user, 'cliente', None)
+        loja = getattr(request.user, 'loja', None)
 
-        try:
-            loja = request.user.loja
-        except:
-            pass
-        
-        # Adicionar pontos ao cliente
         if cliente:
             cliente.pontos += pontos_a_adicionar
             cliente.save()
+            messages.success(request, "Créditos convertidos em pontos com sucesso!")
         elif loja:
             loja.pontos += pontos_a_adicionar
             loja.save()
-
-        messages.success(request, "Créditos convertidos em pontos com sucesso!")
+            messages.success(request, "Créditos convertidos em pontos com sucesso!")
+        else:
+            messages.error(request, "Erro ao converter créditos em pontos. Usuário não associado a um cliente ou loja.")
     else:
         messages.error(request, "Erro ao converter créditos em pontos.")
     
     return redirect('home')  # Ou redirecione para a página de status do crédito
-
 
 def loja1(request):
     lojas = Loja.objects.all()
