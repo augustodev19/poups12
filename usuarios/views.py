@@ -1006,11 +1006,12 @@ def enviar_email_distribuicao_pontos(loja, funcionario, pontos):
 
 def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
     accept_url = reverse('aceitar_convite', args=[lojafunc_id])
+    full_accept_url = f'{request.scheme}://{request.get_host()}{accept_url}'
     subject = 'Convite para ser Funcionário'
     context = {
         'loja': loja,
         'funcionario': funcionario,
-        'accept_url': f'https://poupecomprando.com.br{accept_url}'
+        'accept_url': full_accept_url
     }
     html_content = render_to_string('core/email_convite_funcionario.html', context)
     text_content = strip_tags(html_content)
@@ -1019,6 +1020,7 @@ def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
+    
 def aceitar_convite(request, lojafunc_id):
     lojafunc = get_object_or_404(LojaFuncionario, id=lojafunc_id)
     lojafunc.aceitou_convite = True
