@@ -1010,7 +1010,7 @@ def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
     context = {
         'loja': loja,
         'funcionario': funcionario,
-        'accept_url': f'https://poupecomprando.com.br/{accept_url}'
+        'accept_url': f'https://poupecomprando.com.br{accept_url}'
     }
     html_content = render_to_string('core/email_convite_funcionario.html', context)
     text_content = strip_tags(html_content)
