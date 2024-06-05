@@ -956,6 +956,7 @@ def distribuir_pontos(request):
     if request.method == 'POST':
         if 'distribuir_pontos' in request.POST:
             form = DistribuirPontosForm(request.POST, loja=loja)
+            add_form = AdicionarFuncionarioForm()  # Define add_form aqui
             if form.is_valid():
                 pontos = form.cleaned_data['pontos']
                 funcionario = form.cleaned_data['funcionario']
@@ -970,6 +971,7 @@ def distribuir_pontos(request):
                     return redirect('distribuir_pontos')
         elif 'adicionar_funcionario' in request.POST:
             add_form = AdicionarFuncionarioForm(request.POST)
+            form = DistribuirPontosForm(loja=loja)  # Define form aqui
             if add_form.is_valid():
                 cpf = add_form.cleaned_data['cpf']
                 funcionario = get_object_or_404(Cliente, username=cpf)

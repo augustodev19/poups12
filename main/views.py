@@ -404,7 +404,7 @@ def confirmar_compra_credito(request):
         elif loja:
             loja.pontos += pontos_a_adicionar
             loja.save()
-            
+
         messages.success(request, "Créditos convertidos em pontos com sucesso!")
     else:
         messages.error(request, "Erro ao converter créditos em pontos.")
