@@ -68,7 +68,7 @@
           
           notificationContainer.style.display = 'block';  // Mostrar a notificação
           
-          // Remover a notificação após um tempo (opcional)
+          // Remover a notif  icação após um tempo (opcional)
           // setTimeout(() => {
           //   notificationContainer.style.display = 'none';
           // }, 10000); // Exibir a notificação por 10 segundos
@@ -195,8 +195,18 @@
               </a>
             </li>
 
-          
-          
+            <li class="nav-small-cap">
+              <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+              <span class="hide-menu">Empresa</span>
+            </li>
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="{%url 'distribuir_pontos' %}" aria-expanded="false">
+                <span>
+                  <i class="ti ti-file-description"></i>
+                </span>
+                <span class="hide-menu">Funcionários</span>
+              </a>
+            </li>
           </ul>
           
         </nav>
