@@ -360,7 +360,7 @@ def comprar_credito(request):
                     'quantity': 1,
                 }],
                 mode='payment',
-                success_url=request.build_absolute_uri(reverse('editar_cliente')),
+                success_url=request.build_absolute_uri(reverse('home')),
                 cancel_url=request.build_absolute_uri('/credito_cancelado/'),
                 metadata={
                     'user_id': request.user.id,
