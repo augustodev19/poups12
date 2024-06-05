@@ -1408,6 +1408,7 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
             'pedido': pedido,
             'loja': pedido.loja,
             'itens_pedido': itens_pedido,
+            'itens_promocionais': [item for item in itens_pedido if item.promocao],  # Adicionando itens promocionais
             'pedido_url': f'https://poupecomprando.com.br/pedido/{pedido.id}',  # Atualize com seu domínio real
             'subperfil_nome': subperfil_nome
         }
@@ -1417,7 +1418,6 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
 
         email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
-
 
         email.send()
         recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)  # 600 segundos = 10 minutos
@@ -1434,6 +1434,7 @@ def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
             'pedido_id': pedido.id,
             'loja': pedido.loja.nomeLoja,
             'itens_pedido': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: R${item.preco_unitario}' for item in itens_pedido],
+            'itens_promocionais': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: Promoção' for item in itens_pedido if item.promocao],  # Adicionando itens promocionais
             'total': pedido.total,
             'subperfil_nome': subperfil_nome or pedido.cliente.nome,
             'cliente': pedido.cliente.nome,

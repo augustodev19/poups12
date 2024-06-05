@@ -152,6 +152,7 @@ def handle_pix_payment(self, correlation_id):
                 )
 
             enviar_email_pedido_pix.delay(pedido.id)
+            enviar_notificacao_pedido_pix.delay(pedido.id)
             cache.set(f"pedido_id_{correlation_id}", pedido.id, timeout=300)
             charge.payment_status = 'completed'
             charge.save()
@@ -167,15 +168,17 @@ def handle_pix_payment(self, correlation_id):
 
 @shared_task(bind=True)
 def enviar_email_pedido_pix(self, pedido_id, subperfil_nome=None):
-    #logger.warning(f"Iniciando envio de email para o pedido {pedido_id}")
     try:
         pedido = Pedido.objects.get(id=pedido_id)
         itens_pedido = pedido.itempedido_set.all()
+        itens_promocionais = [item for item in itens_pedido if item.produto.promocao]
+
         subject = 'Detalhes do Seu Pedido'
         context = {
             'pedido': pedido,
             'loja': pedido.loja,
             'itens_pedido': itens_pedido,
+            'itens_promocionais': itens_promocionais,
             'pedido_url': f'https://poupecomprando.com.br/pedido/{pedido.id}',  # Atualize com seu domínio real
             'subperfil_nome': subperfil_nome
         }
@@ -186,13 +189,44 @@ def enviar_email_pedido_pix(self, pedido_id, subperfil_nome=None):
         email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
 
-
         email.send()
         recusar_pedido_automaticamente.apply_async((pedido.id,), countdown=600)
         logger.warning("Email com detalhes do pedido enviado com sucesso.")
     except Exception as e:
         pass
         #logger.warning(f"Erro ao enviar email: {str(e)}")
+
+@shared_task(bind=True)
+def enviar_notificacao_pedido_pix(self, pedido_id, subperfil_nome=None):
+    try:
+        pedido = Pedido.objects.get(id=pedido_id)
+        itens_pedido = pedido.itempedido_set.all()
+        message = {
+            'pedido_id': pedido.id,
+            'loja': pedido.loja.nomeLoja,
+            'itens_pedido': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: R${item.preco_unitario}' for item in itens_pedido],
+            'itens_promocionais': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: Promoção' for item in itens_pedido if item.promocao],
+            'total': pedido.total,
+            'subperfil_nome': subperfil_nome or pedido.cliente.nome,
+            'cliente': pedido.cliente.nome,
+            'cpf': pedido.cliente.username,
+            'telefone': pedido.cliente.telefone,
+            'tempo_entrega_min': pedido.loja.tempo_entrega_min or 60,
+            'tempo_entrega_max': pedido.loja.tempo_entrega_max or 75
+        }
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'pedidos_{pedido.loja.id}',  # Grupo específico do lojista
+            {
+                'type': 'pedido_message',
+                'message': message
+            }
+        )
+        print("Notificação de pedido enviada com sucesso.")
+    except Exception as e:
+        logger.error(f"Erro ao enviar notificação: {str(e)}")
+        raise
 
 @shared_task(bind=True)
 def verificar_pagamento_concluido(self, correlation_id, start_time=None):

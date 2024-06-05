@@ -37,12 +37,13 @@
     </head>
 
     <body>
-      <div id="notification-container" class="notification" style="position: fixed; bottom: 20px; right: 20px; background-color: #fff; padding: 20px; border: 1px solid #000;  /* Borda preta para visibilidade */ border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); font-family: 'Arial', sans-serif; color: #333; width: 300px; z-index: 1000; display: none;  /* Inicialmente oculto */">
+      <div id="notification-container" class="notification" style="position: fixed; bottom: 20px; right: 20px; background-color: #fff; padding: 20px; border: 1px solid #000; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); font-family: 'Arial', sans-serif; color: #333; width: 300px; z-index: 1000; display: none;">
         <div class="container">
             <h1 class="mb-0 fw-bold text-primary" style="color:#000 !important;">Poupe<span style="color:#1094F5 !important;">Comprando</span></h1>
         </div>
         <p id="notification-message"></p>
         <ul id="notification-items"></ul>
+        <ul id="notification-items-promocionais"></ul>
         <p id="notification-total"></p>
         <p id="notification-client-name"></p>
         <p id="notification-cpf"></p>
@@ -59,7 +60,7 @@
         const userId = {{ user.id }};  // Certifique-se de que o ID do usuário está disponível no contexto do template
         const protocolo = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const pedidoSocket = new WebSocket(protocolo + window.location.host + '/ws/pedidos/' + userId + '/');
-        
+    
         pedidoSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             const message = data['message'];
@@ -74,6 +75,9 @@
                 <p>Seu pedido foi criado com sucesso!</p>
                 <ul>
                     ${message.itens_pedido.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+                <ul>
+                    ${message.itens_promocionais.map(item => `<li>${item}</li>`).join('')}
                 </ul>
                 <p>Total do pedido: R$${message.total}</p>
                 ${message.subperfil_nome ? `<p>Nome do cliente: ${message.subperfil_nome}</p>` : `<p>Nome do cliente: ${message.cliente}</p>`}
@@ -93,7 +97,7 @@
             //   notificationContainer.style.display = 'none';
             // }, 10000); // Exibir a notificação por 10 segundos
         }
-        
+    
         pedidoSocket.onclose = function(e) {
             console.error('Pedido socket closed unexpectedly');
         };
