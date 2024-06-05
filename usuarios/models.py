@@ -158,6 +158,14 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nome
 
+class Cliente(CustomUser):
+    foto = models.ImageField(upload_to='images/', blank=True, null=True, default='images/user_2.png')
+    endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
+    saldo_poups = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    plano_familia = models.BooleanField(default=False, verbose_name=_('Plano Família'))
+
+
 
 class Loja(CustomUser):
     nomeLoja = models.CharField(max_length=100, blank=True)
@@ -177,6 +185,8 @@ class Loja(CustomUser):
     saldo = models.DecimalField(max_digits = 20, decimal_places=2, blank=True, null=True, default="0")
     ever_saldo = models.DecimalField(max_digits = 20, decimal_places=2, blank=True, null=True, default="0")
     is_active = models.BooleanField(default=True)
+    pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    funcionarios = models.ManyToManyField(Cliente, through='LojaFuncionario', related_name='empresas')
       # campo adicionado
     def delete(self, *args, **kwargs):
         """
@@ -188,6 +198,10 @@ class Loja(CustomUser):
 
     def __str__(self):
         return self.nome
+
+
+
+
 
 class CategoriaProduto(models.Model):
     foto = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
@@ -251,12 +265,6 @@ class ItemOpcao(models.Model):
 
 
 
-class Cliente(CustomUser):
-    foto = models.ImageField(upload_to='images/', blank=True, null=True, default='images/user_2.png')
-    endereco = models.ForeignKey(Endereco, on_delete=models.CASCADE, blank=True, null=True)
-    saldo_poups = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    pontos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    plano_familia = models.BooleanField(default=False, verbose_name=_('Plano Família'))
 
 
 
@@ -372,3 +380,11 @@ class Charge(models.Model):
     def __str__(self):
         return self.charge_id
 
+
+class LojaFuncionario(models.Model):
+    loja = models.ForeignKey(Loja, on_delete=models.CASCADE)
+    funcionario = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    aceitou_convite = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.loja.nomeLoja} - {self.funcionario.username}"

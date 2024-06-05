@@ -386,12 +386,25 @@ def comprar_credito(request):
 def confirmar_compra_credito(request):
     if 'pontos_a_adicionar' in request.session:
         pontos_a_adicionar = Decimal(request.session.pop('pontos_a_adicionar'))
-        cliente = request.user.cliente
+        
+        try:
+            cliente = request.user.cliente
+        except:
+            pass
+
+        try:
+            loja = request.user.loja
+        except:
+            pass
         
         # Adicionar pontos ao cliente
-        cliente.pontos += pontos_a_adicionar
-        cliente.save()
-        
+        if cliente:
+            cliente.pontos += pontos_a_adicionar
+            cliente.save()
+        elif loja:
+            loja.pontos += pontos_a_adicionar
+            loja.save()
+            
         messages.success(request, "Créditos convertidos em pontos com sucesso!")
     else:
         messages.error(request, "Erro ao converter créditos em pontos.")

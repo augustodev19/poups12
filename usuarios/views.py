@@ -11,9 +11,14 @@ from django.contrib.auth import login as auth_login
 from .forms import LoginForm
 from django.contrib.auth import authenticate
 import logging
+from django.template.loader import render_to_string
+from bs4 import BeautifulSoup
+
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import TruncYear
 import mercadopago
+from django.core.mail import EmailMultiAlternatives
+
 
 from django.utils.timezone import now, datetime
 from django.db.models import Sum
@@ -933,3 +938,90 @@ def criar_pedido_loja(request):
     }
     return render(request, 'core/criar_pedido.html', context)
 
+
+
+def strip_tags(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    text_content = soup.get_text()
+    return text_content
+
+def distribuir_pontos(request):
+    if not hasattr(request.user, 'loja'):
+        messages.error(request, 'Apenas lojas podem distribuir pontos.')
+        return redirect('home')
+
+    loja = request.user.loja
+    funcionarios = loja.funcionarios.filter(lojafuncionario__aceitou_convite=True)
+
+    if request.method == 'POST':
+        if 'distribuir_pontos' in request.POST:
+            form = DistribuirPontosForm(request.POST, loja=loja)
+            if form.is_valid():
+                pontos = form.cleaned_data['pontos']
+                funcionario = form.cleaned_data['funcionario']
+                if pontos > loja.pontos:
+                    messages.error(request, 'Pontos insuficientes.')
+                else:
+                    loja.pontos -= pontos
+                    loja.save()
+                    funcionario.pontos += pontos
+                    funcionario.save()
+                    enviar_email_distribuicao_pontos(loja, funcionario, pontos)
+                    messages.success(request, f'{pontos} pontos foram atribuídos a {funcionario.username}.')
+                    return redirect('distribuir_pontos')
+        elif 'adicionar_funcionario' in request.POST:
+            add_form = AdicionarFuncionarioForm(request.POST)
+            if add_form.is_valid():
+                cpf = add_form.cleaned_data['cpf']
+                funcionario = get_object_or_404(Cliente, username=cpf)
+                lojafunc = LojaFuncionario.objects.create(loja=loja, funcionario=funcionario)
+                enviar_email_convite_funcionario(loja, funcionario, lojafunc.id)
+                messages.success(request, f'Convite enviado para {funcionario.username}.')
+                return redirect('distribuir_pontos')
+    else:
+        form = DistribuirPontosForm(loja=loja)
+        add_form = AdicionarFuncionarioForm()
+
+    return render(request, 'core/distribuir_pontos.html', {
+        'form': form,
+        'add_form': add_form,
+        'funcionarios': funcionarios,
+        'pontos_disponiveis': loja.pontos,
+        'loja': loja
+    })
+
+def enviar_email_distribuicao_pontos(loja, funcionario, pontos):
+    subject = 'Distribuição de Pontos'
+    context = {
+        'loja': loja,
+        'funcionario': funcionario,
+        'pontos': pontos
+    }
+    html_content = render_to_string('core/email_distribuicao_pontos.html', context)
+    text_content = strip_tags(html_content)
+
+    email = EmailMultiAlternatives(subject, text_content, 'seu_email@example.com', [funcionario.email])
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+
+def enviar_email_convite_funcionario(loja, funcionario, lojafunc_id):
+    accept_url = reverse('aceitar_convite', args=[lojafunc_id])
+    subject = 'Convite para ser Funcionário'
+    context = {
+        'loja': loja,
+        'funcionario': funcionario,
+        'accept_url': f'https://poupecomprando.com.br/{accept_url}'
+    }
+    html_content = render_to_string('core/email_convite_funcionario.html', context)
+    text_content = strip_tags(html_content)
+
+    email = EmailMultiAlternatives(subject, text_content, 'seu_email@example.com', [funcionario.email])
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+
+def aceitar_convite(request, lojafunc_id):
+    lojafunc = get_object_or_404(LojaFuncionario, id=lojafunc_id)
+    lojafunc.aceitou_convite = True
+    lojafunc.save()
+    messages.success(request, 'Você aceitou o convite para ser funcionário.')
+    return redirect('home')

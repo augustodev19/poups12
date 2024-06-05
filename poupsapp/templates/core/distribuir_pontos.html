@@ -1,0 +1,50 @@
+{% extends 'core/base-dashboard.html' %}
+{% load static %}
+{% block 'conteudo' %}
+<div class="container-fluid">
+    <div class="container-fluid">
+        <!-- Formulário para distribuir pontos -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Distribuir Pontos</h5>
+                <form method="POST" id="distribuirPontosForm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" name="distribuir_pontos" class="mt-3 btn btn-primary">Distribuir Pontos</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Formulário para adicionar novo funcionário -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Adicionar Funcionário</h5>
+                <form method="POST" id="adicionarFuncionarioForm">
+                    {% csrf_token %}
+                    {{ add_form.as_p }}
+                    <button type="submit" name="adicionar_funcionario" class="mt-3 btn btn-secondary">Adicionar Funcionário</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Funcionários -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">Funcionários</h5>
+                <div id="funcionarios" class="mt-5">
+                    {% for funcionario in funcionarios %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="funcionario-item">
+                                <span>{{ funcionario.username }}</span> -
+                                <span>Pontos: {{ funcionario.pontos }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

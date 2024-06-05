@@ -138,3 +138,19 @@ class EmailPasswordResetForm(PasswordResetForm):
         # Busca usuários pelo e-mail, independente do estado 'is_active'
         active_users = User._default_manager.filter(email__iexact=email)
         return (u for u in active_users if u.has_usable_password())
+
+class AdicionarFuncionarioForm(forms.Form):
+    cpf = forms.CharField( label='CPF do Funcionário')
+
+class DistribuirPontosForm(forms.ModelForm):
+    pontos = forms.DecimalField(max_digits=10, decimal_places=2, label='Pontos')
+
+    class Meta:
+        model = LojaFuncionario
+        fields = ['funcionario', 'pontos']
+
+    def __init__(self, *args, **kwargs):
+        loja = kwargs.pop('loja', None)
+        super(DistribuirPontosForm, self).__init__(*args, **kwargs)
+        if loja:
+            self.fields['funcionario'].queryset = loja.funcionarios.filter(lojafuncionario__aceitou_convite=True)
