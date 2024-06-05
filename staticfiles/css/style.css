@@ -907,6 +907,29 @@
     }
 }
 
+/* Torna a barra de rolagem invisível */
+.scroll-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Exibe a barra de rolagem quando o mouse está sobre o container */
+.scroll-container:hover::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+/* Estiliza a barra de rolagem */
+.scroll-container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+/* Estiliza a barra de rolagem ao passar o mouse sobre ela */
+.scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
+
 .notification {
     position: fixed;
     bottom: 20px;
