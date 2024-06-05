@@ -157,7 +157,7 @@
     <a class="d-flex nav-item nav-link align-items-center justify-content-center" href="{%url 'subperfil_list'%}"><span>Editar perfil</a>
 
 {%endif%}
-{%if cliente%}
+{%if cliente or loja%}
 <a href="{%url 'payment'%}" class="nav-item nav-link">Comprar Poups</a>
 
 {%endif%}
