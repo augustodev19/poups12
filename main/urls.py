@@ -11,6 +11,7 @@ urlpatterns = [
     path('loja/', loja, name='loja1'),
     path('credito_sucesso/', credito_sucesso, name='credito_sucesso'),
     path('lojas_proximas/', loja, name='loja'),
+    path('produtos/', lista_produtos, name='lista_produtos'),
     path('loja/<int:loja_id>/', perfil_loja, name='perfil_loja'),
     path('set_location/', set_location, name='set_location'),
     path('produto/<int:id>/', detalhes_produto, name='detalhes_produto'),

@@ -1,0 +1,197 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block 'conteudo' %}
+<div class="container mt-5 d-flex flex-column align-items-start" style="margin-top:7rem !important;">
+    <h3>Filtrar por Categoria:</h3>
+    <div class="scroll-container container mt-3 d-flex justify-content-start" style="gap:3rem; overflow-x:auto; white-space: nowrap;">
+        {% for categoria in categorias %}
+        <a class="d-flex flex-column align-items-center" href="{% url 'lista_produtos' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'100' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
+            <img style="width:5rem; height:5rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
+            <span>{{ categoria.nome }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="container mt-5 d-flex container flex-column align-items-start" >
+    <div class="d-flex scroll-container" style="overflow-x:auto; gap:1rem; max-width:100%;">
+        <a id="filtroFreteGratis" class="btn-filter">Filtrar por Frete Grátis</a>
+        <a class="btn-filter" id="abrirDistancia">Distância</a>
+        <a class="btn-filter" id="abrirPrecoPontos">Filtrar por Preço em Pontos Poups</a>
+        <a class="btn-filter" href="{% url 'lista_produtos' %}" id="limparFiltros">Limpar filtros</a>
+    </div>
+
+    <div id="distanciaModal" class="modal1">
+        <div class="modal-content1">
+            <div class="modal-header1">
+                <h2 class="text-center">Onde você quer receber seu pedido?</h2>
+            </div>
+            <div class="modal-body1">
+                <label for="distanciaSlider">Distância: <span id="distanciaValor">100</span> km</label>
+                <input type="range" id="distanciaSlider" name="distancia" min="5" max="100" value="100">
+                <button style="background:#1094F5;" id="enviarDistancia">Enviar</button>
+            </div>
+        </div>
+    </div>
+    <div id="precoPontosModal" class="modal1">
+        <div class="modal-content1">
+            <div class="modal-header1">
+                <h2 class="text-center">Filtrar por Preço em Pontos Poups</h2>
+            </div>
+            <div class="modal-body1">
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="0-250">Até 250</button>
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="251-500">De 251 a 500</button>
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="501-1000">De 501 a 1.000</button>
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="1001-2000">De 1.001 a 2.000</button>
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="2001-5000">De 2.001 a 5.000</button>
+                <button class="btn-filter-pontos mb-3 btn-filter btn-primary btn" style="background:#1094F5 !important; color#fff !important;" data-pontos="5001">Mais de 5.001</button>
+            </div>
+        </div>
+    </div>
+    <div class="mt-5 mobile-lojas container w-100 flex-column" style="flex-grow:1; display:none">
+    <h3 >Resultados</h3>
+    <div class="container-1 mt-3 d-flex justify-content-start flex-wrap" style="gap:1rem;">
+        {% if mensagem_nenhum_produto %}
+            <p>{{ mensagem_nenhum_produto }}</p>
+        {% else %}
+            {% for produto in produtos %}
+            <div class="card-1" style="width: 18rem;">
+                <img src="{{ produto.foto.url }}" alt="{{ produto.nome }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ produto.nome }}</h5>
+                    <p class="card-text">{{ produto.descricao }}</p>
+                    <p class="card-text">R$ {{ produto.preco| floatformat:2 }} ou {{ produto.preco_poups | floatformat:2 }} poups</p>
+                    <a href="{% url 'detalhes_produto' produto.id %}" class="btn btn-primary" style="color:#fff;">Comprar</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+</div>
+
+
+
+<div class="mt-5 desk-lojas d-flex flex-column container" style="flex-grow:1;">
+    <h3 >Resultados</h3>
+    <div class="container-1 mt-3 d-flex justify-content-start flex-wrap" style="gap:1rem;">
+        {% if mensagem_nenhum_produto %}
+            <p>{{ mensagem_nenhum_produto }}</p>
+        {% else %}
+            {% for produto in produtos %}
+            <div class="card-1" style="width: 18rem;">
+                <img src="{{ produto.foto.url }}" alt="{{ produto.nome }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ produto.nome }}</h5>
+                    <p class="card-text">{{ produto.descricao }}</p>
+                    <p class="card-text">R$ {{ produto.preco| floatformat:2 }} ou {{ produto.preco_poups | floatformat:2 }} poups</p>
+                    <a href="{% url 'detalhes_produto' produto.id %}" class="btn btn-primary" style="color:#fff;">Comprar</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        let abrirDistancia = document.querySelector('#abrirDistancia');
+        let distanciaModal = document.querySelector('#distanciaModal');
+        let abrirPrecoPontos = document.querySelector('#abrirPrecoPontos');
+        let precoPontosModal = document.querySelector('#precoPontosModal');
+        
+        abrirPrecoPontos.addEventListener('click', function() {
+            precoPontosModal.style.display = 'flex';
+        });
+    
+        abrirDistancia.addEventListener('click', function() {
+            distanciaModal.style.display = 'flex';
+        });
+    
+        document.getElementById('filtroFreteGratis').addEventListener('click', function() {
+            var url = new URL(window.location.href);
+            var params = new URLSearchParams(url.search);
+    
+            // Mantém o valor atual da distância
+            var distancia = params.get('distancia') || '100';
+    
+            // Adiciona o filtro de frete grátis à URL
+            params.set('freteGratis', 'sim');
+            params.set('distancia', distancia);
+    
+            // Mantém o valor atual da categoria
+            var categoria = params.get('categoria');
+            if (categoria) {
+                params.set('categoria', categoria);
+            }
+    
+            window.location.href = url.pathname + '?' + params.toString();
+        });
+    
+        // Função para obter o valor do parâmetro 'distancia' da URL
+        function getDistanciaFromURL() {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('distancia'); // retorna null se o parâmetro não existir
+        }
+    
+        // Função para verificar se o filtro de frete grátis está ativo
+        function isFreteGratisActive() {
+            var params = new URLSearchParams(window.location.search);
+            return params.get('freteGratis') === 'sim'; // retorna true se freteGratis=sim
+        }
+    
+        // Configurando o valor inicial do slider com base na URL
+        var distancia = getDistanciaFromURL();
+        if (distancia !== null) {
+            document.getElementById('distanciaSlider').value = distancia;
+            document.getElementById('distanciaValor').innerText = distancia;
+        }
+    
+        // Event listeners para o slider
+        document.getElementById('distanciaSlider').addEventListener('input', function() {
+            document.getElementById('distanciaValor').innerText = this.value;
+        });
+    
+        // Event listener para o botão 'Enviar Distância'
+        document.getElementById('enviarDistancia').addEventListener('click', function() {
+            var distancia = document.getElementById('distanciaSlider').value;
+            var url = new URL(window.location.href);
+            var params = new URLSearchParams(url.search);
+    
+            // Verifica se o frete grátis está ativo
+            var freteGratis = isFreteGratisActive() ? 'sim' : 'nao';
+    
+            // Mantém o valor atual da categoria
+            var categoria = params.get('categoria');
+    
+            // Atualiza distância e frete grátis
+            params.set('distancia', distancia);
+            params.set('freteGratis', freteGratis);
+    
+            // Se a categoria estiver presente, adiciona ao URL
+            if (categoria) {
+                params.set('categoria', categoria);
+            }
+    
+            window.location.href = url.pathname + '?' + params.toString();
+        });
+    
+        // Event listeners para os botões de filtro por pontos
+        document.querySelectorAll('.btn-filter-pontos').forEach(button => {
+            button.addEventListener('click', function() {
+                var pontos = this.getAttribute('data-pontos');
+                var url = new URL(window.location.href);
+                var params = new URLSearchParams(url.search);
+    
+                // Atualiza os parâmetros de pontos
+                params.set('pontos', pontos);
+    
+                window.location.href = url.pathname + '?' + params.toString();
+            });
+        });
+    });
+</script>
+{% endblock %}

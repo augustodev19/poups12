@@ -162,7 +162,8 @@
 
 {%endif%}
                             <a href="{%url 'loja'%}" class="nav-item nav-link">Lojas</a>
-                          
+                            <a href="{%url 'lista_produtos'%}" class="nav-item nav-link">Produtos</a>
+
                             <div class="d-none nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Parceiros</a>
                                 <div class="dropdown-menu m-0 bg-secondary rounded-0">
@@ -183,7 +184,6 @@
 
                            
                      
-                            <a href="{%url 'home'%}" class="nav-item nav-link active">Dúvidas</a>
                             
                             {%if user.cliente%}<a href="{%url 'pedidos_cliente'%}" class="nav-item nav-link active">Meus Pedidos</a>
                             {%endif%}

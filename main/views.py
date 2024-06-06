@@ -107,6 +107,82 @@ def home_view(request):
     return render(request, 'core/loja.html', context)
 
 
+
+
+def lista_produtos(request):
+    # Buscar todas as categorias
+    categorias = Categoria.objects.all()
+
+    # Definir cliente e localização
+    cliente = None
+    if request.user.is_authenticated and hasattr(request.user, 'cliente'):
+        cliente = request.user.cliente
+        latitude = cliente.endereco.latitude if cliente.endereco and cliente.endereco.latitude else None
+        longitude = cliente.endereco.longitude if cliente.endereco and cliente.endereco.longitude else None
+    else:
+        user_location = request.session.get('user_location')
+        latitude = user_location.get('latitude') if user_location else None
+        longitude = user_location.get('longitude') if user_location else None
+
+    # Inicializar todos_produtos
+    todos_produtos = Produto.objects.all()
+
+    # Aplicar filtro de categoria se categoria_id for fornecido
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        todos_produtos = todos_produtos.filter(categoria_id=categoria_id)
+
+    # Aplicar filtro de pontos poups
+    pontos = request.GET.get('pontos')
+    if pontos:
+        if pontos == '0-250':
+            todos_produtos = todos_produtos.filter(pontos__lte=250)
+        elif pontos == '251-500':
+            todos_produtos = todos_produtos.filter(pontos__gte=251, pontos__lte=500)
+        elif pontos == '501-1000':
+            todos_produtos = todos_produtos.filter(pontos__gte=501, pontos__lte=1000)
+        elif pontos == '1001-2000':
+            todos_produtos = todos_produtos.filter(pontos__gte=1001, pontos__lte=2000)
+        elif pontos == '2001-5000':
+            todos_produtos = todos_produtos.filter(pontos__gte=2001, pontos__lte=5000)
+        elif pontos == '5001':
+            todos_produtos = todos_produtos.filter(pontos__gte=5001)
+
+    # Aplicar filtro de distância e frete grátis
+    raio = int(request.GET.get('distancia', 100))
+    frete_gratis = request.GET.get('freteGratis') == 'sim'
+    produtos_proximos = []
+
+    if latitude is not None and longitude is not None:
+        localizacao_usuario = (longitude, latitude)
+
+        for produto in todos_produtos:
+            loja = produto.promocao.loja if produto.promocao else None
+            if loja and loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
+                distancia = haversine(localizacao_usuario[0], localizacao_usuario[1], loja.endereco.longitude, loja.endereco.latitude)
+                if distancia <= raio:
+                    if not frete_gratis or produto.promocao.valor_frete == 0:
+                        produto.distancia_calculada = distancia
+                        produto.preco_poups = produto.preco * Decimal('0.4')
+                        produtos_proximos.append(produto)
+
+    if not produtos_proximos:
+        mensagem_nenhum_produto = "Nenhum produto encontrado dentro do raio especificado."
+    else:
+        mensagem_nenhum_produto = None                    
+
+    user_location = request.session.get('user_location', {})  # Usa um dict vazio como padrão
+
+    # Preparar o contexto para o template
+    context = {
+        'user_location': user_location,
+        'cliente': cliente,
+        'produtos': produtos_proximos,
+        'categorias': categorias,
+        'mensagem_nenhum_produto': mensagem_nenhum_produto,  # Adicione a mensagem ao contexto
+    }
+
+    return render(request, 'core/produtos.html', context)
 import math
 
 
@@ -615,41 +691,47 @@ def adicionar_ao_carrinho(request, produto_id):
             'imagem_url': produto.foto.url if produto.foto else None,
             'promocao': False
         }
+    cliente = None
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
 
+    if cliente:
     # Verificar se o produto tem promoção
-    if produto.promocao and produto.promocao.ativo:
-        promocao = produto.promocao
-        compra_acumulada, created = CompraAcumulada.objects.get_or_create(
-            cliente=request.user.cliente,
-            produto=produto,
-            promocao=promocao
-        )
-        
-        if item_key not in carrinho['pontos_para_proxima_promocao']:
-            carrinho['pontos_para_proxima_promocao'][item_key] = compra_acumulada.pontos_para_proxima_promocao
+        if produto.promocao and produto.promocao.ativo:
+            promocao = produto.promocao
+            compra_acumulada, created = CompraAcumulada.objects.get_or_create(
+                cliente=request.user.cliente,
+                produto=produto,
+                promocao=promocao
+            )
+            
+            if item_key not in carrinho['pontos_para_proxima_promocao']:
+                carrinho['pontos_para_proxima_promocao'][item_key] = compra_acumulada.pontos_para_proxima_promocao
 
-        # Atualiza a quantidade comprada acumulada e os pontos para a próxima promoção
-        compra_acumulada.quantidade_comprada += 1
-        carrinho['pontos_para_proxima_promocao'][item_key] += 1
-        pontos_acumulados = carrinho['pontos_para_proxima_promocao'][item_key]
-        num_promocoes = pontos_acumulados // promocao.quantidade_necessaria
+            # Atualiza a quantidade comprada acumulada e os pontos para a próxima promoção
+            compra_acumulada.quantidade_comprada += 1
+            carrinho['pontos_para_proxima_promocao'][item_key] += 1
+            pontos_acumulados = carrinho['pontos_para_proxima_promocao'][item_key]
+            num_promocoes = pontos_acumulados // promocao.quantidade_necessaria
 
-        # Atualiza o carrinho com a quantidade de itens promocionais
-        promocao_key = f'promocao_{promocao.id}'
-        if promocao_key not in carrinho['itens']:
-            carrinho['itens'][promocao_key] = {
-                'produto_id': produto_id,
-                'quantidade': 0,
-                'nome': f"Promoção: {produto.nome}",
-                'imagem_url': promocao.imagem.url if promocao.imagem else None,
-                'promocao': True,
-                'preco': '0.00'
-            }
-        carrinho['itens'][promocao_key]['quantidade'] = num_promocoes
+            # Atualiza o carrinho com a quantidade de itens promocionais
+            promocao_key = f'promocao_{promocao.id}'
+            if promocao_key not in carrinho['itens']:
+                carrinho['itens'][promocao_key] = {
+                    'produto_id': produto_id,
+                    'quantidade': 0,
+                    'nome': f"Promoção: {produto.nome}",
+                    'imagem_url': promocao.imagem.url if promocao.imagem else None,
+                    'promocao': True,
+                    'preco': '0.00'
+                }
+            carrinho['itens'][promocao_key]['quantidade'] = num_promocoes
 
-        # Atualiza a compra acumulada no banco de dados
-        compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
-        compra_acumulada.save()
+            # Atualiza a compra acumulada no banco de dados
+            compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
+            compra_acumulada.save()
 
     request.session.modified = True
     return JsonResponse({
