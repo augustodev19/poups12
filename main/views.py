@@ -163,7 +163,7 @@ def lista_produtos(request):
                 if distancia <= raio:
                     if not frete_gratis or produto.promocao.valor_frete == 0:
                         produto.distancia_calculada = distancia
-                        produto.preco_poups = produto.preco * Decimal('0.4')
+                        produto.preco_poups = produto.preco / Decimal('0.4')
                         produtos_proximos.append(produto)
 
     if not produtos_proximos:
