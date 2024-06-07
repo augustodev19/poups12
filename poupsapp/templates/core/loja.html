@@ -22,11 +22,9 @@
 </div>
 
 </div>
-
 <div class="container mt-5 d-flex flex-column align-items-start" >
-    {%if loja.promocoes%}
+   
     <h3>Ofertas</h3>
-    {%endif%}
 <div class="container mt-3 d-flex justify-content-start promocoes_container scroll-container " style="gap:1rem; overflow-x:auto; white-space: nowrap;">
 
     {% for loja in lojas %}
@@ -45,7 +43,7 @@
                     </a>
                 {% endfor %}
             {%empty%}
-            <span class="d-none">Nenhuma oferta disponível nessa região.</span>
+            <span >Nenhuma oferta disponível nessa região.</span>
 
         {% endfor %}
 
