@@ -792,42 +792,46 @@ def adicionar_item_promocional_ao_carrinho(request, promocao_id):
 def remover_do_carrinho(request, produto_id):
     carrinho = request.session.get('carrinho', {'itens': {}, 'pontos_para_proxima_promocao': {}})
     produto_id_str = str(produto_id)
-
+    try:
+        cliente = request.user.cliente
+    except:
+        cliente = None
     if produto_id_str in carrinho['itens']:
         produto = get_object_or_404(Produto, id=produto_id)
         quantidade_removida = carrinho['itens'][produto_id_str]['quantidade']
         
-        # Verificar se o produto tem promoção
-        if produto.promocao and produto.promocao.ativo:
-            promocao = produto.promocao
-            compra_acumulada = CompraAcumulada.objects.get(
-                cliente=request.user.cliente,
-                produto=produto,
-                promocao=promocao
-            )
-            
-            item_key = produto_id_str
-            if item_key in carrinho['pontos_para_proxima_promocao']:
-                carrinho['pontos_para_proxima_promocao'][item_key] -= quantidade_removida
-                if carrinho['pontos_para_proxima_promocao'][item_key] < 0:
-                    carrinho['pontos_para_proxima_promocao'][item_key] = 0
+        if cliente:
+            # Verificar se o produto tem promoção
+            if produto.promocao and produto.promocao.ativo:
+                promocao = produto.promocao
+                compra_acumulada = CompraAcumulada.objects.get(
+                    cliente=request.user.cliente,
+                    produto=produto,
+                    promocao=promocao
+                )
+                
+                item_key = produto_id_str
+                if item_key in carrinho['pontos_para_proxima_promocao']:
+                    carrinho['pontos_para_proxima_promocao'][item_key] -= quantidade_removida
+                    if carrinho['pontos_para_proxima_promocao'][item_key] < 0:
+                        carrinho['pontos_para_proxima_promocao'][item_key] = 0
 
-                # Remover itens promocionais se não houver quantidade suficiente
-                promocao_key = f'promocao_{promocao.id}'
-                quantidade_promocional = carrinho['itens'].get(promocao_key, {}).get('quantidade', 0)
-                while quantidade_promocional > 0 and carrinho['pontos_para_proxima_promocao'][item_key] < promocao.quantidade_necessaria:
-                    carrinho['itens'][promocao_key]['quantidade'] -= 1
-                    quantidade_promocional -= 1
-                    if carrinho['itens'][promocao_key]['quantidade'] == 0:
-                        del carrinho['itens'][promocao_key]
+                    # Remover itens promocionais se não houver quantidade suficiente
+                    promocao_key = f'promocao_{promocao.id}'
+                    quantidade_promocional = carrinho['itens'].get(promocao_key, {}).get('quantidade', 0)
+                    while quantidade_promocional > 0 and carrinho['pontos_para_proxima_promocao'][item_key] < promocao.quantidade_necessaria:
+                        carrinho['itens'][promocao_key]['quantidade'] -= 1
+                        quantidade_promocional -= 1
+                        if carrinho['itens'][promocao_key]['quantidade'] == 0:
+                            del carrinho['itens'][promocao_key]
 
-                # Atualiza a compra acumulada no banco de dados
-                compra_acumulada.quantidade_comprada -= quantidade_removida
-                if compra_acumulada.quantidade_comprada < 0:
-                    compra_acumulada.quantidade_comprada = 0
+                    # Atualiza a compra acumulada no banco de dados
+                    compra_acumulada.quantidade_comprada -= quantidade_removida
+                    if compra_acumulada.quantidade_comprada < 0:
+                        compra_acumulada.quantidade_comprada = 0
 
-                compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
-                compra_acumulada.save()
+                    compra_acumulada.pontos_para_proxima_promocao = carrinho['pontos_para_proxima_promocao'][item_key] % promocao.quantidade_necessaria
+                    compra_acumulada.save()
 
         del carrinho['itens'][produto_id_str]
         request.session.modified = True
