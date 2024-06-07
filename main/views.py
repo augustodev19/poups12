@@ -1532,7 +1532,7 @@ def enviar_email_pedido(cliente, pedido, itens_pedido, subperfil_nome=None):
         html_content = render_to_string('core/email_pedido_detalhe.html', context)
         text_content = strip_tags(html_content)
 
-        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [cliente.email])
+        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
         email.attach_alternative(html_content, "text/html")
 
         email.send()
