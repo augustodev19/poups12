@@ -429,7 +429,7 @@
                     
                     <div class="d-flex justify-content-between w-100 mb-2">
                         <span id="valorSubTotalSpan" style="font-size:.9rem">Subtotal</span>
-                        <span style="font-size: .9rem;">R$<span>{{ total_geral }}</span></span>
+                        <span style="font-size: .9rem;">R$<span>{{ total_geral }}</span> ou <span>{{total_poups|floatformat:2}} poups</span></span>
                     </div>
     
                     <div class=" taxa_entrega_div justify-content-between w-100 mb-2" style="display:flex;">
@@ -439,8 +439,10 @@
     
                     <div class=" total_div justify-content-between w-100 mb-2" style="display:flex;">
                         <span style="font-size:.9rem; font-weight: 600;">Total</span>
-                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorTotalSpan">{{total_geral_com_frete}}</span></span>
+                        <span style="font-size: .9rem; font-weight: 600;">R$<span id="valorTotalSpan">{{total_geral_com_frete}}</span> ou <span>{{total_geral_poups|floatformat:2}} poups</span></span></span>
+
                     </div>
+              
                 <!-- Conteúdo da segunda coluna -->
             </div>
         </div>

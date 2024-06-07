@@ -2027,7 +2027,8 @@ def checkout(request):
         total_frete = loja.valor_frete
 
     total_geral_com_frete = total_geral_carrinho + total_frete
-
+    total_geral_poups = total_geral_com_frete / Decimal(0.4)
+    total_poups = total_geral_carrinho / Decimal(0.4)
     request.session.modified = True
 
     return render(request, 'core/checkout_test.html', {
@@ -2040,7 +2041,9 @@ def checkout(request):
         'total_geral_com_frete': total_geral_com_frete,
         'loja': loja,
         'subperfil': subperfil,
-        'pontos_para_proxima_promocao': pontos_para_proxima_promocao
+        'pontos_para_proxima_promocao': pontos_para_proxima_promocao,
+        'total_geral_poups': total_geral_poups,
+        'total_poups':total_poups,
     })
 def search(request):
     query = request.GET.get('query', '').strip()
