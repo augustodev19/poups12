@@ -615,7 +615,7 @@ def detalhes_produto(request, id):
     try:
         loja_autenticada = request.user.loja
     except:
-        loja_authenticada = None
+        loja_autenticada = None
     try:
         cliente = request.user.cliente
     except:    
