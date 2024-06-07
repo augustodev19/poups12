@@ -1284,7 +1284,6 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
     endereco = metadata.get('endereco', '')
     retirada_loja = metadata.get('retirada_loja', '')
 
-
     print(f"Processing order for user: {user_id}")
 
     try:
@@ -1336,9 +1335,11 @@ def handle_order_purchase(session, metadata, user_id, subperfil_nome):
 
             except Produto.DoesNotExist:
                 print(f"Produto não encontrado: {item.description}")
-
-        enviar_email_pedido(None, pedido, pedido.itempedido_set.all(), subperfil_nome)
-        print("Email de pedido enviado")
+        try:
+            enviar_email_pedido(cliente, pedido, pedido.itempedido_set.all(), subperfil_nome)
+            print("Email de pedido enviado")
+        except Exception as e:
+            print(f"Erro ao enviar o email: {str(e)}")
         try:
             enviar_notificacao_pedido(pedido, pedido.itempedido_set.all(), subperfil_nome)
             print("Notificação Enviada")
@@ -1515,7 +1516,7 @@ def gerar_token(pedido, tipo):
     return token_obj.token
 
     
-def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
+def enviar_email_pedido(cliente, pedido, itens_pedido, subperfil_nome=None):
     try:
         subject = 'Detalhes do Seu Pedido'
         context = {
@@ -1530,7 +1531,7 @@ def enviar_email_pedido(request, pedido, itens_pedido, subperfil_nome=None):
         html_content = render_to_string('core/email_pedido_detalhe.html', context)
         text_content = strip_tags(html_content)
 
-        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [pedido.loja.email])
+        email = EmailMultiAlternatives(subject, text_content, 'augusto.dataanalysis@gmail.com', [cliente.email])
         email.attach_alternative(html_content, "text/html")
 
         email.send()
