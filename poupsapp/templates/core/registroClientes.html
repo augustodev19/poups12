@@ -33,14 +33,20 @@
                     {% csrf_token %}
                     <!-- Steps Here -->
                     <div id="step1" class="step" style="display: block;">
-                        <div class="wrap-input100 validate-input" data-validate="Nome completo é necessário">
+                        <label for="nome">
+                            Nome Completo
+                        </label>
+                        <div class="wrap-input100 validate-input" id="nome" data-validate="Nome completo é necessário">
                             <input class="input100" type="text" name="nome" placeholder="Nome Completo">
                             <span class="focus-input100"></span>
                             <span class="symbol-input100">
                                 <i class="fa fa-user" aria-hidden="true"></i>
                             </span>
                         </div>
-                        <div class="wrap-input100 validate-input" data-validate="CPF é necessário">
+                        <label for="cpf">
+                            CPF
+                        </label>
+                        <div class="wrap-input100 validate-input" id="cpf" data-validate="CPF é necessário">
                             <input class="input100" id="cpf" type="text" name="username" placeholder="CPF">
                             <span class="focus-input100"></span>
                             <span class="symbol-input100">
@@ -64,6 +70,9 @@
 
                     <div id="step2" class="step" style="display: none;">
                         <!-- Content for Step 2 -->
+                        <label for="email">
+                            Email
+                        </label>
                         <div class="wrap-input100 validate-input" data-validate="Email válido é necessário: ex@abc.xyz">
                             <input class="input100" type="email" name="email" placeholder="Email">
                             <span class="focus-input100"></span>
@@ -71,7 +80,10 @@
                                 <i class="fa fa-envelope" aria-hidden="true"></i>
                             </span>
                         </div>
-                        <div class="wrap-input100 validate-input" data-validate="Celular válido é necessário: (99) 99999-9999">
+                        <label for="celular">
+                            Celular
+                        </label>
+                        <div class="wrap-input100 validate-input" id="celular" data-validate="Celular válido é necessário: (99) 99999-9999">
                           <input class="input100" type="text" id="celular" name="telefone" placeholder="Celular">
                           <script>
                             document.getElementById('celular').addEventListener('input', function (e) {
@@ -109,30 +121,44 @@
                           <button type="button" onclick="showStep(3)">Próximo</button>
                       </div>
                     </div>
-
+                 
                     <div id="step3" class="step" style="display: none;">
-                      <div class="wrap-input100 validate-input" data-validate = "CEP is required">
+                        <label for="cep">
+                            CEP
+                        </label>
+                      <div class="wrap-input100 validate-input" id="CEP" data-validate = "CEP é requerido">
                         <input class="input100" type="text" name="cep" id="cep" placeholder="CEP">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
                             <i class="fa fa-home" aria-hidden="true"></i>
                         </span>
                     </div>
-                    <div class="wrap-input100 validate-input" data-validate = "Endereço is required">
+                    <label for="endereco">
+                        Endereço
+                    </label>
+                    <div class="wrap-input100 validate-input" id="endereco" data-validate = "Endereço é requerido">
+                        
                         <input class="input100" type="text" name="endereco" id="endereco" placeholder="Endereço">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
                             <i class="fa fa-road" aria-hidden="true"></i>
                         </span>
                     </div>
-                    <div class="wrap-input100 validate-input" data-validate = "Logradouro is required">
+                    
+                    <label for="logradouro">
+                        Logradouro
+                    </label>
+                    <div class="wrap-input100 validate-input" id="logradouro" data-validate = "Logradouro é requerido">
                         <input class="input100" type="text" name="bairro" id="bairro" placeholder="Bairro">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
                             <i class="fa fa-map-marker" aria-hidden="true"></i>
                         </span>
                     </div>
-                    <div class="wrap-input100 validate-input" data-validate = "Número is required">
+                    <label for="numero">
+                        Número
+                    </label>
+                    <div class="wrap-input100 validate-input" id="numero" data-validate = "Número é requerido">
                         <input class="input100" type="text" name="numero" id="numero" placeholder="Número">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
@@ -146,16 +172,21 @@
                     </div>
 
                     <div id="step4" class="step" style="display: none;">
-                      <!-- Content for Step 2 -->
-                      <div class="wrap-input100 validate-input" data-validate="Senha é necessária">
+                        <span class="mb-3 text-center w-100 d-flex justify-content-center">Para sua segurança, senha precisa ter pelo menos 8 digitos, 1 letra maiúscula, 1 número e 1 símbolo</span>
+                        <label class="mt-4" for="password1"> 
+                            Digite sua Senha:
+                        </label>
+                      <div class="wrap-input100 validate-input" id="password1" data-validate="Senha é necessária">
                         <input class="input100" type="password" name="password1" placeholder="Senha">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
                             <i class="fa fa-lock" aria-hidden="true"></i>
                         </span>
                     </div>
-                    
-                    <div class="wrap-input100 validate-input" data-validate="Confirmação de senha é necessária">
+                    <label for="password2"> 
+                        Confirme sua Senha:
+                    </label>
+                    <div class="wrap-input100 validate-input"  id="password2" data-validate="Confirmação de senha é necessária">
                         <input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
@@ -267,6 +298,7 @@
     });
     </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{%static 'js/login.js' %}"></script>
 
 </body>
 </html>

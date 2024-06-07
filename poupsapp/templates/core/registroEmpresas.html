@@ -263,15 +263,22 @@
                  
                 <!-- Passo 4: Confirmação -->
                 <div id="step5" class="step" style="display:none;">
-                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
-						<input class="input100" type="password" name="password1" placeholder="Senha">
+                    <span class="mb-3 text-center">Para sua segurança, senha precisa ter pelo menos 8 digitos, 1 letra maiúscula, 1 número e 1 símbolo</span>
+                    <label class="mt-4" for="password1"> 
+                        Digite sua Senha:
+                    </label>
+                    <div class="wrap-input100 validate-input " id="password1" data-validate = "Valid email is required: ex@abc.xyz">
+                       
+						<input class="input100"  type="password" name="password1" placeholder="Senha">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-lock" aria-hidden="true"></i>
 						</span>
 					</div>
-
-					<div class="wrap-input100 validate-input" data-validate = "Password is required">
+                    <label for="password2"> 
+                        Confirme sua Senha:
+                    </label>
+					<div class="wrap-input100 validate-input" id="password2" data-validate = "Password is required">
 						<input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
