@@ -50,8 +50,8 @@
         <p id="notification-phone"></p>
         <p id="notification-delivery-time"></p>
         <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-        <a id="notification-accept" href="#" class="accept">Aceitar Pedido</a>
-        <a id="notification-reject" href="#" class="reject">Recusar Pedido</a>
+        <a id="notification-accept" href="#" class="btn btn-accept">Aceitar Pedido</a>
+        <a id="notification-reject" href="#" class="btn btn-decline">Recusar Pedido</a>
         <p>É uma honra ter você por aqui!</p>
     </div>
     
@@ -65,6 +65,9 @@
             const data = JSON.parse(e.data);
             const message = data['message'];
             
+            const itensPedido = message.itens_pedido.map(item => `<li>${item}</li>`).join('');
+            const itensPromocionais = message.itens_promocionais.map(item => `<li>${item}</li>`).join('');
+
             // Atualizar o conteúdo da div existente
             const notificationContainer = document.getElementById('notification-container');
             notificationContainer.innerHTML = `
@@ -73,11 +76,13 @@
                 </h1>
                 <p>Olá ${message.loja},</p>
                 <p>Seu pedido foi criado com sucesso!</p>
-                <ul>
-                    ${message.itens_pedido.map(item => `<li>${item}</li>`).join('')}
+                <h2>Itens do Pedido</h2>
+                <ul id="notification-items">
+                    ${itensPedido}
                 </ul>
-                <ul>
-                    ${message.itens_promocionais.map(item => `<li>${item}</li>`).join('')}
+                <h2>Itens Promocionais</h2>
+                <ul id="notification-items-promocionais">
+                    ${itensPromocionais}
                 </ul>
                 <p>Total do pedido: R$${message.total}</p>
                 ${message.subperfil_nome ? `<p>Nome do cliente: ${message.subperfil_nome}</p>` : `<p>Nome do cliente: ${message.cliente}</p>`}
@@ -85,8 +90,8 @@
                 <p>Celular do cliente: ${message.telefone}</p>
                 <p>Tempo estimado para entrega: ${message.tempo_entrega_min} - ${message.tempo_entrega_max}min </p>
                 <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-                <a href="https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}" class="accept">Aceitar Pedido</a>
-                <a href="https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}" class="reject">Recusar Pedido</a>
+                <a href="https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}" class="btn btn-accept">Aceitar Pedido</a>
+                <a href="https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}" class="btn btn-decline">Recusar Pedido</a>
                 <p>É uma honra ter você por aqui!</p>
             `;
             

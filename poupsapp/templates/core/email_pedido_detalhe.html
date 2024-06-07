@@ -1,31 +1,68 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
-
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #000 !important;
+            font-size: 2.2rem;
+        }
+        .text-primary {
+            color: #1094F5 !important;
+        }
+        .btn {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .btn-accept {
+            background-color: #28a745;
+        }
+        .btn-decline {
+            background-color: #dc3545;
+        }
+    </style>
 </head>
-<body style="font-family: 'Arial', sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; line-height: 1.6;">
-    <h1 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important; font-size:2.2rem;">Poupe<span style="color:#1094F5">Comprando</span></h1> 
-     <p>Olá {{ pedido.loja.nomeLoja }},</p>
+<body>
+    <h1 class="mb-0 fw-bold text-primary display-6">Poupe<span class="text-primary">Comprando</span></h1>
+    <p>Olá {{ pedido.loja.nomeLoja }},</p>
     <p>Seu pedido foi criado com sucesso!</p>
+    
+    <h2>Itens do Pedido</h2>
     <ul>
         {% for item in itens_pedido %}
+        {% if item.produto.promocao %}
+        <li><strong>Promocional:</strong> {{ item.produto.nome }} - Quantidade: {{ item.quantidade }}, Preço: R${{ item.preco_unitario }}</li>
+        {% else %}
         <li>{{ item.produto.nome }} - Quantidade: {{ item.quantidade }}, Preço: R${{ item.preco_unitario }}</li>
+        {% endif %}
         {% endfor %}
     </ul>
-    <p>Localização: {{pedido.localizacao}}</p>
-    <p>Total do pedido: R${{ pedido.total }}</p>    
+
+    <p>Localização: {{ pedido.localizacao }}</p>
+    <p>Total do pedido: R${{ pedido.total }}</p>
     {% if not subperfil_nome %}
-    <p>Nome do cliente: {{pedido.cliente.nome}}</p>
-    {%elif subperfil_nome %}
+    <p>Nome do cliente: {{ pedido.cliente.nome }}</p>
+    {% elif subperfil_nome %}
     <p>Nome do cliente: {{ subperfil_nome }}</p>
     {% endif %}
-    <p>CPF do cliente: {{pedido.cliente.username}}</p>
-    <p>Celular do cliente: {{pedido.cliente.telefone}}</p>
-    <p>Tempo estimado para entrega: {{pedido.loja.tempo_entrega_min|default:60}} - {{pedido.loja.tempo_entrega_max|default:75}}min </p>
-    <!-- <p>Você pode visualizar seu pedido aqui: <a href="{{ pedido_url }}" style="color: #ffffff; text-decoration: none; background-color: #4A90E2; padding: 10px 20px; border-radius: 5px;">Clique aqui</a></p> -->
+    <p>CPF do cliente: {{ pedido.cliente.username }}</p>
+    <p>Celular do cliente: {{ pedido.cliente.telefone }}</p>
+    <p>Tempo estimado para entrega: {{ pedido.loja.tempo_entrega_min|default:60 }} - {{ pedido.loja.tempo_entrega_max|default:75 }}min</p>
+    
     <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-    <a href="https://poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #28a745; padding: 10px 20px; border-radius: 5px; margin-right: 10px;">Aceitar Pedido</a>
-    <a href="https://poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" style="color: #ffffff; text-decoration: none; background-color: #dc3545; padding: 10px 20px; border-radius: 5px;">Recusar Pedido</a>
+    <a href="https://poupecomprando.com.br/revisar/aceitar/{{ pedido.id }}" class="btn btn-accept">Aceitar Pedido</a>
+    <a href="https://poupecomprando.com.br/revisar/recusar/{{ pedido.id }}" class="btn btn-decline">Recusar Pedido</a>
+    
     <p>É uma honra ter você por aqui!</p>
 </body>
 </html>
