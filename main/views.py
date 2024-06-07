@@ -1516,6 +1516,7 @@ def gerar_token(pedido, tipo):
     return token_obj.token
 
     
+
 def enviar_email_pedido(cliente, pedido, itens_pedido, subperfil_nome=None):
     try:
         subject = 'Detalhes do Seu Pedido'
@@ -1523,7 +1524,7 @@ def enviar_email_pedido(cliente, pedido, itens_pedido, subperfil_nome=None):
             'pedido': pedido,
             'loja': pedido.loja,
             'itens_pedido': itens_pedido,
-            'itens_promocionais': [item for item in itens_pedido if item.promocao],  # Adicionando itens promocionais
+            'itens_promocionais': [item for item in itens_pedido if item.produto.promocao],  # Verificando promoção no produto
             'pedido_url': f'https://poupecomprando.com.br/pedido/{pedido.id}',  # Atualize com seu domínio real
             'subperfil_nome': subperfil_nome
         }
@@ -1541,7 +1542,7 @@ def enviar_email_pedido(cliente, pedido, itens_pedido, subperfil_nome=None):
     except Exception as e:
         print(f"Erro ao enviar email: {str(e)}")
 
-
+        
 def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
     try:
         channel_layer = get_channel_layer()
@@ -1549,7 +1550,7 @@ def enviar_notificacao_pedido(pedido, itens_pedido, subperfil_nome=None):
             'pedido_id': pedido.id,
             'loja': pedido.loja.nomeLoja,
             'itens_pedido': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: R${item.preco_unitario}' for item in itens_pedido],
-            'itens_promocionais': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: Promoção' for item in itens_pedido if item.promocao],  # Adicionando itens promocionais
+            'itens_promocionais': [f'{item.produto.nome} - Quantidade: {item.quantidade}, Preço: Promoção' for item in itens_pedido if item.produto.promocao],  # Verificando promoção no produto
             'total': pedido.total,
             'subperfil_nome': subperfil_nome or pedido.cliente.nome,
             'cliente': pedido.cliente.nome,
