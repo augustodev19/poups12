@@ -975,9 +975,14 @@ def distribuir_pontos(request):
             if add_form.is_valid():
                 cpf = add_form.cleaned_data['cpf']
                 funcionario = get_object_or_404(Cliente, username=cpf)
-                lojafunc = LojaFuncionario.objects.create(loja=loja, funcionario=funcionario)
-                enviar_email_convite_funcionario(request, loja, funcionario, lojafunc.id)
-                messages.success(request, f'Convite enviado para {funcionario.username}.')
+                
+                # Verifica se o funcionário já está associado à loja
+                if not LojaFuncionario.objects.filter(loja=loja, funcionario=funcionario).exists():
+                    lojafunc = LojaFuncionario.objects.create(loja=loja, funcionario=funcionario)
+                    enviar_email_convite_funcionario(request, loja, funcionario, lojafunc.id)
+                    messages.success(request, f'Convite enviado para {funcionario.username}.')
+                else:
+                    messages.warning(request, f'O funcionário {funcionario.username} já foi adicionado a esta loja.')
                 return redirect('distribuir_pontos')
     else:
         form = DistribuirPontosForm(loja=loja)

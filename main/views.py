@@ -612,13 +612,23 @@ def perfil_loja(request, loja_id):
 def detalhes_produto(request, id):
     produto = get_object_or_404(Produto, id=id)
     loja = produto.categoria.loja if produto.categoria else None
+    try:
+        loja_autenticada = request.user.loja
+    except:
+        loja_authenticada = None
+    try:
+        cliente = request.user.cliente
+    except:    
+        cliente = None
 
     # Calcular preco_poups para o produto específico
     produto.preco_poups = produto.preco / Decimal('0.4')
 
     context = {
         'produto': produto,
-        'lojaPerfil': loja
+        'lojaPerfil': loja,
+        'loja':loja_autenticada,
+        'cliente':cliente
     }
     return render(request, 'core/detalhes_produto.html', context)
 def detalhes_promocao(request, promocao_id):

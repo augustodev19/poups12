@@ -24,7 +24,9 @@
 </div>
 
 <div class="container mt-5 d-flex flex-column align-items-start" >
-<h3>Ofertas:</h3>
+    {%if loja.promocoes%}
+    <h3>Ofertas</h3>
+    {%endif%}
 <div class="container mt-3 d-flex justify-content-start promocoes_container scroll-container " style="gap:1rem; overflow-x:auto; white-space: nowrap;">
 
     {% for loja in lojas %}
@@ -43,6 +45,8 @@
                     </a>
                 {% endfor %}
             {%empty%}
+            <span class="d-none">Nenhuma oferta disponível nessa região.</span>
+
         {% endfor %}
 
 </div>
@@ -219,54 +223,73 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
 </script>   
 
 
-    <div class="mt-5 container-1 mobile-lojas" style="display:none; flex-grow:1">
-        <h3 class="mb-2"> Lojas </h3>
+<div class="mt-5 container-1 mobile-lojas" style="display:none; flex-grow:1">
+    <h3 class="mb-2"> Lojas </h3>
+    {% for loja in lojas %}
+    <a class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'login' %}?next=loja_{{loja.id}}{% endif %}">
+        <div class="d-flex">
+            <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
+            <div>
+                <h2>{{loja.nomeLoja}}</h2>
+                <div class="d-flex" style="flex-direction:row !important; gap:1rem !important">
+                <p class="pb-0 mb-0" style="color: #1094F5; font-weight:600; margin-bottom:0 !important;">
+                    {{loja.categorias.first.nome}}
+                </p>
+               
+                    <p class="pb-0 mb-0" style="margin-bottom:0 !important;"> {{ loja.distancia_calculada|floatformat:2 }} km
 
-{%for loja in lojas%}
-<a  class="card-1" href="{% if user.is_authenticated %}{% url 'perfil_loja' loja.id %}{% else %}{% url 'login' %}?next=loja_{{loja.id}}{% endif %}">
-
-<div class="d-flex">
-<img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
-<div>
-    <h2>{{loja.nomeLoja}}</h2>
-
-<p  style="color: #1094F5; font-weight:600;">
-    Ver Perfil
-</p>
-
-
-<p> {{ loja.distancia_calculada|floatformat:2 }} km</p>
+                </p>
+            </div>
+                <span class="d-flex" style="gap:1rem;">
+                    {%if loja.valor_frete == 0%}
+                    <p style="color: #1094F5; font-weight:600;">
+                        Frete grátis
+                    </p>
+                    {%else%}
+                    <p >
+                       R$ {{loja.valor_frete}}</p>
+                        {%endif%}
+                        <p>
+                    {{loja.tempo_entrega_min | default:65}}min</p>
+                </span>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+        <span>Nenhuma loja disponível nessa região.</span>
+    {% endfor %}
 </div>
 </div>
-</a>
-{%empty%}
-<span> Nenhuma loja disponível nessa região. </span>
-{%endfor%}
-    </div>
-</div>
-
 
 <div class="mt-5 container container-1 desk-lojas" style="flex-grow:1;">
-
-    {%for loja in lojas%}
-    <a  class="card-1" href="{% url 'perfil_loja' loja.id %}">
-    
+{% for loja in lojas %}
+<a class="card-1" href="{% url 'perfil_loja' loja.id %}">
     <img style="width:5rem; height:5rem; border-radius:50%; object-fit:cover;" src="{{loja.foto.url}}">
-        <h2 style="font-size:1.3rem">{{loja.nomeLoja}}</h2>
-    
+    <h2 style="font-size:1.3rem">{{loja.nomeLoja}}</h2>
     <p style="color: #1094F5; font-weight:600;">
-        Ver Perfil
+       {{loja.categorias.first.nome}}
     </p>
-    
-    <p>Endereço: {{loja.endereco.rua}}, {{loja.endereco.bairro}}
+    <p>
+        {{ loja.distancia_calculada|floatformat:2 }} km
+     </p>
+     <div class="d-flex justify-content-center" style="gap:.5rem;">
+     {%if loja.valor_frete == 0%}
+     <p style="color: #1094F5; font-weight:600;">Frete grátis</p>
+     {%else%}
+    <p>R$ {{loja.valor_frete}}</p>
+    {%endif %}
+    <p>
+        -
     </p>
-    <p>Distância: {{ loja.distancia_calculada|floatformat:2 }} km</p>
- 
-    </a>
-    
-    {%endfor%}
-        </div>
-    </div>
+    <p>
+        {{loja.tempo_entrega_min|default:65}}min
+    </p>
+     </div>
+</a>
+{% empty %}
+    <span>Nenhuma loja disponível nessa região.</span>
+{% endfor %}
+</div>
 
     <div id="locationModal" class="modal1 {%if user.is_authenticated%}d-none{%endif%}">
         <div class="modal-content1">

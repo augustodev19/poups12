@@ -29,7 +29,7 @@ admin.site.register(Endereco)
 admin.site.register(Pedido)
 admin.site.register(Charge)
 admin.site.register(Subperfil)
-
+admin.site.register(LojaFuncionario)
 admin.site.register(ItemPedido)
 
 

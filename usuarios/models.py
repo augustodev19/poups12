@@ -386,5 +386,8 @@ class LojaFuncionario(models.Model):
     funcionario = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     aceitou_convite = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('loja', 'funcionario')  # Garante a unicidade
+
     def __str__(self):
         return f"{self.loja.nomeLoja} - {self.funcionario.username}"
