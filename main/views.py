@@ -246,6 +246,7 @@ def loja(request):
         latitude = user_location.get('latitude') if user_location else None
         longitude = user_location.get('longitude') if user_location else None
         adress = user_location.get('adress') if user_location else None
+
     # Inicializar todas_lojas
     todas_lojas = Loja.objects.filter(is_active=True)
 
@@ -260,24 +261,24 @@ def loja(request):
     lojas_proximas = []
 
     if latitude is not None and longitude is not None:
-        localizacao_usuario = (longitude, latitude)
-
+        localizacao_usuario = (float(longitude), float(latitude))
         for loja in todas_lojas:
             if loja.endereco and loja.endereco.latitude and loja.endereco.longitude:
-                distancia = haversine(localizacao_usuario[0], localizacao_usuario[1], loja.endereco.longitude, loja.endereco.latitude)
+                distancia = haversine(localizacao_usuario[0], localizacao_usuario[1], float(loja.endereco.longitude), float(loja.endereco.latitude))
                 if distancia <= raio:
                     if not frete_gratis or loja.valor_frete == 0:
                         loja.distancia_calculada = distancia
                         loja.promocoes = Promocao.objects.filter(loja=loja)
                         lojas_proximas.append(loja)
+
     if not lojas_proximas:
         mensagem_nenhuma_loja = "Nenhuma loja encontrada dentro do raio especificado."
     else:
-        mensagem_nenhuma_loja = None                    
+        mensagem_nenhuma_loja = None
 
     if request.user.is_authenticated:
         try:
-            cliente = request.user.cliente  # Substitua 'cliente' pelo nome correto do campo no seu modelo
+            cliente = request.user.cliente
         except AttributeError:
             cliente = None
     else:
@@ -285,22 +286,22 @@ def loja(request):
 
     if request.user.is_authenticated:
         try:
-            loja = request.user.loja  # Substitua 'cliente' pelo nome correto do campo no seu modelo
+            loja = request.user.loja
         except AttributeError:
             loja = None
     else:
         loja = None
-                        
-    user_location = request.session.get('user_location', {})  # Usa um dict vazio como padrão
+
+    user_location = request.session.get('user_location', {})
 
     # Preparar o contexto para o template
     context = {
-        'user_location':user_location,
-        'loja':loja,
-        'cliente':cliente,
+        'user_location': user_location,
+        'loja': loja,
+        'cliente': cliente,
         'lojas': lojas_proximas,
         'categorias': categorias,
-        'mensagem_nenhuma_loja': mensagem_nenhuma_loja,  # Adicione a mensagem ao contexto
+        'mensagem_nenhuma_loja': mensagem_nenhuma_loja,
     }
 
     return render(request, 'core/loja.html', context)

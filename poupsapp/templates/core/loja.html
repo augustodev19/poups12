@@ -5,14 +5,14 @@
 {%block 'conteudo'%}
 <div class="container mt-5 d-flex flex-column align-items-start" style="margin-top:7rem !important;" >
 
-<h3 >Filtrar por Categoria:</h3>
+<h3 style="font-size:1.3rem" >Filtrar por Categoria:</h3>
 
 <div class="scroll-container container mt-3 d-flex justify-content-start" style="gap:3rem;  overflow-x:auto; white-space: nowrap;">
 
 {% for categoria in categorias %}
 
     <a class="d-flex flex-column align-items-center" href="{% url 'loja' %}?categoria={{ categoria.id }}&distancia={{ request.GET.distancia|default:'100' }}&freteGratis={{ request.GET.freteGratis|default:'nao' }}">
-    <img style="width:5rem; height:5rem; object-fit:cover; border-radius:4px;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
+    <img style="width:5rem; height:5rem; object-fit:cover; border-radius:50%;" src="{{ categoria.foto.url }}" alt="{{ categoria.nome }}">
         <span>{{ categoria.nome }}</span>
     </a>
     {% endfor %}
@@ -24,7 +24,7 @@
 </div>
 <div class="container mt-5 d-flex flex-column align-items-start" >
    
-    <h3>Ofertas</h3>
+    <h3 style="font-size:1.3rem">Ofertas</h3>
 <div class="container mt-3 d-flex justify-content-start promocoes_container scroll-container " style="gap:1rem; overflow-x:auto; white-space: nowrap;">
 
     {% for loja in lojas %}
@@ -293,9 +293,9 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
         <div class="modal-content1">
           <div class="modal-header1">
             
-            <h2 class=" text-center modal-title" style="font-size:2.2rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
+            <h2 class=" text-center mb-3 modal-title" style="font-size:1.4rem; color:#000 !important;">Onde você quer receber seu pedido?</h2>
             <div class="mb-3 d-flex justify-content-center">
-              <img style="height:15rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
+              <img style="height:9rem; border-radius:4px;" src="{%static 'img/motoboy.png' %}">
               </div>
           </div>
           <div class="modal-body1">
