@@ -1825,13 +1825,7 @@ def aceitar_pedido(request, pedido_id, token):
         return HttpResponse("Pedido já foi processado.", status=400)
 
     # Verificação do método de pagamento
-    if pedido.pagamento != 'pontos':
-        # Lógica de atualização de saldo para pagamentos que não são com pontos
-        percentual_para_loja = Decimal('0.85')
-        valor_a_transferir = pedido.total * percentual_para_loja
-        pedido.loja.saldo += valor_a_transferir
-        pedido.loja.save()
-        logger.info(f"Pedido {pedido_id} aceito com sucesso. R${valor_a_transferir} transferidos para a loja.")
+    
 
     # Confirmar pedido
     pedido.status = 'confirmado'

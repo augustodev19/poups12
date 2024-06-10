@@ -877,16 +877,25 @@ def marcar_como_entregue(request):
     except: 
         loja = None
         return redirect('home')
+    
     pedidos = Pedido.objects.filter(loja=loja).order_by('-data')
     pedido_id = request.POST.get('pedido_id')
     codigo_secreto = request.POST.get('codigo_secreto')
-    
+
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, id=pedido_id, loja=request.user.loja)
-
-        if pedido.status == 'confirmado' and pedido.codigo_secreto == codigo_secreto:
+        
+        logger.info(f"Pedido {pedido_id} aceito com sucesso. R${valor_a_transferir} transferidos para a loja.")
+        # Verificar apenas os últimos 4 dígitos do código secreto
+        if pedido.status == 'confirmado' and pedido.codigo_secreto[-4:] == codigo_secreto[-4:]:
             pedido.status = 'entregue'
             pedido.save()
+            if pedido.pagamento != 'pontos':
+                percentual_para_loja = Decimal('0.85')
+                valor_a_transferir = pedido.total * percentual_para_loja
+                pedido.loja.saldo += valor_a_transferir
+                pedido.loja.save()
+
             messages.success(request, "Pedido marcado como entregue com sucesso.")
         else:
             messages.error(request, "Código secreto incorreto ou pedido não pode ser marcado como entregue.")
@@ -897,6 +906,8 @@ def marcar_como_entregue(request):
         'tokens': {pedido.id: TokenPedido.objects.filter(pedido=pedido, tipo='aceite', expiracao__gt=timezone.now()).first() for pedido in pedidos}
     }
     return render(request, 'core/confirmar_entrega.html', context)
+
+    
 def criar_pedido_loja(request):
     if request.method == 'POST':
         username = request.POST.get('username')
