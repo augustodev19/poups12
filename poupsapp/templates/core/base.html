@@ -64,8 +64,8 @@
         <p id="notification-phone"></p>
         <p id="notification-delivery-time"></p>
         <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-        <a id="notification-accept" href="#" class="btn btn-accept mb-3" style="background:#24da50; color:#fff !important;">Aceitar Pedido</a>
-        <a id="notification-reject" href="#" class="btn btn-decline mb-3" style="background:#ff1b1b; color:#fff !important;">Recusar Pedido</a>
+        <a id="notification-accept" href="#" class="btn btn-accept mb-3" style="background:#24da50 !important; color:#fff !important;">Aceitar Pedido</a>
+        <a id="notification-reject" href="#" class="btn btn-decline mb-3" style="background:#ff1b1b !important; color:#fff !important;">Recusar Pedido</a>
         <p>É uma honra ter você por aqui!</p>
     </div>
     
@@ -85,16 +85,15 @@
             // Atualizar o conteúdo da div existente
             const notificationContainer = document.getElementById('notification-container');
             notificationContainer.innerHTML = `
-                <h1 class="mb-0 fw-bold text-primary display-6">
-                    Poupe<span>Comprando</span>
-                </h1>
+            <h1 class="mb-3 fw-bold" style="color:#000 !important;">Poupe<span style="color:#1094F5 !important;">Comprando</span></h1>
+
                 <p>Olá ${message.loja},</p>
                 <p>Seu pedido foi criado com sucesso!</p>
-                <h2>Itens do Pedido</h2>
+                <h6>Itens do Pedido</h6>
                 <ul id="notification-items">
                     ${itensPedido}
                 </ul>
-                <h2>Itens Promocionais</h2>
+                <h6>Itens Promocionais</h6>
                 <ul id="notification-items-promocionais">
                     ${itensPromocionais}
                 </ul>
@@ -104,8 +103,8 @@
                 <p>Celular do cliente: ${message.telefone}</p>
                 <p>Tempo estimado para entrega: ${message.tempo_entrega_min} - ${message.tempo_entrega_max}min </p>
                 <p>Por favor, visite nosso site para aceitar ou recusar o pedido:</p>
-                <a href="https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}" class="btn btn-accept">Aceitar Pedido</a>
-                <a href="https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}" class="btn btn-decline">Recusar Pedido</a>
+                <a href="https://poupecomprando.com.br/revisar/aceitar/${message.pedido_id}" style="background:#24da50 !important; color:#fff !important;" class="btn btn-accept">Aceitar Pedido</a>
+                <a href="https://poupecomprando.com.br/revisar/recusar/${message.pedido_id}"  style="background:#ff1b1b !important; color:#fff !important;" class="btn btn-decline">Recusar Pedido</a>
                 <p>É uma honra ter você por aqui!</p>
             `;
             

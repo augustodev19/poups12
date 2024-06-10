@@ -20,6 +20,8 @@
 <!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="{%static 'css/util.css' %}">
 	<link rel="stylesheet" type="text/css" href="{%static 'css/login.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.7-beta.0/inputmask.min.js"></script>
+
 <!--===============================================================================================-->
 </head>
 <body>
@@ -116,32 +118,19 @@
  <!-- Passo 3: Informações Básicas -->
  <div id="step3" class="step" style="display:none;">
     <div class="wrap-input100 validate-input" data-validate = "Celular precisa ser válido.">
-        <input class="input100" id="celular" type="text" name="celular" placeholder="Celular">
+        <input class="input100" type="text" id="celular" name="telefone" placeholder="Celular">
         <script>
-            document.getElementById('celular').addEventListener('input', function (e) {
-                let value = e.target.value.replace(/\D/g, '');
-            
-                if (value.length <= 2) {
-                    value = '+55';
-                } else if (value.length <= 4) {
-                    value = `+55 (${value.slice(2)}`;
-                } else if (value.length <= 8) {
-                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4)}`;
-                } else if (value.length <= 13) {
-                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
-                } else {
-                    value = `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9, 13)}`;
-                }
-            
-                e.target.value = value;
+            document.addEventListener('DOMContentLoaded', function () {
+                var telefoneInput = document.getElementById('celular');
+                Inputmask({
+                    mask: "+55 (99) 99999-9999",
+                    placeholder: "",
+                    showMaskOnHover: false,
+                    showMaskOnFocus: false,
+                    clearIncomplete: true
+                }).mask(telefoneInput);
             });
-            
-            document.getElementById('celular').addEventListener('focus', function (e) {
-                if (e.target.value === '') {
-                    e.target.value = '+55 ';
-                }
-            });
-            </script>
+        </script>
         <span class="focus-input100"></span>
         <span class="symbol-input100">
             <i class="fa fa-phone" aria-hidden="true"></i>
@@ -263,8 +252,9 @@
                  
                 <!-- Passo 4: Confirmação -->
                 <div id="step5" class="step" style="display:none;">
-                    <span class="mb-3 text-center">Para sua segurança, senha precisa ter pelo menos 8 digitos, 1 letra maiúscula, 1 número e 1 símbolo</span>
-                    <label class="mt-4" for="password1"> 
+                    <span class="mb-3 text-center d-flex justify-content-center">Para sua segurança, senha precisa ter pelo menos 8 digitos, 1 letra maiúscula, 1 número e 1 símbolo</span>
+                    
+                    <div> <label class="mt-4" for="password1"> 
                         Digite sua Senha:
                     </label>
                     <div class="wrap-input100 validate-input " id="password1" data-validate = "Valid email is required: ex@abc.xyz">
@@ -288,7 +278,7 @@
                     <div class="d-flex align-items-center" style="gap:1rem;">
                     <button type="button" onclick="showStep(4)">Anterior</button>
                     <button type="submit">Enviar</button>
-
+                    </div>
                     </div>
                 
                 </div>
