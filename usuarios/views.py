@@ -877,7 +877,7 @@ def marcar_como_entregue(request):
     except: 
         loja = None
         return redirect('home')
-    
+    valor_a_transferir = Decimal('0.00')
     pedidos = Pedido.objects.filter(loja=loja).order_by('-data')
     pedido_id = request.POST.get('pedido_id')
     codigo_secreto = request.POST.get('codigo_secreto')
