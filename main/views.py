@@ -1720,7 +1720,11 @@ def pedido_pagamento(request, pedido_id):
     return render(request, 'core/pedido_pendente.html', context)
 @login_required
 def pagar_com_pontos(request):
-    carrinho = request.session.get('carrinho', {'itens': {}})
+    try:
+        carrinho = request.session.get('carrinho', {'itens': {}})
+    except:
+        messages.error('Carrinho vazio.')
+        return redirect('home')
     endereco = request.POST.get('endereco')
     retirada_na_loja = request.POST.get('retiradaPixHidden') == "true"
 
@@ -1759,7 +1763,7 @@ def pagar_com_pontos(request):
     # Convertendo o total do carrinho em reais para pontos
     # Cada ponto vale R$0.4, então o total de pontos necessário é total em reais dividido por 0.4
     total_pontos_necessarios = total_geral_carrinho / Decimal('0.4')
-
+    codigo_secreto = str(uuid.uuid4())
     if cliente.pontos >= total_pontos_necessarios:
         pedido = Pedido.objects.create(
             cliente=cliente,
@@ -1770,7 +1774,8 @@ def pagar_com_pontos(request):
             total=total_geral_carrinho,
             pontos=total_pontos_necessarios,
             status='pendente',
-            retirada_na_loja=retirada_na_loja
+            retirada_na_loja=retirada_na_loja,
+            codigo_secreto=codigo_secreto
         )
 
         # Criando os itens do pedido

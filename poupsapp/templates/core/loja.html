@@ -394,8 +394,8 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (window.location.pathname !== '/loja/') {
-                        window.location.href = '/loja/'; // Redireciona para a URL padrão se não estiver já na página
+                    if (redirect && window.location.pathname !== '/loja/') {
+                        window.location.href = '/loja/';
                     }
                 })
                 .catch(error => {
