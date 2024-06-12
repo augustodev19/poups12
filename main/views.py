@@ -1802,6 +1802,7 @@ def pagar_com_pontos(request):
 
         # Enviar email com os detalhes do pedido
         enviar_email_pedido(request, pedido, itens_pedido)
+        enviar_notificacao_pedido(request, pedido, itens_pedido)
 
         # Limpar o carrinho na sessão após a compra
         del request.session['carrinho']
