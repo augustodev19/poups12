@@ -328,9 +328,7 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
                 const longitude = localStorage.getItem('longitude');
                 const address = localStorage.getItem('address');
                 
-                if (latitude && longitude && address) {
-                    setLocation(latitude, longitude, address);
-                }
+           
             }
         
             function getAddressFromCoordinates(latitude, longitude, callback) {
@@ -394,10 +392,10 @@ document.getElementById('enviarDistancia').addEventListener('click', function() 
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (redirect && window.location.pathname !== '/loja/') {
-                        window.location.href = '/loja/';
-                    }
-                })
+                    if (data.success) {
+                        window.location.href = '/lojas_proximas/';
+                } 
+            })
                 .catch(error => {
                     console.error('Erro ao enviar localização:', error);
                 });
