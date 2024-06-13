@@ -1,25 +1,25 @@
-{%load static%}
+{% load static %}
 
 <html lang="en">
 <head>
-	<title>Login V1</title>
+	<title>PoupeComprando - Registrar</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->	
 	<link rel="icon" type="image/png" href="images/icons/favicon.ico"/>
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{%static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{%static 'fonts/font-awesome-4.7.0/css/font-awesome.min.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'fonts/font-awesome-4.7.0/css/font-awesome.min.css' %}">
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{%static 'vendor/animate/animate.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'vendor/animate/animate.css' %}">
 <!--===============================================================================================-->	
-	<link rel="stylesheet" type="text/css" href="{%static 'vendor/css-hamburgers/hamburgers.min.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'vendor/css-hamburgers/hamburgers.min.css' %}">
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{%static 'vendor/select2/select2.min.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'vendor/select2/select2.min.css' %}">
 <!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{%static 'css/util.css' %}">
-	<link rel="stylesheet" type="text/css" href="{%static 'css/login.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/util.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
 <!--===============================================================================================-->
 </head>
 <body>
@@ -27,39 +27,34 @@
 	<div class="limiter">
         <div class="container-login100" style="flex-direction:column !important; gap:2rem;">
             <div class="wrap-login100">
-				<div class="login100-pic js-tilt" data-tilt>
-					<h2 class="mb-0 fw-bold text-primary display-6; " style="color:#000 !important; font-weight:bold; font-family: 'Poppins-Bold' !important;">Poupe<span style="color:#007bff">Comprando</span></h2>
-				</div>
+			
                 
                 <div class="login100-form validate-form">
                     <span class="login100-form-title">
 						Registre-se Agora!
 					</span>
                 
-                    <form  method="post" enctype="multipart/form-data" action="{% url 'registerFamilia'  %}">
-                        {%csrf_token%}
-                        <div id="step1" class="step" style="display: block;">
-                            <label for="nome">
-                                Nome do Titular
-                            </label>
-                          <div class="wrap-input100 validate-input" id="nome" data-validate="Nome do titular é necessário">
-                              <input class="input100" type="text" name="nome" placeholder="Nome do Titular">
-                              <span class="focus-input100"></span>
-                              <span class="symbol-input100">
-                                  <i class="fa fa-user" aria-hidden="true"></i>
-                              </span>
-                          </div>
-                          <label for="cpf">
-                            CPF do Titular
-                        </label>
-                          <div class="wrap-input100 validate-input" id="cpf" data-validate="CPF é necessário">
-                              <input class="input100" id="cpf" type="text" name="username" placeholder="CPF do Titular">
-                              <span class="focus-input100"></span>
-                              <span class="symbol-input100">
-                                  <i class="fa fa-id-card" aria-hidden="true"></i>
-                              </span>
-                          </div>
-                          <script>
+                    <form method="post" enctype="multipart/form-data" action="{% url 'registerFamilia' %}">
+                        {% csrf_token %}
+                        
+                        <label for="nome">Nome do Titular</label>
+                        <div class="wrap-input100 validate-input" data-validate="Nome do titular é necessário">
+                            <input class="input100" type="text" name="nome" placeholder="Nome do Titular">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-user" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <label for="cpf">CPF do Titular</label>
+                        <div class="wrap-input100 validate-input" data-validate="CPF é necessário">
+                            <input class="input100" id="cpf" type="text" name="username" placeholder="CPF do Titular">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-id-card" aria-hidden="true"></i>
+                            </span>
+                        </div>
+                        <script>
                             document.getElementById('cpf').addEventListener('input', function (e) {
                                 let value = e.target.value;
                                 value = value.replace(/\D/g, ''); // Remove tudo o que não é dígito
@@ -69,150 +64,104 @@
                                 e.target.value = value;
                             });
                         </script>
-                          <div class="d-flex align-items-center" style="gap:1rem;">
-                            <button type="button" onclick="showStep(2)">Próximo</button>
+
+                        <label for="email">Email</label>
+                        <div class="wrap-input100 validate-input" data-validate="Email válido é necessário: ex@abc.xyz">
+                            <input class="input100" type="email" name="email" placeholder="Email">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                            </span>
                         </div>
-                      </div>
-  
-                      <div id="step2" class="step" style="display: none;">
-                        <label for="email">
-                            Email
-                        </label>
-                          <!-- Content for Step 2 -->
-                          <div class="wrap-input100 validate-input" id="email" data-validate="Email válido é necessário: ex@abc.xyz">
-                              <input class="input100" type="email" name="email" placeholder="Email">
-                              <span class="focus-input100"></span>
-                              <span class="symbol-input100">
-                                  <i class="fa fa-envelope" aria-hidden="true"></i>
-                              </span>
-                          </div>
-                          <label for="telefone">
-                            Telefone
-                        </label>
-                          <div class="wrap-input100 validate-input" id="telefone" data-validate="Telefone válido é necessário: (99) 99999-9999">
+
+                        <label for="telefone">Telefone</label>
+                        <div class="wrap-input100 validate-input" data-validate="Telefone válido é necessário: (99) 99999-9999">
                             <input class="input100" type="text" name="telefone" placeholder="Telefone">
                             <span class="focus-input100"></span>
                             <span class="symbol-input100">
                                 <i class="fa fa-phone" aria-hidden="true"></i>
                             </span>
                         </div>
-                          <!-- More inputs here as needed -->
-                          <div class="d-flex align-items-center" style="gap:1rem;">
-                            <button type="button" onclick="showStep(1)">Anterior</button>
-                            <button type="button" onclick="showStep(3)">Próximo</button>
+
+                        <label for="cep">CEP</label>
+                        <div class="wrap-input100 validate-input" data-validate="CEP é requerido">
+                            <input class="input100" type="text" name="cep" id="cep" placeholder="CEP">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-home" aria-hidden="true"></i>
+                            </span>
                         </div>
-                      </div>
-  
-                      <div id="step3" class="step" style="display: none;">
-                        <label for="cep">
-                            CEP
-                        </label>
-                        <div class="wrap-input100 validate-input" id="cep" data-validate = "CEP é requerido">
-                          <input class="input100" type="text" name="cep" id="cep" placeholder="CEP">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-home" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                      <label for="endereco">
-                        Endereço
-                    </label>
-                      <div class="wrap-input100 validate-input" id="endereco" data-validate = "Endereço é requerido">
-                          <input class="input100" type="text" name="endereco" id="endereco" placeholder="Endereço">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-road" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                      <label for="logradouro">
-                       Logradouro
-                    </label>
-                      <div class="wrap-input100 validate-input" id="logradouro" data-validate = "Logradouro é requerido">
-                          <input class="input100" type="text" name="bairro" id="bairro" placeholder="Bairro">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-map-marker" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                      <label for="numero">
-                        Número
-                     </label>
-                      <div class="wrap-input100 validate-input" data-validate = "Número é requerido">
-                          <input class="input100" type="text" name="numero" id="numero" placeholder="Número">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-building" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                      <div class="d-flex align-items-center" style="gap:1rem;">
-                        <button type="button" onclick="showStep(2)">Anterior</button>
-                        <button type="button" onclick="showStep(4)">Próximo</button>
+
+                        <label for="endereco">Endereço</label>
+                        <div class="wrap-input100 validate-input" data-validate="Endereço é requerido">
+                            <input class="input100" type="text" name="endereco" id="endereco" placeholder="Endereço">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-road" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <label for="logradouro">Logradouro</label>
+                        <div class="wrap-input100 validate-input" data-validate="Logradouro é requerido">
+                            <input class="input100" type="text" name="bairro" id="bairro" placeholder="Bairro">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-map-marker" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <label for="numero">Número</label>
+                        <div class="wrap-input100 validate-input" data-validate="Número é requerido">
+                            <input class="input100" type="text" name="numero" id="numero" placeholder="Número">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-building" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <label for="senha1" class="mt-4">Digite sua senha:</label>
+                        <div class="wrap-input100 validate-input" data-validate="Senha é necessária">
+                            <input class="input100" type="password" name="password1" placeholder="Senha">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-lock" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <label for="senha2">Confirme sua senha:</label>
+                        <div class="wrap-input100 validate-input" data-validate="Confirmação de senha é necessária">
+                            <input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
+                            <span class="focus-input100"></span>
+                            <span class="symbol-input100">
+                                <i class="fa fa-lock" aria-hidden="true"></i>
+                            </span>
+                        </div>
+
+                        <button type="submit">Enviar</button>
+                    </form>
+
+                    <div class="text-center pt-4">
+                        <a style="font-size:.9rem !important;" class="txt2" href="{% url 'login' %}">
+                            Já tenho uma Conta!
+                            <i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
+                        </a>
                     </div>
-                      </div>
-  
-                      <div id="step4" class="step" style="display: none;">
-                        <span class="mb-3 d-flex text-center">Para sua segurança, senha precisa ter pelo menos 6 digitos, 1 letra maiúscula, 1 número e 1 símbolo</span>
 
-                        <!-- Content for Step 2 -->
-                        <label for="senha1" class="mt-4">
-                            Digite sua senha:
-                        </label>
-                        <div class="wrap-input100 validate-input" id="senha1" data-validate="Senha é necessária">
-                          <input class="input100" type="password" name="password1" placeholder="Senha">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-lock" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                    
-                      <label for="senha2">
-                        Confirme sua senha:
-                    </label>
-                      <div class="wrap-input100 validate-input" id="senha2" data-validate="Confirmação de senha é necessária">
-                          <input class="input100" type="password" name="password2" placeholder="Confirmar Senha">
-                          <span class="focus-input100"></span>
-                          <span class="symbol-input100">
-                              <i class="fa fa-lock" aria-hidden="true"></i>
-                          </span>
-                      </div>
-                        <!-- More inputs here as needed -->
-                        <div class="d-flex align-items-center" style="gap:1rem;">
-                          <button type="button" onclick="showStep(3)">Anterior</button>
-                          <button type="submit">Enviar</button>
-      
-                          </div>
-                    </div>
-  
-            </form>
-
-         
-
-                <div class="text-center pt-4 ">
-                    <a style="font-size:.9rem !important;" class="txt2" href="{%url 'login' %}">
-                        Já tenho uma Conta!
-                        <i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
-                    </a>
                 </div>
-                    <!-- Conteúdo do Passo 3 (Ex: Termos e Condições) -->
-                    <!-- Botões para voltar para o Passo 2 ou enviar o formulário -->
-                </div>
-
-                
-    
             </div>
-            <a style="color:#fff !important; font-size:1.2rem !important" href="{%url 'tipoCliente' %}">Voltar</a>
+            <a style="color:#fff !important; font-size:1.2rem !important" href="{% url 'tipoCliente' %}">Voltar</a>
         </div>
     </div>
 
 <!--===============================================================================================-->	
-	<script src="{%static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+	<script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 <!--===============================================================================================-->
-	<script src="{%static 'vendor/bootstrap/js/popper.js' %}"></script>
-	<script src="{%static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'vendor/bootstrap/js/popper.js' %}"></script>
+	<script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
 <!--===============================================================================================-->
-	<script src="{%static 'vendor/select2/select2.min.js' %}"></script>
+	<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
 <!--===============================================================================================-->
-	<script src="{%static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
+	<script src="{% static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
 	<script>
     document.getElementById('cep').addEventListener('blur', function(e) {
         var cep = this.value.replace(/\D/g, '');
@@ -225,7 +174,7 @@
                     document.getElementById('bairro').value = data.bairro;
                     // O número geralmente não é fornecido pela API
                 } else {
-                    continue;
+                    alert("CEP não encontrado.");
                 }
             })
             .catch(() => alert("Erro ao buscar o CEP."));
@@ -247,67 +196,49 @@
 <script src="{% static 'vendor/select2/select2.min.js' %}"></script>
 <script src="{% static 'vendor/tilt/tilt.jquery.min.js' %}"></script>
 <script src="{% static 'js/main.js' %}"></script>
-<script>
-function showStep(stepNumber) {
-    // Hide all steps
-    var steps = document.querySelectorAll('.step');
-    steps.forEach(function(step) {
-        step.style.display = 'none';
-    });
-
-    // Show the current step
-    var currentStep = document.getElementById('step' + stepNumber);
-    if (currentStep) {
-        currentStep.style.display = 'block';
-    }
-}
-</script>
 
     <!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-      <!-- ... rest of modal content ... -->
-      <div class="modal-body">
-        <div class="d-flex flex-column align-items-center" style="gap:1rem;">
-        <img style="max-height:5rem;" src="{%static 'img/check (1).png'%}">
-        {% if messages %}
-        <div class="messages">
-          {% for message in messages %}
-          {% if message.tags == 'success' %}
-            <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
-          {% endif %}
-          {% endfor %}
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+                        <img style="max-height:5rem;" src="{% static 'img/check (1).png' %}">
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            {% if message.tags == 'success' %}
+                            <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-      </div>
-      </div>
-      </div>
-    </div>
     </div>
     
     <!-- Error Modal -->
     <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-      <!-- ... rest of modal content ... -->
-      <div class="modal-body">
-    
-        <div class="d-flex flex-column align-items-center" style="gap:1rem;">
-          <img style="max-height:5rem;" src="{%static 'img/close.png'%}">
-        {% if messages %}
-        <div class="messages">
-          {% for message in messages %}
-          {% if message.tags == 'error' %}
-        <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
-          {% endif %}
-          {% endfor %}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+                        <img style="max-height:5rem;" src="{% static 'img/close.png' %}">
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                            <span style="text-align:center; font-size:1.2rem !important;">{{ message }}</span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-        </div>
-      </div>
-      </div>
-    </div>
     </div>
     
     <script type="text/javascript">
@@ -328,10 +259,7 @@ function showStep(stepNumber) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!--===============================================================================================-->
-	<script src="{%static 'js/login.js' %}"></script>
+	<script src="{% static 'js/login.js' %}"></script>
 
-
-    
-  
 </body>
 </html>
