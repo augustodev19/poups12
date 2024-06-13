@@ -88,9 +88,6 @@ def registerCliente(request):
                     user.endereco = endereco
                     user.save()
 
-            # Autenticar e fazer login do usuário automaticamente
-            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password1'])
-            if user is not None:
                 login(request, user)
                 logger.debug("Login automático bem-sucedido")
                 messages.success(request, 'Cadastro realizado com sucesso!')
