@@ -320,12 +320,10 @@
                            
                         </form>
 
-                        <form id="paymentForm" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
-                            {% csrf_token %}
-                            <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
-                            <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="False">
+                 
+                            
 
-                            <button style="background: transparent; border:none; text-align:start" class="w-100" type="submit">
+                            <button style="background: transparent; border:none; text-align:start" class="w-100" id="btnPoups" type="submit">
                                 <div class="d-flex px-4 py-3 align-items-start flex-column mt-4 " style="max-width:32rem; width: 100%; gap: .5rem; border:solid #88888895 1px; border-radius:8px;">
                                     <div class="d-flex align-items-center justify-content-start w-100" style="gap: 1rem;">
                                         
@@ -339,9 +337,37 @@
                                     
                                 </div>
                                 </button>
-                           
-                        </form>
+                                <div class="modal fade" id="modalPoups" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                      <div class="modal-content">
+                                        <div class="modal-body">
+                                          <div class="d-flex flex-column align-items-center" style="gap:1rem;">
+                                            <form id="paymentForm" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
 
+                                                <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
+                                                <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="False">
+                                                {% csrf_token %}
+                    
+                                               <span> {{total_poups|floatformat:2}}
+                                                {{valor_}} </span> 
+                                            </form>
+                    
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                <script>
+                                    const btnPoups = document.querySelector('#btnPoups');
+                                    btnPoups.addEventListener('click', function()
+                                    {
+                                        $('#modalPoups').modal('show');
+                                    })
+                                </script>
+
+                               
+
+                       
                      
                         <form method="POST" action="{% url 'criar_pagamento_pix' %}" class="w-100">
                         {%csrf_token%}

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth import login as auth_login
 from .forms import LoginForm
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 import logging
 from django.template.loader import render_to_string
 from bs4 import BeautifulSoup
@@ -88,14 +88,22 @@ def registerCliente(request):
                     user.endereco = endereco
                     user.save()
 
-            messages.success(request, 'Cadastro realizado com sucesso!')
-            logger.debug("Cadastro realizado com sucesso, redirecionando para login")
-            return redirect('login')
+            # Autenticar e fazer login do usuário automaticamente
+            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password1'])
+            if user is not None:
+                login(request, user)
+                logger.debug("Login automático bem-sucedido")
+                messages.success(request, 'Cadastro realizado com sucesso!')
+                return redirect('home')  # ou qualquer outra página após login bem-sucedido
+            else:
+                logger.error("Falha na autenticação do usuário após o registro")
+
         else:
             logger.error(f"Formulário inválido: {form.errors}")
             messages.error(request, form.errors)
 
     return render(request, 'core/registroClientes.html', {'form': form})
+
 
 
 def perfil_familia(request):
@@ -321,10 +329,12 @@ def registerLoja(request):
                 selected_categorias = form.cleaned_data['categorias']
                 logger.debug(f"Categorias selecionadas: {selected_categorias}")
                 user.categorias.set(selected_categorias)
-
+                
+                # Autentica e loga o usuário
+                login(request, user)
                 messages.success(request, 'Cadastro realizado com sucesso!')
-                logger.debug("Cadastro realizado com sucesso, redirecionando para login")
-                return redirect('login')
+                logger.debug("Cadastro realizado com sucesso, redirecionando para a página inicial")
+                return redirect('editar_loja')  # Redireciona para a página inicial após o login
         else:
             logger.error(f"Formulário inválido: {form.errors}")
             messages.error(request, form.errors)
