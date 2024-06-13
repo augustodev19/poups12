@@ -342,14 +342,15 @@
                                       <div class="modal-content">
                                         <div class="modal-body">
                                           <div class="d-flex flex-column align-items-center" style="gap:1rem;">
-                                            <form id="paymentForm" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
+                                            <form id="paymentForm" class="d-flex flex-column align-items-center" method="post" action="{% url 'pagar_com_pontos' %}" class="w-100">
 
                                                 <input type="hidden" value="{{ cliente.endereco.rua }}, {{ cliente.endereco.bairro }}, {{ cliente.endereco.numero }}" name="endereco" id="endereco-form" />
                                                 <input type="hidden" id="retiradaPoupsHidden" name="retiradaPoupsHidden" value="False">
                                                 {% csrf_token %}
-                    
-                                               <span> {{total_poups|floatformat:2}}
-                                                {{valor_}} </span> 
+                                                <h4 class="text-center">Opção de pagamento: Poups </h4>
+                                               <h4> Total: {{total_geral_poups|floatformat:2}} poups
+                                                </h4> 
+                                                <button class="btn btn-primary" style="color:#fff;" type="submit">Finalizar compra </button>
                                             </form>
                     
                                           </div>
