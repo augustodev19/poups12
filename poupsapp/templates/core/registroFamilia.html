@@ -58,13 +58,20 @@
                             document.getElementById('cpf').addEventListener('input', function (e) {
                                 let value = e.target.value;
                                 value = value.replace(/\D/g, ''); // Remove tudo o que não é dígito
-                                value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o terceiro e o quarto dígitos
-                                value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o sexto e o sétimo dígitos
-                                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Coloca hífen entre o nono e o décimo dígitos
+                                value = value.slice(0, 11); // Limita a 11 dígitos
+                        
+                                // Adiciona os pontos e hífen
+                                if (value.length >= 6) {
+                                    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o terceiro e o quarto dígitos
+                                    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o sexto e o sétimo dígitos
+                                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Coloca hífen entre o nono e o décimo dígitos
+                                } else if (value.length >= 3) {
+                                    value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o terceiro e o quarto dígitos
+                                }
+                        
                                 e.target.value = value;
                             });
                         </script>
-
                         <label for="email">Email</label>
                         <div class="wrap-input100 validate-input" data-validate="Email válido é necessário: ex@abc.xyz">
                             <input class="input100" type="email" name="email" placeholder="Email">
@@ -183,13 +190,7 @@
         }
     });
 </script>
-<script>
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-    }
-});
-</script>
+
 <script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 <script src="{% static 'vendor/bootstrap/js/popper.js' %}"></script>
 <script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>

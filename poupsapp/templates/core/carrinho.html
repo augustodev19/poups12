@@ -11,7 +11,7 @@
                             <p style="margin-bottom:.5rem;">Preço unitário: R$ {{ produto_info.preco }}</p>
                             <p style="margin-bottom:.5rem;">Pontos: {{ produto_info.pontos }}</p>
                             <div class="acoes">
-                                <div class="d-flex align-items-center" style="gap:.5rem"><span>Quantidade:</span>
+                                <div class="d-flex align-items-center" style="gap:.5rem"><span>Quantidade (Unid.):</span>
                                     <input type="number" class="quantidade-input mt-0" data-produto-id="{{ produto_info.produto_id }}" value="{{ produto_info.quantidade }}" min="1" style="height:2rem; max-width:4.5rem; border-radius:12px text-align: center;">
                                 </div>
                                 <button class="btn btn-danger remover-item" data-produto-id="{{ produto_info.produto_id }}">Remover</button>

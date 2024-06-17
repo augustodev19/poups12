@@ -17,9 +17,26 @@
                         {% csrf_token %}
                         <div class="mb-3">
                           <label for="username" class="form-label">C.P.F do Cliente:</label>
-                          <input type="text" class="form-control" id="username" name="username" required>
+                          <input type="text" id="cpf" class="form-control" id="username" name="username" required>
                         </div>
-            
+                        <script>
+                          document.getElementById('cpf').addEventListener('input', function (e) {
+                              let value = e.target.value;
+                              value = value.replace(/\D/g, ''); // Remove tudo o que não é dígito
+                              value = value.slice(0, 11); // Limita a 11 dígitos
+                      
+                              // Adiciona os pontos e hífen
+                              if (value.length >= 6) {
+                                  value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o terceiro e o quarto dígitos
+                                  value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o sexto e o sétimo dígitos
+                                  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Coloca hífen entre o nono e o décimo dígitos
+                              } else if (value.length >= 3) {
+                                  value = value.replace(/(\d{3})(\d)/, '$1.$2'); // Coloca ponto entre o terceiro e o quarto dígitos
+                              }
+                      
+                              e.target.value = value;
+                          });
+                      </script>
                         <div class="mb-3">
                           <label for="total" class="form-label">Total do Pedido (R$):</label>
                           <input type="number" class="form-control" id="total" name="total" step="0.01" required>
