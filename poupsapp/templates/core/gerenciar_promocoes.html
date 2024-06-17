@@ -10,6 +10,7 @@
                 <form method="POST" id="promocaoForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ promocao_form.as_p }}
+                
                     <button type="submit" class="mt-3 btn btn-primary">Criar Promoção</button>
                 </form>
             </div>
@@ -28,6 +29,7 @@
                                 <img style="max-width:5rem" src="{{promocao.imagem.url}}">
                                 <span>Quantidade Necessária: {{ promocao.quantidade_necessaria }}</span> -
                                 <span>Ativo: {{ promocao.ativo }}</span>
+                                {%if promocao.descricao%} - <span>Descrição: {{promocao.descricao}}</span>{%endif%}
                                 <button class="d-none mb-3 btn btn-secondary" onclick="abrirFormularioEdicaoPromocao({{ promocao.id }}, '{{ promocao.produto.nome }}', {{ promocao.quantidade_necessaria }}, {{ promocao.ativo }})">
                                     Editar Promoção
                                 </button>

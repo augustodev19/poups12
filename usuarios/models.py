@@ -342,7 +342,7 @@ class Promocao(models.Model):
     quantidade_necessaria = models.PositiveIntegerField()
     imagem = models.ImageField(upload_to='images/', blank=True, null=True, default="/images/ella-olsson-oPBjWBCcAEo-unsplash_1.jpg")
     ativo = models.BooleanField(default=True)
-
+    descricao = models.CharField(max_length=250, null=True, blank=True)
     def __str__(self):
         return f"{self.produto.nome} - Compre {self.quantidade_necessaria}, Ganhe 1"
 

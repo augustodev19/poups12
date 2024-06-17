@@ -32,12 +32,13 @@ class LojaRegistrationForm(UserCreationForm):
 class PromocaoForm(forms.ModelForm):
     class Meta:
         model = Promocao
-        fields = ['produto', 'quantidade_necessaria', 'ativo', 'imagem']
+        fields = ['produto', 'quantidade_necessaria', 'ativo', 'imagem', 'descricao']  # Inclua 'descricao'
         widgets = {
             'produto': forms.Select(attrs={'class': 'form-control'}),
             'quantidade_necessaria': forms.NumberInput(attrs={'class': 'form-control'}),
             'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'imagem': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={'class': 'form-control'}),  # Widget para 'descricao'
         }
 
     def __init__(self, *args, **kwargs):

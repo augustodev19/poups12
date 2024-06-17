@@ -50,7 +50,7 @@ CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 SECRET_KEY = 'django-insecure-1q$$n3hh=h1f*n8i2lwjivc2dz2_ics324t0&5i7k10nmd3x69'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'poupecomprando.onrender.com.br',
