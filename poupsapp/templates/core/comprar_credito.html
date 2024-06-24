@@ -6,13 +6,17 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{%static 'css/credito.css'%}">
+    <link rel="icon" type="image/png" href="{% static 'img/Slice-20-_1_.ico' %}">
+
 <!--===============================================================================================-->	
 
 <!--===============================================================================================-->
 </head>
 <body>
 	
-	
+    <div class="spinner-wrapper" id="spinner-wrapper">
+        <div class="spinner"></div>
+    </div>
         <main id="main">
             <section id="left" style="border-radius:8px; justify-content:center !important;">
                 <div id="head">
@@ -35,5 +39,38 @@
                 </form>
             </section>
         </main>
+
+        <script>
+            // Function to show the spinner
+            function showSpinner() {
+                document.getElementById('spinner-wrapper').style.display = 'flex';
+            }
+        
+            // Function to hide the spinner
+            function hideSpinner() {
+                document.getElementById('spinner-wrapper').style.display = 'none';
+            }
+        
+            // Hide spinner when the page is fully loaded
+            window.addEventListener('load', function() {
+                hideSpinner();
+            });
+        
+            // Show spinner on link click
+            document.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    if (event.target.href) {
+                        showSpinner();
+                    }
+                });
+            });
+        
+            // Show spinner on form submission
+            document.querySelectorAll('form').forEach(function(form) {
+                form.addEventListener('submit', function() {
+                    showSpinner();
+                });
+            });
+        </script>
 </body>
 </html>
