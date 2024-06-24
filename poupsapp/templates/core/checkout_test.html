@@ -40,7 +40,9 @@
         </div>
         <!-- Spinner End -->
 
-
+        <div class="spinner-wrapper" id="spinner-wrapper">
+            <div class="spinner"></div>
+        </div>
         <!-- Navbar start -->
         <div class="container-fluid fixed-top" style="padding:0 !important; border-radoius:0 !important; ">
             <div class=" topbar bg-primary d-none ">
@@ -1123,6 +1125,40 @@ document.addEventListener('DOMContentLoaded', function() {
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBd2FPXoFej_0ooiHJfRjCZFzIADYSUIY&libraries=places,geometry,marker&callback=initAutocomplete" async defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-  </body>
+
+  <script>
+    // Function to show the spinner
+    function showSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'flex';
+    }
+
+    // Function to hide the spinner
+    function hideSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'none';
+    }
+
+    // Hide spinner when the page is fully loaded
+    window.addEventListener('load', function() {
+        hideSpinner();
+    });
+
+    // Show spinner on link click
+    document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            if (event.target.href) {
+                showSpinner();
+            }
+        });
+    });
+
+    // Show spinner on form submission
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            showSpinner();
+        });
+    });
+</script>
+
+</body>
 
 </html>

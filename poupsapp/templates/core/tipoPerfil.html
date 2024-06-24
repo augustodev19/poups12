@@ -157,14 +157,38 @@
 
 <!--===============================================================================================-->
 	<script src="{%static 'js/login.js' %}"></script>
-
   <script>
-		// JavaScript para esconder o spinner quando a página estiver completamente carregada
-		window.addEventListener('load', function() {
-			document.getElementById('spinner-wrapper').style.display = 'none';
-		});
-	</script>
-    
-  
+    // Function to show the spinner
+    function showSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'flex';
+    }
+
+    // Function to hide the spinner
+    function hideSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'none';
+    }
+
+    // Hide spinner when the page is fully loaded
+    window.addEventListener('load', function() {
+        hideSpinner();
+    });
+
+    // Show spinner on link click
+    document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            if (event.target.href) {
+                showSpinner();
+            }
+        });
+    });
+
+    // Show spinner on form submission
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            showSpinner();
+        });
+    });
+</script>
+
 </body>
 </html>
