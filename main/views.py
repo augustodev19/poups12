@@ -1032,8 +1032,8 @@ def criar_pagamento_pix(request):
             return JsonResponse({"erro": "Informações da loja não disponíveis."}, status=400)
         entrega_loja = request.POST.get('retiradaPixHidden')
         print(entrega_loja)
-        if entrega_loja:
-            valor_frete = 0
+        if entrega_loja == 'True':
+            valor_frete = Decimal('0.00')
         else:
             valor_frete = Decimal(loja.valor_frete)
         total_geral_carrinho += valor_frete
@@ -1154,6 +1154,11 @@ def criar_pagamento_checkout(request):
 
         total_geral_carrinho += valor_frete
 
+        # Verificação se o valor total é menor que 0.50
+        if total_geral_carrinho < Decimal('0.50'):
+            messages.error(request, "O valor mínimo para compra com cartão é R$0,50.")
+            return redirect('checkout')
+
         items.append({
             'price_data': {
                 'currency': 'brl',
@@ -1164,6 +1169,7 @@ def criar_pagamento_checkout(request):
             },
             'quantity': 1,
         })
+
         endereco = request.POST.get('endereco')
         request.session['total_geral_carrinho'] = str(total_geral_carrinho)
         request.session['total_pontos_carrinho'] = total_pontos_carrinho
@@ -1718,6 +1724,7 @@ def pedido_pagamento(request, pedido_id):
         'cliente':cliente
     }
     return render(request, 'core/pedido_pendente.html', context)
+
 @login_required
 def pagar_com_pontos(request):
     try:
@@ -1802,7 +1809,7 @@ def pagar_com_pontos(request):
 
         # Enviar email com os detalhes do pedido
         enviar_email_pedido(request, pedido, itens_pedido)
-        enviar_notificacao_pedido(request, pedido, itens_pedido)
+        enviar_notificacao_pedido(pedido, itens_pedido)  # Certifique-se de passar `pedido` corretamente
 
         # Limpar o carrinho na sessão após a compra
         del request.session['carrinho']
@@ -2155,3 +2162,6 @@ def pagar_com_pix(request):
         'total_frete': total_frete,
         'loja':loja
     })
+
+def custom_page_not_found_view(request, exception):
+    return render(request, "core/404.html", {}, status=404)

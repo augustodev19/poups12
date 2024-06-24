@@ -23,7 +23,9 @@
 <!--===============================================================================================-->
 </head>
 <body>
-	
+	<div class="spinner-wrapper" id="spinner-wrapper">
+    <div class="spinner"></div>
+</div>
 	<div class="limiter">
         <div class="container-login100" style="flex-direction:column !important; gap:2rem;">
             <div class="wrap-login100 justify-content-center p-5" style="gap:3rem; width:auto;" >
@@ -156,7 +158,12 @@
 <!--===============================================================================================-->
 	<script src="{%static 'js/login.js' %}"></script>
 
-
+  <script>
+		// JavaScript para esconder o spinner quando a página estiver completamente carregada
+		window.addEventListener('load', function() {
+			document.getElementById('spinner-wrapper').style.display = 'none';
+		});
+	</script>
     
   
 </body>

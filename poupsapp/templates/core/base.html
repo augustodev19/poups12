@@ -37,6 +37,10 @@
     </head>
 
     <body>
+      <div class="spinner-wrapper" id="spinner-wrapper">
+        <div class="spinner"></div>
+    </div>
+
       <div id="notification-container" class="notification" style="position: fixed;
       bottom: 20px !important;
       right: 20px !important;
@@ -229,80 +233,80 @@
                             </div>
                         </div>
                         <script>
-                          document.addEventListener('DOMContentLoaded', function() {
-                              const searchIcon = document.getElementById('search-icon');
-                              const modal = document.getElementById('search-modal');
-                              const closeModal = document.getElementById('close-modal');
-                              const searchInput = document.getElementById('search-input');
-                              const searchButton = document.getElementById('search-button');
-                              const suggestions = document.getElementById('suggestions');
-                              const suggestionsList = document.getElementById('suggestions-list');
-                      
-                              searchIcon.onclick = function() {
-                                  modal.style.display = 'block';
-                              }
-                      
-                              closeModal.onclick = function() {
-                                  modal.style.display = 'none';
-                              }
-                      
-                              window.onclick = function(event) {
-                                  if (event.target == modal) {
-                                      modal.style.display = 'none';
-                                  }
-                              }
-                      
-                              searchInput.addEventListener('change', function() {
-                                  const query = searchInput.value.trim();
-                                  if (query.length > 0) {
-                                      fetch(`/search/?query=${query}`)
-                                          .then(response => response.json())
-                                          .then(data => {
-                                              suggestionsList.innerHTML = '';
-                                              const produtos = data.produtos;
-                                              const lojas = data.lojas;
-                      
-                                              produtos.forEach(produto => {
-                                                  const li = document.createElement('li');
-                                                  li.textContent = produto.nome;
-                                                  li.addEventListener('click', () => {
-                                                      window.location.href = `/produto/${produto.id}/`;
-                                                  });
-                                                  suggestionsList.appendChild(li);
-                                              });
-                      
-                                              lojas.forEach(loja => {
-                                                  const li = document.createElement('li');
-                                                  li.textContent = loja.nomeLoja;
-                                                  li.addEventListener('click', () => {
-                                                      window.location.href = `/loja/${loja.id}/`;
-                                                  });
-                                                  suggestionsList.appendChild(li);
-                                              });
-                      
-                                              suggestions.style.display = 'block';
-                                          }).catch(error => {
-                                              console.error('Erro ao buscar sugestões:', error);
-                                              suggestions.style.display = 'none';
-                                          });
-                                  } else {
-                                      suggestions.style.display = 'none';
-                                  }
-                              });
-                      
-                              searchButton.addEventListener('click', function() {
-                                  const query = searchInput.value.trim();
-                                  if (query.length > 0) {
-                                      window.location.href = `/search_results/?query=${query}`;
-                                  }
-                              });
-                      
-                              document.addEventListener('click', function(e) {
-                                  if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
-                                      suggestions.style.display = 'none';
-                                  }
-                              });
-                          });
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const searchIcon = document.getElementById('search-icon');
+                                const modal = document.getElementById('search-modal');
+                                const closeModal = document.getElementById('close-modal');
+                                const searchInput = document.getElementById('search-input');
+                                const searchButton = document.getElementById('search-button');
+                                const suggestions = document.getElementById('suggestions');
+                                const suggestionsList = document.getElementById('suggestions-list');
+                        
+                                searchIcon.onclick = function() {
+                                    modal.style.display = 'block';
+                                }
+                        
+                                closeModal.onclick = function() {
+                                    modal.style.display = 'none';
+                                }
+                        
+                                window.onclick = function(event) {
+                                    if (event.target == modal) {
+                                        modal.style.display = 'none';
+                                    }
+                                }
+                        
+                                searchInput.addEventListener('change', function() {
+                                    const query = searchInput.value.trim();
+                                    if (query.length > 0) {
+                                        fetch(`/search/?query=${query}`)
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                suggestionsList.innerHTML = '';
+                                                const produtos = data.produtos;
+                                                const lojas = data.lojas;
+                        
+                                                produtos.forEach(produto => {
+                                                    const li = document.createElement('li');
+                                                    li.textContent = produto.nome;
+                                                    li.addEventListener('click', () => {
+                                                        window.location.href = `/produto/${produto.id}/`;
+                                                    });
+                                                    suggestionsList.appendChild(li);
+                                                });
+                        
+                                                lojas.forEach(loja => {
+                                                    const li = document.createElement('li');
+                                                    li.textContent = loja.nomeLoja;
+                                                    li.addEventListener('click', () => {
+                                                        window.location.href = `/loja/${loja.id}/`;
+                                                    });
+                                                    suggestionsList.appendChild(li);
+                                                });
+                        
+                                                suggestions.style.display = 'block';
+                                            }).catch(error => {
+                                                console.error('Erro ao buscar sugestões:', error);
+                                                suggestions.style.display = 'none';
+                                            });
+                                    } else {
+                                        suggestions.style.display = 'none';
+                                    }
+                                });
+                        
+                                searchButton.addEventListener('click', function() {
+                                    const query = searchInput.value.trim();
+                                    if (query.length > 0) {
+                                        window.location.href = `/search_results/?query=${query}`;
+                                    }
+                                });
+                        
+                                document.addEventListener('click', function(e) {
+                                    if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+                                        suggestions.style.display = 'none';
+                                    }
+                                });
+                            });
                       </script>
                           <div>
     <button class="d-none" id="search-button">Pesquisar</button>
@@ -1083,9 +1087,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
 
 
-    
-
-
 
   <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', (event) => {
@@ -1102,7 +1103,50 @@ document.addEventListener('DOMContentLoaded', function() {
     {% endif %}
   });
   </script>
-  
+
+
+  <script>
+    document.addEventListener('hidden.bs.modal', function (event) {
+      // Check if there are any other modals still open
+      const openModals = document.querySelectorAll('.modal.show');
+      if (openModals.length === 0) {
+        document.body.classList.remove('modal-open');
+      }
+    });
+  </script>
+
+  <script>
+    // Function to show the spinner
+    function showSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'flex';
+    }
+
+    // Function to hide the spinner
+    function hideSpinner() {
+        document.getElementById('spinner-wrapper').style.display = 'none';
+    }
+
+    // Hide spinner when the page is fully loaded
+    window.addEventListener('load', function() {
+        hideSpinner();
+    });
+
+    // Show spinner on link click
+    document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            if (event.target.href) {
+                showSpinner();
+            }
+        });
+    });
+
+    // Show spinner on form submission
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            showSpinner();
+        });
+    });
+</script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- Owl Carousel JS -->
